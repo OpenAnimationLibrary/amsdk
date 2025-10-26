@@ -1,0 +1,237 @@
+<div class="tabs">
+
+- [Main Page](index.md)
+- <span id="current">[Classes](annotated.md)</span>
+- [Files](files.md)
+- [Directories](dirs.md)
+- [Related Pages](pages.md)
+
+</div>
+
+<div class="tabs">
+
+- [Class List](annotated.md)
+- [Alphabetical List](classes.md)
+- <span id="current">[Class Hierarchy](hierarchy.md)</span>
+- [Class Members](functions.md)
+
+</div>
+
+# A:M SDK v12.0 Class Hierarchy
+
+[Go to the graphical class hierarchy](inherits.md)
+
+This inheritance list is sorted roughly, but not completely, alphabetically:
+
+- <a href="classAttr.md" class="el">Attr</a>
+- <a href="classBoid.md" class="el">Boid</a>
+- <a href="classBoidList.md" class="el">BoidList</a>
+- <a href="classCExtension.md" class="el">CExtension</a>
+- <a href="classCMProfile.md" class="el">CMProfile</a>
+- <a href="unionColor.md" class="el">Color</a>
+- <a href="classColorBuf.md" class="el">ColorBuf</a>
+- <a href="classColorVector.md" class="el">ColorVector</a>
+- <a href="classColorVectorAlpha.md" class="el">ColorVectorAlpha</a>
+- <a href="classColorVectors.md" class="el">ColorVectors</a>
+- <a href="classCPluginApp.md" class="el">CPluginApp</a>
+- <a href="classCPluginDialog.md" class="el">CPluginDialog</a>
+- <a href="classCPXChooseDirectory.md" class="el">CPXChooseDirectory</a>
+- <a href="classCPXComPort.md" class="el">CPXComPort</a>
+- <a href="classCPXFileDialog.md" class="el">CPXFileDialog</a>
+- <a href="classCPXNewDir.md" class="el">CPXNewDir</a>
+- <a href="classDataValue.md" class="el">DataValue</a>
+- <a href="classDLLPlugin.md" class="el">DLLPlugin</a>
+  - <a href="classFlock.md" class="el">Flock</a>
+  - <a href="classImageIO.md" class="el">ImageIO</a>
+  - <a href="classMCDriver.md" class="el">MCDriver</a>
+  - <a href="classShader.md" class="el">Shader</a>
+    - <a href="classShader2.md" class="el">Shader2</a>
+  - <a href="classTexture.md" class="el">Texture</a>
+  - <a href="classTurbulence.md" class="el">Turbulence</a>
+  - <a href="classVolumetric.md" class="el">Volumetric</a>
+- <a href="classFlockBuf.md" class="el">FlockBuf</a>
+- <a href="structFRECT.md" class="el">FRECT</a>
+- <a href="classHalfColorBuf.md" class="el">HalfColorBuf</a>
+- <a href="classHalfColorBufAlpha.md" class="el">HalfColorBufAlpha</a>
+- <a href="classHashArray.md" class="el">HashArray&lt; TYPE, ARG_TYPE &gt;</a>
+- <a href="classHashNode.md" class="el">HashNode</a>
+- <a href="classHashPool.md" class="el">HashPool</a>
+- <a href="classHashStream.md" class="el">HashStream</a>
+  - <a href="classFileStream.md" class="el">FileStream</a>
+  - <a href="classMemoryStream.md" class="el">MemoryStream</a>
+- <a href="classHChannelCP.md" class="el">HChannelCP</a>
+- <a href="classHDynamicCategoryProperty.md" class="el">HDynamicCategoryProperty</a>
+- <a href="classHeader.md" class="el">Header</a>
+- <a href="classHGroupNode.md" class="el">HGroupNode</a>
+- <a href="classHit.md" class="el">Hit</a>
+- <a href="classHObjectListNode.md" class="el">HObjectListNode</a>
+- <a href="structhostent.md" class="el">hostent</a>
+- <a href="classHOutputInfo.md" class="el">HOutputInfo</a>
+- <a href="classHPatch.md" class="el">HPatch</a>
+  - <a href="classHPatch5.md" class="el">HPatch5</a>
+- <a href="classHProgressBar.md" class="el">HProgressBar</a>
+- <a href="classHPropertyInfo.md" class="el">HPropertyInfo</a>
+  - <a href="classHAttrPropertyInfo.md" class="el">HAttrPropertyInfo</a>
+  - <a href="classHBiasPropertyInfo.md" class="el">HBiasPropertyInfo</a>
+  - <a href="classHBoolPropertyInfo.md" class="el">HBoolPropertyInfo</a>
+  - <a href="classHButtonPropertyInfo.md" class="el">HButtonPropertyInfo</a>
+  - <a href="classHDataPropertyInfo.md" class="el">HDataPropertyInfo</a>
+  - <a href="classHFileInfoPropertyInfo.md" class="el">HFileInfoPropertyInfo</a>
+  - <a href="classHFloatPropertyInfo.md" class="el">HFloatPropertyInfo</a>
+    - <a href="classHPercentPropertyInfo.md" class="el">HPercentPropertyInfo</a>
+  - <a href="classHGradientPropertyInfo.md" class="el">HGradientPropertyInfo</a>
+  - <a href="classHIntPropertyInfo.md" class="el">HIntPropertyInfo</a>
+  - <a href="classHPointerPropertyInfo.md" class="el">HPointerPropertyInfo</a>
+    - <a href="classHClipPropertyInfo.md" class="el">HClipPropertyInfo</a>
+  - <a href="classHRotatePropertyInfo.md" class="el">HRotatePropertyInfo</a>
+  - <a href="classHStringPropertyInfo.md" class="el">HStringPropertyInfo</a>
+    - <a href="classHDirPropertyInfo.md" class="el">HDirPropertyInfo</a>
+    - <a href="classHFilenamePropertyInfo.md" class="el">HFilenamePropertyInfo</a>
+  - <a href="classHTimePropertyInfo.md" class="el">HTimePropertyInfo</a>
+  - <a href="classHTimeRangePropertyInfo.md" class="el">HTimeRangePropertyInfo</a>
+  - <a href="classHTransformPropertyInfo.md" class="el">HTransformPropertyInfo</a>
+  - <a href="classHTypePropertyInfo.md" class="el">HTypePropertyInfo</a>
+  - <a href="classHVector2PropertyInfo.md" class="el">HVector2PropertyInfo</a>
+  - <a href="classHVectorPropertyInfo.md" class="el">HVectorPropertyInfo</a>
+    - <a href="classHColorPropertyInfo.md" class="el">HColorPropertyInfo</a>
+    - <a href="classHScalePropertyInfo.md" class="el">HScalePropertyInfo</a>
+    - <a href="classHTranslatePropertyInfo.md" class="el">HTranslatePropertyInfo</a>
+  - <a href="classHVectorPropertyNoSubsInfo.md" class="el">HVectorPropertyNoSubsInfo</a>
+- <a href="classHTexInfo.md" class="el">HTexInfo</a>
+- <a href="classHTreeObject.md" class="el">HTreeObject</a>
+  - <a href="classHAnimObject.md" class="el">HAnimObject</a>
+    - <a href="classHBasePatchUV.md" class="el">HBasePatchUV</a>
+      - <a href="classHPatch5UV.md" class="el">HPatch5UV</a>
+      - <a href="classHPatchUV.md" class="el">HPatchUV</a>
+    - <a href="classHCP.md" class="el">HCP</a>
+      - <a href="classHHookCP.md" class="el">HHookCP</a>
+    - <a href="classHCPInstance.md" class="el">HCPInstance</a>
+    - <a href="classHHashObject.md" class="el">HHashObject</a>
+      - <a href="classHAction.md" class="el">HAction</a>
+      - <a href="classHActionCache.md" class="el">HActionCache</a>
+        - <a href="classHChorAction.md" class="el">HChorAction</a>
+        - <a href="classHRelation.md" class="el">HRelation</a>
+      - <a href="classHAnimObjectShortcut.md" class="el">HAnimObjectShortcut</a>
+        - <a href="classHCPShortcut.md" class="el">HCPShortcut</a>
+      - <a href="classHBitmapBuffer.md" class="el">HBitmapBuffer</a>
+        - <a href="classHRGBABuffer.md" class="el">HRGBABuffer</a>
+          - <a href="classHRGBAFloatBuffer.md" class="el">HRGBAFloatBuffer</a>
+        - <a href="classHRGBBuffer.md" class="el">HRGBBuffer</a>
+        - <a href="classHScalarBuffer.md" class="el">HScalarBuffer</a>
+        - <a href="classHYABuffer.md" class="el">HYABuffer</a>
+      - <a href="classHBitmapNode.md" class="el">HBitmapNode</a>
+      - <a href="classHBone.md" class="el">HBone</a>
+        - <a href="classHObject.md" class="el">HObject</a>
+          - <a href="classHCamera.md" class="el">HCamera</a>
+          - <a href="classHForce.md" class="el">HForce</a>
+          - <a href="classHFX.md" class="el">HFX</a>
+            - <a href="classHMatFX.md" class="el">HMatFX</a>
+            - <a href="classHVolFX.md" class="el">HVolFX</a>
+              - <a href="classHLight.md" class="el">HLight</a>
+          - <a href="classHMCDevice.md" class="el">HMCDevice</a>
+          - <a href="classHNullObject.md" class="el">HNullObject</a>
+          - <a href="classHProp.md" class="el">HProp</a>
+          - <a href="classHSegment.md" class="el">HSegment</a>
+            - <a href="classHModel.md" class="el">HModel</a>
+              - <a href="classHLayer.md" class="el">HLayer</a>
+              - <a href="classHPathModel.md" class="el">HPathModel</a>
+      - <a href="classHBoneCache.md" class="el">HBoneCache</a>
+        - <a href="classHObjectCache.md" class="el">HObjectCache</a>
+          - <a href="classHCameraCache.md" class="el">HCameraCache</a>
+          - <a href="classHForceCache.md" class="el">HForceCache</a>
+          - <a href="classHFXCache.md" class="el">HFXCache</a>
+            - <a href="classHMatFXCache.md" class="el">HMatFXCache</a>
+            - <a href="classHVolFXCache.md" class="el">HVolFXCache</a>
+              - <a href="classHLightCache.md" class="el">HLightCache</a>
+          - <a href="classHMCDeviceCache.md" class="el">HMCDeviceCache</a>
+          - <a href="classHNullObjectCache.md" class="el">HNullObjectCache</a>
+          - <a href="classHPropCache.md" class="el">HPropCache</a>
+          - <a href="classHSegmentCache.md" class="el">HSegmentCache</a>
+            - <a href="classHModelCache.md" class="el">HModelCache</a>
+              - <a href="classHLayerCache.md" class="el">HLayerCache</a>
+      - <a href="classHBoneCacheContainer.md" class="el">HBoneCacheContainer</a>
+      - <a href="classHBoneContainer.md" class="el">HBoneContainer</a>
+      - <a href="classHBufferShortcut.md" class="el">HBufferShortcut</a>
+      - <a href="classHChor.md" class="el">HChor</a>
+      - <a href="classHClip.md" class="el">HClip</a>
+        - <a href="classHBitmap.md" class="el">HBitmap</a>
+          - <a href="classHDecal.md" class="el">HDecal</a>
+          - <a href="classHRotoscope.md" class="el">HRotoscope</a>
+        - <a href="classHImage.md" class="el">HImage</a>
+          - <a href="classHAnimation.md" class="el">HAnimation</a>
+          - <a href="classHStill.md" class="el">HStill</a>
+      - <a href="classHClipCacheContainer.md" class="el">HClipCacheContainer</a>
+      - <a href="classHDecalClip.md" class="el">HDecalClip</a>
+      - <a href="classHDecalClipContainer.md" class="el">HDecalClipContainer</a>
+      - <a href="classHDecalContainer.md" class="el">HDecalContainer</a>
+      - <a href="classHDecalStamp.md" class="el">HDecalStamp</a>
+      - <a href="classHDecalStampContainer.md" class="el">HDecalStampContainer</a>
+      - <a href="classHGroup.md" class="el">HGroup</a>
+      - <a href="classHGroupContainer.md" class="el">HGroupContainer</a>
+      - <a href="classHGroupCP.md" class="el">HGroupCP</a>
+      - <a href="classHLightCacheContainer.md" class="el">HLightCacheContainer</a>
+      - <a href="classHLightContainer.md" class="el">HLightContainer</a>
+      - <a href="classHLightListNode.md" class="el">HLightListNode</a>
+      - <a href="classHMaterial.md" class="el">HMaterial</a>
+      - <a href="classHMaterialCache.md" class="el">HMaterialCache</a>
+      - <a href="classHMaterialNode.md" class="el">HMaterialNode</a>
+        - <a href="classHCheckerNode.md" class="el">HCheckerNode</a>
+        - <a href="classHGradientNode.md" class="el">HGradientNode</a>
+        - <a href="classHSphericalNode.md" class="el">HSphericalNode</a>
+        - <a href="classHTextureNode.md" class="el">HTextureNode</a>
+      - <a href="classHObjectCacheContainer.md" class="el">HObjectCacheContainer</a>
+        - <a href="classHActionCacheContainer.md" class="el">HActionCacheContainer</a>
+        - <a href="classHActionShortcutContainer.md" class="el">HActionShortcutContainer</a>
+        - <a href="classHChorContainer.md" class="el">HChorContainer</a>
+        - <a href="classHMaterialCacheContainer.md" class="el">HMaterialCacheContainer</a>
+      - <a href="classHPolyModifierNode.md" class="el">HPolyModifierNode</a>
+      - <a href="classHPolyModifierShortcut.md" class="el">HPolyModifierShortcut</a>
+      - <a href="classHProject.md" class="el">HProject</a>
+      - <a href="classHProperty.md" class="el">HProperty</a>
+        - <a href="classHBiasProperty.md" class="el">HBiasProperty</a>
+        - <a href="classHBoolProperty.md" class="el">HBoolProperty</a>
+        - <a href="classHButtonProperty.md" class="el">HButtonProperty</a>
+        - <a href="classHContainerProperty.md" class="el">HContainerProperty</a>
+          - <a href="classHAttrProperty.md" class="el">HAttrProperty</a>
+          - <a href="classHCategoryProperty.md" class="el">HCategoryProperty</a>
+            - <a href="classHBoolCategoryProperty.md" class="el">HBoolCategoryProperty</a>
+            - <a href="classHTypeCategoryProperty.md" class="el">HTypeCategoryProperty</a>
+            - <a href="classHUserCategoryProperty.md" class="el">HUserCategoryProperty</a>
+          - <a href="classHClipProperty.md" class="el">HClipProperty</a>
+          - <a href="classHFileInfoProperty.md" class="el">HFileInfoProperty</a>
+          - <a href="classHTimeRangeProperty.md" class="el">HTimeRangeProperty</a>
+        - <a href="classHDataProperty.md" class="el">HDataProperty</a>
+        - <a href="classHFloatProperty.md" class="el">HFloatProperty</a>
+          - <a href="classHPercentProperty.md" class="el">HPercentProperty</a>
+        - <a href="classHGradientProperty.md" class="el">HGradientProperty</a>
+        - <a href="classHIntProperty.md" class="el">HIntProperty</a>
+        - <a href="classHPointerProperty.md" class="el">HPointerProperty</a>
+        - <a href="classHRotateProperty.md" class="el">HRotateProperty</a>
+        - <a href="classHShading.md" class="el">HShading</a>
+        - <a href="classHStringProperty.md" class="el">HStringProperty</a>
+          - <a href="classHDirProperty.md" class="el">HDirProperty</a>
+          - <a href="classHFilenameProperty.md" class="el">HFilenameProperty</a>
+        - <a href="classHTimeProperty.md" class="el">HTimeProperty</a>
+        - <a href="classHTransformProperty.md" class="el">HTransformProperty</a>
+        - <a href="classHTypeProperty.md" class="el">HTypeProperty</a>
+        - <a href="classHVector2Property.md" class="el">HVector2Property</a>
+        - <a href="classHVectorProperty.md" class="el">HVectorProperty</a>
+          - <a href="classHColorProperty.md" class="el">HColorProperty</a>
+          - <a href="classHScaleProperty.md" class="el">HScaleProperty</a>
+          - <a href="classHTranslateProperty.md" class="el">HTranslateProperty</a>
+        - <a href="classHVectorPropertyNoSubs.md" class="el">HVectorPropertyNoSubs</a>
+          - <a href="classHTranslatePropertyNoSubs.md" class="el">HTranslatePropertyNoSubs</a>
+      - <a href="classHPropertyDriver.md" class="el">HPropertyDriver</a>
+        - <a href="classHAttrDriver.md" class="el">HAttrDriver</a>
+        - <a href="classHBiasDriver.md" class="el">HBiasDriver</a>
+        - <a href="classHConstDriver.md" class="el">HConstDriver</a>
+          - <a href="classHTimeBasedKey.md" class="el">HTimeBasedKey</a>
+        - <a href="classHConstraint.md" class="el">HConstraint</a>
+          - <a href="classHEulerLimits.md" class="el">HEulerLimits</a>
+          - <a href="classHOneTargetConstraint.md" class="el">HOneTargetConstraint</a>
+            - <a href="classHAimAtConstraint.md" class="el">HAimAtConstraint</a>
+              - <a href="classHKinematicConstraint.md" class="el">HKinematicConstraint</a>
+            - <a href="classHAimRollAtConstraint.md" class="el">HAimRollAtConstraint</a>
+            - <a href="classHOrientLikeConstraint.md" class="el">HOrientLikeConstraint</a>
+            - <a href="classHRollLikeConstraint.md" class="el">HRollLikeConstraint</a>
+    

@@ -1,0 +1,81 @@
+5.md#eaa3cea754b6acb01ef4d92329bf9906" class="el">HPatch5</a>
+- IsFrameWnd() : <a href="classCPluginDialog.md#0595382a22846971b04899a8f28ddd03" class="el">CPluginDialog</a>
+- IsGroup() : <a href="classHCP.md#f79c9a5f3985f7f2051d87055242b1f5" class="el">HCP</a>
+- IsHash() : <a href="classHashStream.md#3c6292aa52abee79ecfff30eb76abc52" class="el">HashStream</a>
+- IsHashObject() : <a href="classHTreeObject.md#3cc50d1bfcedd6d4c7e0ca9d222acc3c" class="el">HTreeObject</a>
+- IsHeader() : <a href="classMemoryStream.md#4fff96ceaef69ef6ff70b1f522abcbb4" class="el">MemoryStream</a>
+- IsHeaderAt0() : <a href="classMemoryStream.md#0b2aa7bffc2537ad9036f93c37a92127" class="el">MemoryStream</a>
+- IsHide() : <a href="classHCP.md#8f2bb2f0912b79d699a8c2d3d06e2b19" class="el">HCP</a>
+- ishit : <a href="classHit.md#e01eea8e0050848f8fdb638009a28e47" class="el">Hit</a>
+- IsHook() : <a href="classHCP.md#279ba4834ab299cfa7f5353cc04ae131" class="el">HCP</a>
+- IsHook1() : <a href="classHPatch.md#03cda15f41d0dc8a552345b169678bf5" class="el">HPatch</a>
+- IsHook2() : <a href="classHPatch.md#41814f2f1d8a99e2e4a8bfded0488e2d" class="el">HPatch</a>
+- IsHook3() : <a href="classHPatch.md#e07c8f5ec105286f9993a4543e163caa" class="el">HPatch</a>
+- IsHook4() : <a href="classHPatch.md#de47c4dfe12f9016466bbcdafb0186e1" class="el">HPatch</a>
+- IsHookBase() : <a href="classHCP.md#9451a9afd8d10ff9f2011e189e20d3a0" class="el">HCP</a>
+- IsHookData1() : <a href="classHPatch.md#11a44ab0e1b5c5bdf9f9c2cd0694a9ba" class="el">HPatch</a>
+- IsHookData2() : <a href="classHPatch.md#5419ea42e58303886a23c07e1caf6ed1" class="el">HPatch</a>
+- IsHookData3() : <a href="classHPatch.md#0196853fd3e3e1905330eac41fedfc5c" class="el">HPatch</a>
+- IsHookData4() : <a href="classHPatch.md#880661963ef3dc3ca7d8f145304659a5" class="el">HPatch</a>
+- IsIdentity() : <a href="classQuaternion.md#2c7a0650161ae2554bcb061c523a268a" class="el">Quaternion</a>
+- IsIdleMessage() : <a href="classCPluginApp.md#94d0a34527c8a35ee5cf64051d4e5fc3" class="el">CPluginApp</a>
+- IsInFailedList() : <a href="classFileStream.md#b451959fa2fddc994e307366e99e464c" class="el">FileStream</a>
+- IsInSelection() : <a href="classTimeLineSelection.md#1877edadf2af785b8e0a7067136645e4" class="el">TimeLineSelection</a>
+- IsInside() : <a href="classSlab.md#cf5b86a14d1309ececc1cf2190d848b0" class="el">Slab</a>, <a href="classCylinder.md#cf5b86a14d1309ececc1cf2190d848b0" class="el">Cylinder</a>, <a href="classCone.md#cf5b86a14d1309ececc1cf2190d848b0" class="el">Cone</a>, <a href="classRSphere.md#cf5b86a14d1309ececc1cf2190d848b0" class="el">RSphere</a>, <a href="classInfluenceShape.md#d15806044fc54bed18e5ebcc9fec450f" class="el">InfluenceShape</a>
+- IsInstance() : <a href="classTimeRange.md#0a27f82745897daefc1926344619da70" class="el">TimeRange</a>
+- IsIntersect() : <a href="classTimeRange.md#f1c65f6ebe6045430943661391edfd35" class="el">TimeRange</a>
+- IsInTutorial() : <a href="classHTutorialBar.md#5439a6e5bb92d16b358ee1bde7aa0b5f" class="el">HTutorialBar</a>
+- IsInvariant() : <a href="classHAttrProperty.md#e01b86bc84d44bdd04d08ea13dc28635" class="el">HAttrProperty</a>
+- IsKey() : <a href="classHAnimObject.md#5053985d57baafc4d758f97990c134d6" class="el">HAnimObject</a>
+- IsKindOfBoneCache() : <a href="classHHashObject.md#10cdf81d35cde6c49e8a699b74aa5482" class="el">HHashObject</a>
+- IsLabel() : <a href="classMemoryStream.md#30512244e4403f57c456776f1f127551" class="el">MemoryStream</a>
+- IsLoading() : <a href="classHashStream.md#d6250c7bedd41bd6244d5bd066ef9723" class="el">HashStream</a>
+- IsLocked() : <a href="classHCP.md#9f0a1babb1d9d4b0f25da587c623b350" class="el">HCP</a>
+- IsLoop() : <a href="classHChannelCP.md#9cbcca8dca730418dadff034cb15ac2e" class="el">HChannelCP</a>, <a href="classHCP.md#9cbcca8dca730418dadff034cb15ac2e" class="el">HCP</a>
+- IsMax() : <a href="classTime.md#c10470949baed0123bff728e67156c87" class="el">Time</a>
+- IsMin() : <a href="classTime.md#189a675a1bca2c3f7e6ed3835fdc0930" class="el">Time</a>
+- IsMinStep() : <a href="classTime.md#779f977bf8f5a9e52dd40d16531af5b6" class="el">Time</a>
+- IsModified() : <a href="classHTreeObject.md#97be359c26ddf9186be271cb8a6a64d2" class="el">HTreeObject</a>
+- IsNotifyAnimObjectValueChanged() : <a href="classHPropertyInfo.md#32e78a8eddb09c184dcfea83e6139fa7" class="el">HPropertyInfo</a>
+- IsNull() : <a href="classHProperty.md#bbdda942caac43d3abb79c31ec881793" class="el">HProperty</a>
+- IsNullable() : <a href="classHProperty.md#39be410879dc697502dc708221a16544" class="el">HProperty</a>
+- IsOpenDialog() : <a href="classHFilenamePropertyInfo.md#92d73a0e48a96f2adc3c85fb7513eef6" class="el">HFilenamePropertyInfo</a>
+- IsPatch() : <a href="classRObject.md#4bffe3bafe7317374a6eb3369ba34453" class="el">RObject</a>, <a href="classQuadObject.md#4bffe3bafe7317374a6eb3369ba34453" class="el">QuadObject</a>
+- IsPatch5UV() : <a href="classHBasePatchUV.md#4e840be527126b7b96107a26d73c45a4" class="el">HBasePatchUV</a>
+- IsPatchInGroup() : <a href="classHGroup.md#4bbc506b77cafc9ff7749d931319076a" class="el">HGroup</a>
+- IsPeaked() : <a href="classHChannelCP.md#8366236e3ada406bbc448dc03aaaee65" class="el">HChannelCP</a>, <a href="classHCP.md#8366236e3ada406bbc448dc03aaaee65" class="el">HCP</a>
+- IsPromptForMissingFileOnLoad() : <a href="classHFilenamePropertyInfo.md#f20f8bf680d77c609eeea66339bb352b" class="el">HFilenamePropertyInfo</a>
+- IsProperty() : <a href="classHTreeObject.md#9af60cb77396d656df470cd8478a31f6" class="el">HTreeObject</a>
+- IsPropertyDriver() : <a href="classHTreeObject.md#21cc949c5910d5dff9080d5eb6990b17" class="el">HTreeObject</a>
+- IsPseudoDOF() : <a href="classNewRenderSettings.md#c42e7c5d7a9ab53ee972ab28bf44bc9f" class="el">NewRenderSettings</a>
+- IsPseudoMotionblur() : <a href="classNewRenderSettings.md#6d7bbaf39aeb8512a3c26cebbdc91d3a" class="el">NewRenderSettings</a>
+- IsQuad() : <a href="classIEPoly.md#e9a8ddbd1be04e5aaff0fa2ae74fed26" class="el">IEPoly</a>
+- IsRangeInRange() : <a href="classTimeRange.md#873182ea25734b68d614b4dcc7fe6b6c" class="el">TimeRange</a>
+- IsReadOnly() : <a href="classHPropertyInfo.md#e4a8dfca918163cef57e727aedd80818" class="el">HPropertyInfo</a>
+- IsReadOnlyOnCache() : <a href="classHPropertyInfo.md#a7f273e225834b15f2e9a91c2bbaaddb" class="el">HPropertyInfo</a>
+- IsReadOnlyOnInstance() : <a href="classHPropertyInfo.md#589aebd2db39f6d258d94c7dded1881b" class="el">HPropertyInfo</a>
+- IsSaveProperty() : <a href="classHPropertyInfo.md#6e24fdb0e365e5b03bd17f81fd9c8d05" class="el">HPropertyInfo</a>
+- IsSimpleDriverShortcut() : <a href="classHPropertyDriver.md#e96c90b36308469b8ee11c9e5b4db357" class="el">HPropertyDriver</a>
+- IsSmooth() : <a href="classHChannelCP.md#625daa75d6de150b576ac6e81370c7e4" class="el">HChannelCP</a>, <a href="classHCP.md#625daa75d6de150b576ac6e81370c7e4" class="el">HCP</a>
+- IsStorageDriver() : <a href="classHPropertyDriver.md#ef28896311723d57c205b82f0412e70b" class="el">HPropertyDriver</a>
+- IsStoring() : <a href="classHashStream.md#99f3dc774a162fd431fad9511de42a70" class="el">HashStream</a>
+- IsTagged() : <a href="classTime.md#51da836da857369c7b1749113ea110ce" class="el">Time</a>
+- IsTempGroup() : <a href="classHGroup.md#dc5d58b76c30199920587d2ca7d2ea6c" class="el">HGroup</a>
+- IsTimeInRange() : <a href="classTimeRange.md#7b26eadcec1e56ec635d7a434c568d68" class="el">TimeRange</a>
+- IsTimeWithinRange() : <a href="classTimeRange.md#624be9af091a84fd1932f2ddbb77de1d" class="el">TimeRange</a>
+- IsTri() : <a href="classIEPoly.md#b163078c3e3d54ef43cd485705578527" class="el">IEPoly</a>
+- IsUseHook1() : <a href="classHPatch.md#e13c5507444e41172dcfca5e95d81d42" class="el">HPatch</a>
+- IsUseHook2() : <a href="classHPatch.md#44515e7ea3cc6708dc5641de8f74e423" class="el">HPatch</a>
+- IsUseHook3() : <a href="classHPatch.md#aabcf1ad5223a3ca6bce709cb4fbbf94" class="el">HPatch</a>
+- IsUseHook4() : <a href="classHPatch.md#fcdf153fe19fe0b6f20a2d7793eddada" class="el">HPatch</a>
+- IsUserProperty() : <a href="classHProperty.md#d441229b35627850670c2a4c538689a6" class="el">HProperty</a>
+- IsValid() : <a href="classTimeRange.md#683e38cb80848d1178fd39a29bfe9866" class="el">TimeRange</a>
+- IsVisible() : <a href="classCone.md#0993799c2834e0fd9f64c613e9809f7c" class="el">Cone</a>
+- IsZero() : <a href="classTime.md#027b58e95feed77348d2b6d89eb3d4d9" class="el">Time</a>
+- iType : <a href="structtagHH__ENUM__IT.md#e00ef68ac7b08f725700d08a246e6b1f" class="el">tagHH_ENUM_IT</a>
+
+------------------------------------------------------------------------
+
+<span class="small">This A:M SDK v12.0 documentation is maintained by Hash Inc. Please address any comments concerning this documentation to [AMReports](http://www.hash.com/reports). If you have any information, knowledge, or documentation to share with the A:M developer community, please post them on the [Hash SDK forum](http://www.hash.com/forums/index.php?showforum=11).</span>
+
+Generated on Thu Oct 27 11:46:50 2005 with [<span class="image placeholder" original-image-src="doxygen.png" original-image-title="" height="45" width="100" align="middle" border="0">doxygen</span>](http://www.doxygen.org/index.html) 1.4.5 written by [Dimitri van Heesch](mailto:dimitri@stack.nl), © 1997-2001

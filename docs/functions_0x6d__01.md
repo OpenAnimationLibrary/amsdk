@@ -1,0 +1,122 @@
+GBFloat.md#b27a27e1ceec1a227d339ddd737b2fee" class="el">RGBFloat</a>, <a href="classRGBByte.md#b27a27e1ceec1a227d339ddd737b2fee" class="el">RGBByte</a>, <a href="classIEColor.md#b27a27e1ceec1a227d339ddd737b2fee" class="el">IEColor</a>, <a href="classHalfColorBuf.md#b27a27e1ceec1a227d339ddd737b2fee" class="el">HalfColorBuf</a>, <a href="classColorVector.md#b27a27e1ceec1a227d339ddd737b2fee" class="el">ColorVector</a>
+- m_grouparray : <a href="classVertexInfo.md#5cfbd3060812eefed40b5d9b36a98136" class="el">VertexInfo</a>
+- m_growby : <a href="classHashArray.md#c1b68821c76d6f50867d3b378e82cba8" class="el">HashArray&lt; TYPE, ARG_TYPE &gt;</a>
+- m_haircubic : <a href="classHit.md#9beb092639480441c890bbfa5cf7d0dd" class="el">Hit</a>
+- m_hasharray : <a href="classVectorCollection.md#829264e08d8250a6eb3c1d2487799b43" class="el">VectorCollection</a>
+- m_haswriteoptions : <a href="classImageIOInfo.md#ceccc3cba24a6c7656cd6663c29f2c44" class="el">ImageIOInfo</a>
+- m_hDev : <a href="classCPXComPort.md#249b2893839a28cbec8846224a8ea477" class="el">CPXComPort</a>
+- m_height : <a href="classIEMap.md#5bccc2dd5051e6a1a46cb5bc9a7fab06" class="el">IEMap</a>
+- m_hicon : <a href="classRegistration.md#24acf2f84ac81a486d54d1b48ba21b92" class="el">Registration</a>
+- m_hinst : <a href="classRegistration.md#f8125226140991bd71c1a66dd540fc4d" class="el">Registration</a>
+- m_hither : <a href="classPatchSplitter.md#1acf5bbbc55232801c7664a7f01d09dd" class="el">PatchSplitter</a>
+- m_hresource : <a href="classRegistration.md#636e970e82fa4a8dbbf22b759c78b235" class="el">Registration</a>, <a href="classDLLPlugin.md#636e970e82fa4a8dbbf22b759c78b235" class="el">DLLPlugin</a>
+- m_id : <a href="classMenuDoc.md#2c7397eb19298a63b3012d70e4b6b694" class="el">MenuDoc</a>, <a href="classHashNode.md#2c7397eb19298a63b3012d70e4b6b694" class="el">HashNode</a>
+- m_id1 : <a href="classPatchID.md#aad31f6a74b1cf09fb1ec8e9dd453b8a" class="el">PatchID</a>
+- m_id2 : <a href="classPatchID.md#121347ed5e4b372388c0a3aaf448990f" class="el">PatchID</a>
+- m_id3 : <a href="classPatchID.md#7b15813ec73c7b40a148a493982c8dbe" class="el">PatchID</a>
+- m_id4 : <a href="classPatchID.md#ca124735b304389a6aeea124703c5666" class="el">PatchID</a>
+- m_id5 : <a href="classPatchID5.md#aede70a150f458fcb7f75b7c0be84cf5" class="el">PatchID5</a>
+- m_iioreg : <a href="classNewOutputSettings.md#a49b962b806105db0eb31ba275a91f9a" class="el">NewOutputSettings</a>
+- m_iniFileName : <a href="classCMProfile.md#66dd8e8c073a18dd5199eaf4026a8a14" class="el">CMProfile</a>
+- m_InSize : <a href="classCPXComPort.md#add83966748f35caad081ab7c9d33537" class="el">CPXComPort</a>
+- m_interlaceorder : <a href="classNewRenderSettings.md#79e5e9ede4b2fd98a52bc372151f7d8c" class="el">NewRenderSettings</a>
+- m_is3point : <a href="classPatchSplitter.md#e6e0a806907769d81fc8f53a4492d5bd" class="el">PatchSplitter</a>, <a href="classSplitPatch.md#e6e0a806907769d81fc8f53a4492d5bd" class="el">SplitPatch</a>, <a href="classIEPatch.md#e6e0a806907769d81fc8f53a4492d5bd" class="el">IEPatch</a>
+- m_isadditivetransparency : <a href="classHit.md#6e86365f5ec6f3065decf5cdf40b5125" class="el">Hit</a>
+- m_isalphabuffer : <a href="classNewOutputSettings.md#5b2ca701d665948a08b1e5e92fb0af9e" class="el">NewOutputSettings</a>
+- m_isbloom : <a href="classNewRenderSettings.md#76a9b352c2df2123b8cb4e9470cb1183" class="el">NewRenderSettings</a>
+- m_isbuildattrarray : <a href="classIEModelParms.md#cdeecd4052e7db38d5e07f9bf45f3132" class="el">IEModelParms</a>
+- m_isbuildbonelist : <a href="classIEModelParms.md#79ae39b5f220be423bd796d31c1f1f76" class="el">IEModelParms</a>
+- m_isbuildmaparray : <a href="classIEModelParms.md#9fe3e200ab95147225aac9e87018a77d" class="el">IEModelParms</a>
+- m_isbuildmodelmap : <a href="classIEModelParms.md#38d10d93c02c772683d8ef4d5548bb3e" class="el">IEModelParms</a>
+- m_isbuildnormalarray : <a href="classIEPolyModelParms.md#fe85ce0206cb8c654fc0fe6891d87b38" class="el">IEPolyModelParms</a>
+- m_iscullbackfacing : <a href="classPatchSplitter.md#d887fc1e8a7ccb6aadabed144990b25d" class="el">PatchSplitter</a>
+- m_isdeantialias : <a href="classNewRenderSettings.md#0e968de26602d0501510bb6709a1e646" class="el">NewRenderSettings</a>
+- m_isdepthbuffer : <a href="classNewOutputSettings.md#7fb1fafa3444ab1f8912613fa3c46942" class="el">NewOutputSettings</a>
+- m_isdisplaybones : <a href="classNewRenderSettings.md#b7bad5d5e587b06612a84293c45615cd" class="el">NewRenderSettings</a>
+- m_isdisplaycps : <a href="classNewRenderSettings.md#01877897b249fe4d5f4a1be3728bcb75" class="el">NewRenderSettings</a>
+- m_isdisplaygrid : <a href="classNewRenderSettings.md#b527493872a985fc83d87d7dd6055075" class="el">NewRenderSettings</a>
+- m_isdisplaypercentbar : <a href="classIEModelParms.md#b3ba79da2c53a091af510d36dbb5fa9a" class="el">IEModelParms</a>
+- m_isdither : <a href="classNewRenderSettings.md#2bc05833e9474f2d28583daf3077cd33" class="el">NewRenderSettings</a>
+- m_isdof : <a href="classNewRenderSettings.md#4659be2d1033bda4366632c0343fb506" class="el">NewRenderSettings</a>
+- m_isdrawsystems : <a href="classNewRenderSettings.md#3e01456cf9e8cbabf3c3b7eee1c09e03" class="el">NewRenderSettings</a>
+- m_isenhanced : <a href="classNewRenderSettings.md#f3667247bc9f4afa6c336b779e00e2bc" class="el">NewRenderSettings</a>
+- m_isfieldrender : <a href="classNewRenderSettings.md#98606493b62e778c61721fcdc15da191" class="el">NewRenderSettings</a>
+- m_isfilmgrain : <a href="classNewRenderSettings.md#f00ee3500d3f1b9a8686e0943be60995" class="el">NewRenderSettings</a>
+- m_isfog : <a href="classNewRenderSettings.md#17f768ab1f364b6094d9a71b79e88438" class="el">NewRenderSettings</a>
+- m_isframeburn : <a href="classNewOutputSettings.md#b1b4a4c47f5f316a6ededafc0cef999e" class="el">NewOutputSettings</a>
+- m_isgammaeffect : <a href="classNewRenderSettings.md#2893d44db5662e68fbc60dd30b5d950b" class="el">NewRenderSettings</a>
+- m_isglow : <a href="classAttr.md#83bf5ac2709eeff42c23374c15f99008" class="el">Attr</a>
+- m_isgroupdecal : <a href="classIEMapNode.md#044fbf2fad7f5c3591e88ee0e53a16d0" class="el">IEMapNode</a>
+- m_isinited : <a href="classNewOutputSettings.md#52ffdf7bcb2e4259ce0eb37e1b263307" class="el">NewOutputSettings</a>, <a href="classNewRenderSettings.md#52ffdf7bcb2e4259ce0eb37e1b263307" class="el">NewRenderSettings</a>
+- m_islightbuffers : <a href="classNewOutputSettings.md#c918beb42e278f36f522024e95f61a94" class="el">NewOutputSettings</a>
+- m_islinesonly : <a href="classNewRenderSettings.md#153402a6174033d1b4a1517d7f356c49" class="el">NewRenderSettings</a>
+- m_ismotionblur : <a href="classNewRenderSettings.md#9fd856c912a22a4e4634394e14b9765b" class="el">NewRenderSettings</a>
+- m_ismultipass : <a href="classNewRenderSettings.md#bcc3c66ed761302e55594661dea81c21" class="el">NewRenderSettings</a>
+- m_ismultiplyspecularbytransparency : <a href="classHit.md#00fd1337df2a3b0cfdab5932a5095ac1" class="el">Hit</a>
+- m_isnormalizeuvs : <a href="classIEModelParms.md#fc8a4b7a6a5dc82350c50690e47a2da5" class="el">IEModelParms</a>
+- m_isnormals : <a href="classPatchSplitter.md#f86ba90fc262614f189067b81210fb8a" class="el">PatchSplitter</a>
+- m_isntscsafe : <a href="classNewRenderSettings.md#981ab147f5a4a78bbd57910754c15cb7" class="el">NewRenderSettings</a>
+- m_isopened : <a href="classImageIO.md#5ff383d974993eb3eb84eb891dcaca18" class="el">ImageIO</a>
+- m_isoverridelines : <a href="classNewRenderSettings.md#ad368328ad9b2465c318dd63955ff453" class="el">NewRenderSettings</a>
+- m_isoverrideshading : <a href="classNewRenderSettings.md#3ed2e3fd62ebc334eb3d2913b4f037f3" class="el">NewRenderSettings</a>
+- m_isreflections : <a href="classNewRenderSettings.md#d3f7ca39fb3d1f269f285ead9b538fec" class="el">NewRenderSettings</a>
+- m_isrenderlines : <a href="classNewRenderSettings.md#bc6259fe76e7190830931b8b5941ff82" class="el">NewRenderSettings</a>
+- m_isrendershaders : <a href="classNewRenderSettings.md#4812cbdfaeec2b93ad88a46723c561ce" class="el">NewRenderSettings</a>
+- m_isrollcomputed : <a href="classTSQ.md#18d4ac9112b1a6454fa87c50eb0ac20e" class="el">TSQ</a>
+- m_isseamless : <a href="classIEMapNode.md#ce14c53704fd003d5011642d042497e9" class="el">IEMapNode</a>
+- m_isshadowbuffer : <a href="classNewOutputSettings.md#151994cfcfc926f374044cf483616f22" class="el">NewOutputSettings</a>
+- m_isshadows : <a href="classNewRenderSettings.md#14415c257af54c1feef08309f610f28d" class="el">NewRenderSettings</a>
+- m_isshowbackfacing : <a href="classNewRenderSettings.md#90e4e123de07d68284876c5d59750880" class="el">NewRenderSettings</a>
+- m_isshowdecals : <a href="classNewRenderSettings.md#6b1f73046ce205d41d1870535cf7d547" class="el">NewRenderSettings</a>
+- m_isshowfinalandrealtimeproperties : <a href="classNewRenderSettings.md#17b7fedb74168592368baa23eb26682d" class="el">NewRenderSettings</a>
+- m_issoften : <a href="classNewRenderSettings.md#ba04352cdd8bf9180016d044a40641cb" class="el">NewRenderSettings</a>
+- m_issoftreflections : <a href="classNewRenderSettings.md#16a49425a7e1527eec89ae065bbacf7d" class="el">NewRenderSettings</a>
+- m_isstereo : <a href="classNewRenderSettings.md#588c2155b06e13f36d71c57a6c19a6ee" class="el">NewRenderSettings</a>
+- m_issurfacenormalbuffer : <a href="classNewOutputSettings.md#7a5ec24f2a600d570a1cf6863cb344a4" class="el">NewOutputSettings</a>
+- m_istemporalfilter : <a href="classNewRenderSettings.md#99cc32bc92c606d8cee365e078d774ff" class="el">NewRenderSettings</a>
+- m_istint : <a href="classNewRenderSettings.md#adb8464e48fba082d2b31c11b72b98df" class="el">NewRenderSettings</a>
+- m_istoonrender : <a href="classNewRenderSettings.md#8239cca760b2d48afd9a497801fdd32c" class="el">NewRenderSettings</a>
+- m_isuvs : <a href="classPatchSplitter.md#8833f7b4681f1487a1653447a8f3cc6f" class="el">PatchSplitter</a>
+- m_isvariable : <a href="classPatchSplitter.md#2e5073964a61a33503a3c329c097b71a" class="el">PatchSplitter</a>
+- m_k0 : <a href="classInfluenceShape.md#7a1a343404f3fab290d884351454c3b9" class="el">InfluenceShape</a>
+- m_k1 : <a href="classInfluenceShape.md#7d5e2f9ec5ee7c5f0fe731f5d737905f" class="el">InfluenceShape</a>
+- m_k2 : <a href="classInfluenceShape.md#b33ad3849b8bb8ef848fcfc75ea143e6" class="el">InfluenceShape</a>
+- m_key : <a href="classHashNode.md#c991d959e32208108be73d1cc83c68af" class="el">HashNode</a>
+- m_keyarray : <a href="classUDCollection.md#d716da2cf3aef3fd260193ac6f316ae1" class="el">UDCollection&lt; TYPE, ARG_TYPE &gt;</a>
+- m_kind : <a href="classIEMapNode.md#66d68980660a982fc401607c239f54e2" class="el">IEMapNode</a>
+- m_largestchunk : <a href="classMemHeader.md#d6e15367995842c43d6c059f0cfa086d" class="el">MemHeader</a>
+- m_length : <a href="classDataValue.md#cecb4cd09a8adf5aa458591c0dfdbb48" class="el">DataValue</a>
+- m_lightbuffertype : <a href="classNewOutputSettings.md#fb7a2a4d918eb6dd12ae588048ff65c6" class="el">NewOutputSettings</a>
+- m_linearray : <a href="classTimeLineSelection.md#015020961ff08e8e5b10f79c4b0fdf09" class="el">TimeLineSelection</a>
+- m_localizedname : <a href="classRegistration.md#69640451775f2eb11b013ad746f709ee" class="el">Registration</a>, <a href="classImageIOInfo.md#69640451775f2eb11b013ad746f709ee" class="el">ImageIOInfo</a>
+- m_luminance : <a href="classYAHalf.md#d3347f3949a75477be933f7f46102b97" class="el">YAHalf</a>, <a href="classYAFloat.md#d3347f3949a75477be933f7f46102b97" class="el">YAFloat</a>, <a href="classYAByte.md#d3347f3949a75477be933f7f46102b97" class="el">YAByte</a>
+- m_macwriteDOS : <a href="classCMProfile.md#7a9ca295b4613680ead0945148714f74" class="el">CMProfile</a>
+- m_mapid : <a href="classIEMapNode.md#3b2aff5cd1a2382d7dedd0af9426b63e" class="el">IEMapNode</a>
+- m_maplist : <a href="classIEModel.md#2c29d9d6852876ce79b41be5f204c533" class="el">IEModel</a>
+- m_mapnodearray : <a href="classIEPatch.md#facc693853ee22aa40695ff21efecbdd" class="el">IEPatch</a>, <a href="classIEPoly.md#facc693853ee22aa40695ff21efecbdd" class="el">IEPoly</a>
+- m_matchname : <a href="classImageIOInfo.md#a77ed353b00a6194a70b9a82a50a9e7b" class="el">ImageIOInfo</a>
+- m_maxactionoffset : <a href="classFlockBuf.md#3f2cabb5768270bb90220e72bd03b7a6" class="el">FlockBuf</a>
+- m_maxlevel : <a href="classPatchSplitter.md#20e382452d724065bc425f47ba94a62d" class="el">PatchSplitter</a>
+- m_maxmodelmapsize : <a href="classIEModelParms.md#0b42614aba1e7896a8b10cf26a0fabe2" class="el">IEModelParms</a>
+- m_maxsize : <a href="classHashArray.md#b49c56ab606e2039b8fdb36bfbfeb75f" class="el">HashArray&lt; TYPE, ARG_TYPE &gt;</a>
+- m_memheader : <a href="classHashPool.md#5682dc82cb16546b3707c07e46d0c21d" class="el">HashPool</a>
+- m_memheaderlist : <a href="classHashPool.md#12565d22586299f4d6a9c69fb204f6d1" class="el">HashPool</a>
+- m_minmodelmapsize : <a href="classIEModelParms.md#8f3ea1f5122d355b15f4e5b32264eba7" class="el">IEModelParms</a>
+- m_motionblurpercent : <a href="classNewRenderSettings.md#d5422f4d9703d42384e4f1f9dbd5ca13" class="el">NewRenderSettings</a>
+- m_n : <a href="classSplitPatch.md#049f15cd8cb8e9828f2a49b1ab80dbba" class="el">SplitPatch</a>
+- m_name : <a href="classAttr.md#ce8785f7d4587a5968f088b366c90f2d" class="el">Attr</a>, <a href="classIEBone.md#ce8785f7d4587a5968f088b366c90f2d" class="el">IEBone</a>, <a href="classHashPool.md#86cce5eb4063b44d1d3df906eddde135" class="el">HashPool</a>
+- m_nameid : <a href="classRegistration.md#7cd9d16e49ab485a82fdccc9c3949cc4" class="el">Registration</a>
+- m_NewDir : <a href="classCPXNewDir.md#ed446c5c205f81dc6d5306e19d3e520b" class="el">CPXNewDir</a>
+- m_next : <a href="classHashNode.md#3bfb47e8362544e4462b7fae503e3774" class="el">HashNode</a>, <a href="classRegistration.md#3bfb47e8362544e4462b7fae503e3774" class="el">Registration</a>, <a href="classHashNode.md#3bfb47e8362544e4462b7fae503e3774" class="el">HashNode</a>
+- m_nextflock : <a href="classFlock.md#38aa181256d0cbe8644426c655cfe693" class="el">Flock</a>
+- m_normalid : <a href="classPropQuadrangle.md#6b5ed913dc8f1aaa7311421ebabc6cb1" class="el">PropQuadrangle</a>, <a href="classIEPoly.md#6b5ed913dc8f1aaa7311421ebabc6cb1" class="el">IEPoly</a>
+- m_normallist : <a href="classIEPolyModel.md#e82420e6aaa828723462f1b512e02ce0" class="el">IEPolyModel</a>
+- m_numfaces : <a href="classIEEdge.md#299a079f8aa5899d5ef08fc665019872" class="el">IEEdge</a>
+- m_numpasses : <a href="classNewRenderSettings.md#74b2c3f1b500a830b293b5fb9749f60e" class="el">NewRenderSettings</a>
+- m_openfilter : <a href="classImageIOInfo.md#40d554da81c4bf4194c061422537fbcb" class="el">ImageIOInfo</a>
+- m_origpatch : <a href="classIEPatch.md#0af5376991509a658ac7143de365c068" class="el">IEPatch</a>, <a href="classIEPoly.md#0af5376991509a658ac7143de365c068" class="el">IEPoly</a>
+- m_OutSize : <a href="classCPXComPort.md#80b1fc72e879ba1efd588a2a99149cd5" class="el">CPXComPort</a>
+- m_p1 : <a href="classSplitPatch.md#6704671c31ecd19f4662b0dc65cf093d" class="el">SplitPatch</a>
+- m_p12 : <a href="classSplitPatch.md#50cdcdb70a924f2aec01b71d5299bfae" class="el">SplitPatch</a>
+- m_p13 : <a href="classSplitPatch.md#221351cfd907d8232be0bc305ac2b146" class="el">SplitPatch</a>
+- m_p14 : <a href="classSplitPa

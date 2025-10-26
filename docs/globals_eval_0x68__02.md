@@ -1,0 +1,60 @@
+ <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db03e807b06eaa95bd6588b82e82f03928d" class="el">ObjType.h</a>
+- HOT_SMARTSKINCONTAINER : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0ab41f14d59366069c364997822f7d6ad" class="el">ObjType.h</a>
+- HOT_SOUND : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0a9e6e8bddf66691741cc581c4b8ca3cc" class="el">ObjType.h</a>
+- HOT_SOUNDCONTAINER : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0348a00fc25812ea30a351d0e44d2c5cd" class="el">ObjType.h</a>
+- HOT_SPHERICAL : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db03c7b6b11229063d667af3f37a28dd6e8" class="el">ObjType.h</a>
+- HOT_SPHERICALLIMITS : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0b06155a33b9cc0d5579a2ad5ae4ce1e1" class="el">ObjType.h</a>
+- HOT_SPLINECONTAINER : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db05970c434c58f2d5f4c28d30bd191f6c6" class="el">ObjType.h</a>
+- HOT_SPLINECONTAINERSHORTCUT : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0b4caaa92c01733d597233f2090de8c0c" class="el">ObjType.h</a>
+- HOT_SPLINESHORTCUT : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db010fc800bda36717dab6742a1db9e1a3b" class="el">ObjType.h</a>
+- HOT_SPRING : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db043aac14c771b9f6dd0615a91fd0256bd" class="el">ObjType.h</a>
+- HOT_SPRINGSCONTAINER : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0c3ab75499dbb1e3cd6d88a119516c26d" class="el">ObjType.h</a>
+- HOT_SPRINGSYSTEM : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db08f636df68a29d582944d1280981decf1" class="el">ObjType.h</a>
+- HOT_SPRITEEMITTER : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db001a461b463e66694e06f43daa897ecb9" class="el">ObjType.h</a>
+- HOT_SPRITESYSTEM : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db009a251742ea40f0b518c6eef25985829" class="el">ObjType.h</a>
+- HOT_STAMP : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db023cf6871cca8fd555b5078f382face7b" class="el">ObjType.h</a>
+- HOT_STAMPCONTAINER : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0c4798eeac02af7857de18c909044e888" class="el">ObjType.h</a>
+- HOT_STILL : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0fe277198025c90b480a68883387dd52a" class="el">ObjType.h</a>
+- HOT_STREAK : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db092062f3b17e4c0a07a9de33257356db4" class="el">ObjType.h</a>
+- HOT_STRINGPROPERTY : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db032d2e15e7d64632016b293dbc0d828ea" class="el">ObjType.h</a>
+- HOT_SURFACECONSTRAINT : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db06d3a613d8463831b0bbab05e3fac8a3d" class="el">ObjType.h</a>
+- HOT_TEXT : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db03edb37f2d536daf1e95ad5a7c8cf1d5e" class="el">ObjType.h</a>
+- HOT_TEXTURENODE : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0cfa75d455a846130a05290ed33e848bc" class="el">ObjType.h</a>
+- HOT_TIMEBASEDDRIVER : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db02ad3333e38747063f05f0b71d6b031cf" class="el">ObjType.h</a>
+- HOT_TIMEBASEDKEY : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db00e9b6815670796d7a4a0598d1270214c" class="el">ObjType.h</a>
+- HOT_TIMEPROPERTY : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0cfd194eabb388e113edcdcf6a5cd617e" class="el">ObjType.h</a>
+- HOT_TIMERANGEPROPERTY : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0258d0155e4655ba2c91697414ab30e2c" class="el">ObjType.h</a>
+- HOT_TRANSFORMPROPERTY : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db019399280b68522ba6ec6844db278ef62" class="el">ObjType.h</a>
+- HOT_TRANSLATEDRIVERNOSUBS : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db02acad01536f940e90f6eb7f2a0d329c9" class="el">ObjType.h</a>
+- HOT_TRANSLATEFLOATDRIVERSHORTCUT : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0ebb1a3f32e537c5a2aaa6b6731df86c7" class="el">ObjType.h</a>
+- HOT_TRANSLATELIMITS : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db07c06c221caaf25e65b07c5f602546461" class="el">ObjType.h</a>
+- HOT_TRANSLATENOSUBSPROPERTY : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0c18c4efef418b54328e893a8ee49a8ec" class="el">ObjType.h</a>
+- HOT_TRANSLATEPROPERTY : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0a71ed580956a69327564522ee0a48085" class="el">ObjType.h</a>
+- HOT_TRANSLATETOCONSTRAINT : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0f39d55c6faf90c859a757ff3d94a1b9c" class="el">ObjType.h</a>
+- HOT_TURBULENCE : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0fc3469be6f5b1f1c460ace45851165d0" class="el">ObjType.h</a>
+- HOT_TWOTARGETSHORTCUT : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0c0a157a72dc438b6d1f9b6c90654d223" class="el">ObjType.h</a>
+- HOT_TYPEPROPERTY : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db00e3adc1a4b7029ec2c3433aede1a4261" class="el">ObjType.h</a>
+- HOT_UNUSED10 : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db06bf390c6719773d0849a2fa1fa0a4ba4" class="el">ObjType.h</a>
+- HOT_UNUSED2 : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0cd7d1b79bc1968a107a47190a0c5411d" class="el">ObjType.h</a>
+- HOT_UNUSED3 : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0d519fccf8823bac8c01c647ef95eb5bf" class="el">ObjType.h</a>
+- HOT_UNUSED6 : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0515fed605463deda8a463d96930c76a3" class="el">ObjType.h</a>
+- HOT_UNUSED7 : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db03b9e56c4fe0ed202aa77e33a937ad207" class="el">ObjType.h</a>
+- HOT_UNUSED8 : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0f2c4307aba4b5997ee59601827dc61ac" class="el">ObjType.h</a>
+- HOT_UNUSED9 : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db05270e2533aef35c6ec4d7bcefca4aaae" class="el">ObjType.h</a>
+- HOT_URLPROPERTY : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0eeae6af974d91c2113c7c6466ade9bba" class="el">ObjType.h</a>
+- HOT_USERCATEGORYPROPERTY : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db06a9d6e61e2fe7e31a4a2a969dde6751f" class="el">ObjType.h</a>
+- HOT_USERCONTAINER : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0c6b7362ef9b50cca3b3da3a0eb316dee" class="el">ObjType.h</a>
+- HOT_VECTOR2PROPERTY : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0c691720376d57d2308c09c1312cfa5fc" class="el">ObjType.h</a>
+- HOT_VECTORNOSUBSPROPERTY : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0cc8d244ef4053c488612169ab51c15e0" class="el">ObjType.h</a>
+- HOT_VECTORPROPERTY : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0396879d446d2b26a23d41e44e4b8586a" class="el">ObjType.h</a>
+- HOT_VECTORROTATEDRIVER : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db017a0bb9bd3166620b0231e6743153590" class="el">ObjType.h</a>
+- HOT_VIRTUALPROPERTY : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db04a8c9abec4dfa911125c0e74c26db423" class="el">ObjType.h</a>
+- HOT_VOLFX : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db0fdadef1288c9d9112ec48a58c37a2eae" class="el">ObjType.h</a>
+- HOT_WEATHERCLIP : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db013867d25d4623c610a032907380d5dd1" class="el">ObjType.h</a>
+- HOT_WEATHERMAP : <a href="ObjType_8h.md#b74c375731dc50c662d6ce08befe2db04690b8e730b1bc393147e0e578beee0c" class="el">ObjType.h</a>
+
+------------------------------------------------------------------------
+
+<span class="small">This A:M SDK v12.0 documentation is maintained by Hash Inc. Please address any comments concerning this documentation to [AMReports](http://www.hash.com/reports). If you have any information, knowledge, or documentation to share with the A:M developer community, please post them on the [Hash SDK forum](http://www.hash.com/forums/index.php?showforum=11).</span>
+
+Generated on Thu Oct 27 11:47:10 2005 with [<span class="image placeholder" original-image-src="doxygen.png" original-image-title="" height="45" width="100" align="middle" border="0">doxygen</span>](http://www.doxygen.org/index.html) 1.4.5 written by [Dimitri van Heesch](mailto:dimitri@stack.nl), © 1997-2001

@@ -1,0 +1,100 @@
+e165c4d220b0a56a324bf8b206" class="el">HShading</a>
+- GetLength() : <a href="classTimeRange.md#70a8806ccc79c5fa10cceb22ae1ad3bc" class="el">TimeRange</a>, <a href="classHSound.md#0670dbd645d0e24b7f8f78d5c15d6aca" class="el">HSound</a>, <a href="classHSoundCache.md#0670dbd645d0e24b7f8f78d5c15d6aca" class="el">HSoundCache</a>, <a href="classHSpline.md#0670dbd645d0e24b7f8f78d5c15d6aca" class="el">HSpline</a>, <a href="classHBoneCache.md#0670dbd645d0e24b7f8f78d5c15d6aca" class="el">HBoneCache</a>, <a href="classHBitmapNode.md#0670dbd645d0e24b7f8f78d5c15d6aca" class="el">HBitmapNode</a>, <a href="classMemoryStream.md#0670dbd645d0e24b7f8f78d5c15d6aca" class="el">MemoryStream</a>, <a href="classFileStream.md#0670dbd645d0e24b7f8f78d5c15d6aca" class="el">FileStream</a>, <a href="classDataValue.md#70a8806ccc79c5fa10cceb22ae1ad3bc" class="el">DataValue</a>
+- GetLight() : <a href="classHLightListNode.md#731e7ebdba0bcdce301e1550544a1f14" class="el">HLightListNode</a>
+- GetLightAll() : <a href="classHLight.md#f2a648ffe00460d4e5d70c415608e12b" class="el">HLight</a>
+- GetLimitManipulators() : <a href="classHBoneCache.md#6b72919921ce7e1b096d1b22f39ad775" class="el">HBoneCache</a>
+- GetLocalizedName() : <a href="classHTypeInfo.md#64d571c867b3367a45ce04fc2fdaa825" class="el">HTypeInfo</a>, <a href="classHPropertyInfo.md#b20555c3a22c000aa894a5fd5f157507" class="el">HPropertyInfo</a>
+- GetLocalMatrix() : <a href="classHBone.md#391038fffa4f9d7de7696d35ae11131a" class="el">HBone</a>
+- GetLocalTSE() : <a href="classHBone.md#bc6ce1877fc851a782ca1da0eb1a8612" class="el">HBone</a>
+- GetLocalTSQ() : <a href="classHBone.md#6f30d3f0b08cf9921c360d1dce21aebb" class="el">HBone</a>
+- GetLockOffsets() : <a href="classHConstraint.md#a58e1e932868f156b9a261eef9ff95fe" class="el">HConstraint</a>
+- GetLuminance() : <a href="classHColorProperty.md#1adeff3d89e145a11e66b2186b132972" class="el">HColorProperty</a>, <a href="classRGBHalf.md#1adeff3d89e145a11e66b2186b132972" class="el">RGBHalf</a>, <a href="classRGBFloat.md#1adeff3d89e145a11e66b2186b132972" class="el">RGBFloat</a>, <a href="classYAByte.md#0e6dd67023a184fb372932e655b56d1c" class="el">YAByte</a>, <a href="classRGBAByte.md#0e6dd67023a184fb372932e655b56d1c" class="el">RGBAByte</a>, <a href="classRGBByte.md#0e6dd67023a184fb372932e655b56d1c" class="el">RGBByte</a>, <a href="classHalfColorBuf.md#1adeff3d89e145a11e66b2186b132972" class="el">HalfColorBuf</a>, <a href="classColorVector.md#1adeff3d89e145a11e66b2186b132972" class="el">ColorVector</a>
+- GetMagnitude() : <a href="classHBiasProperty.md#5715efd38fabd06ca6180ac5f2090aa6" class="el">HBiasProperty</a>, <a href="classHForce.md#5715efd38fabd06ca6180ac5f2090aa6" class="el">HForce</a>, <a href="classHForceCache.md#5715efd38fabd06ca6180ac5f2090aa6" class="el">HForceCache</a>
+- GetMagnitudePropertyInfo() : <a href="classHBiasPropertyInfo.md#e5f000a0484d49f219c2ac2e60df966c" class="el">HBiasPropertyInfo</a>
+- GetMainWnd() : <a href="classCPluginApp.md#fe9aa7ab76745ebf6a0d2589a97a5897" class="el">CPluginApp</a>
+- GetManipulationMethod() : <a href="classHBoneCache.md#a3ea59d2292f93bf2cd480f0c183a551" class="el">HBoneCache</a>
+- GetMatchName() : <a href="classHTypeInfo.md#4f22a8144d86730912df647231e172d2" class="el">HTypeInfo</a>, <a href="classHPropertyInfo.md#393dff0d5bf352fbad6c3552387bca4a" class="el">HPropertyInfo</a>, <a href="classHTreeObject.md#393dff0d5bf352fbad6c3552387bca4a" class="el">HTreeObject</a>
+- GetMatchNameAbsoluteFromFile() : <a href="classString.md#306fe775e7b15f65fcc96b0ded22d62e" class="el">String</a>
+- GetMatchNameRelativeForFile() : <a href="classString.md#f7dd2d48e2eb6f4adf7cdaf64692f730" class="el">String</a>
+- GetMaterialHead() : <a href="classHAttrProperty.md#f2f6f5b0b6dfb5b486960590936d57d7" class="el">HAttrProperty</a>
+- GetMatrix() : <a href="classHTexInfo.md#9d27380717631a4457c44ea0f3091f55" class="el">HTexInfo</a>, <a href="classHGroup.md#9d27380717631a4457c44ea0f3091f55" class="el">HGroup</a>
+- GetMaxEuler() : <a href="classHEulerLimits.md#10c12935c74c70bb622133a487fd3283" class="el">HEulerLimits</a>
+- GetMaxSphere() : <a href="classHSphericalLimits.md#70d69784a4074bbcb92b6c1275b2ecc1" class="el">HSphericalLimits</a>
+- GetMaxTranslate() : <a href="classHTranslateLimits.md#de6a12295547a3d5bb34d394a2ba1683" class="el">HTranslateLimits</a>
+- GetMaxValue() : <a href="classHTimePropertyInfo.md#e0691420ad2333a6cb7c6e81275d29f5" class="el">HTimePropertyInfo</a>, <a href="classHIntPropertyInfo.md#e0691420ad2333a6cb7c6e81275d29f5" class="el">HIntPropertyInfo</a>, <a href="classHFloatPropertyInfo.md#e0691420ad2333a6cb7c6e81275d29f5" class="el">HFloatPropertyInfo</a>
+- GetMinEuler() : <a href="classHEulerLimits.md#c97c3591fa40c26dfae59128068b5005" class="el">HEulerLimits</a>
+- GetMinSphere() : <a href="classHSphericalLimits.md#4574c4c71b848514fe034c53bd88cd8c" class="el">HSphericalLimits</a>
+- GetMinTranslate() : <a href="classHTranslateLimits.md#043ecc2dc30ce19efff5d64ad775dc7d" class="el">HTranslateLimits</a>
+- GetMinValue() : <a href="classHTimePropertyInfo.md#1ff70527b9e3080ca1a2fe4d0ed8e1cc" class="el">HTimePropertyInfo</a>, <a href="classHIntPropertyInfo.md#1ff70527b9e3080ca1a2fe4d0ed8e1cc" class="el">HIntPropertyInfo</a>, <a href="classHFloatPropertyInfo.md#1ff70527b9e3080ca1a2fe4d0ed8e1cc" class="el">HFloatPropertyInfo</a>
+- GetMode() : <a href="classHashStream.md#77f3867c60ec3eeaee1465e72e5dda45" class="el">HashStream</a>
+- GetModel() : <a href="classTexture.md#e46fe26b37492b1d67d204ff30c6d1cf" class="el">Texture</a>
+- GetModelInTangent() : <a href="classHCP.md#c92eb1d407721cba45adb3a825263dc3" class="el">HCP</a>
+- GetModelOutTangent() : <a href="classHCP.md#5b6df2e402de9d91c21b15d316e9e414" class="el">HCP</a>
+- GetModelPosition() : <a href="classHCP.md#87fc191159f7c68a1a56bd8e482759c7" class="el">HCP</a>
+- GetModelToScreenMatrix() : <a href="classHBone.md#f9038b5a158f5d0ffc6e3a7ff86c904c" class="el">HBone</a>
+- GetModelToWorldMatrix() : <a href="classHBone.md#ca2ad24d66a1736e78ec895efe47de8e" class="el">HBone</a>
+- GetMute() : <a href="classHSound.md#1ece682c4864402ff5e9317bc8c5a6c7" class="el">HSound</a>, <a href="classHSoundCache.md#1ece682c4864402ff5e9317bc8c5a6c7" class="el">HSoundCache</a>
+- GetN() : <a href="classHTexInfo.md#ff64cf1916b839c04c685dbef2ac020f" class="el">HTexInfo</a>
+- GetName() : <a href="classHHashObject.md#d85b49d73e45d0431b18e5a61c7e6f3f" class="el">HHashObject</a>, <a href="classHActionCache.md#d85b49d73e45d0431b18e5a61c7e6f3f" class="el">HActionCache</a>
+- GetNameID() : <a href="classDLLPlugin.md#53f5bbacfebc29c12c9900ce8ca09827" class="el">DLLPlugin</a>
+- GetNameOnly() : <a href="classString.md#1fd0c56b546dedef5ef092663d73d569" class="el">String</a>
+- GetNameOnlyWithoutSuffix() : <a href="classString.md#f48ba00c6b11f3cf16b476a31b67031a" class="el">String</a>
+- GetNbrChannels() : <a href="classHBitmapBuffer.md#b062d260dfc6363d45c095431f549824" class="el">HBitmapBuffer</a>
+- GetNext() : <a href="classHGroupNode.md#0d4ba4036cc2dcca8c73cdde356797cd" class="el">HGroupNode</a>, <a href="classHChannelCP.md#0d4ba4036cc2dcca8c73cdde356797cd" class="el">HChannelCP</a>, <a href="classHGroupCP.md#0d4ba4036cc2dcca8c73cdde356797cd" class="el">HGroupCP</a>, <a href="classHCP.md#0d4ba4036cc2dcca8c73cdde356797cd" class="el">HCP</a>, <a href="classHBitmapBuffer.md#0d4ba4036cc2dcca8c73cdde356797cd" class="el">HBitmapBuffer</a>
+- GetNextActionDriver() : <a href="classHPropertyDriver.md#f162c52f37a5e031f0a9528b7e528fd4" class="el">HPropertyDriver</a>
+- GetNextAttached() : <a href="classHCP.md#4d5b1338d6bd54593d7bd5aa4c077049" class="el">HCP</a>
+- GetNextBufferShortcut() : <a href="classHBufferShortcut.md#a305d20e5af42a353599595f9d261d79" class="el">HBufferShortcut</a>
+- GetNextCameraInChor() : <a href="classHCamera.md#de7b197f2ec49161f84cafbbef3099bb" class="el">HCamera</a>
+- GetNextDriver() : <a href="classHPropertyDriver.md#2fcc6ba10ec1afbd9c48cf04357c76d4" class="el">HPropertyDriver</a>
+- GetNextDriverForAction() : <a href="classHPropertyDriver.md#788a07372b7c850149069d81f18e9570" class="el">HPropertyDriver</a>
+- GetNextForceInChor() : <a href="classHForce.md#de7433fdb080d2770c0bfcdcc405650c" class="el">HForce</a>
+- GetNextInstance() : <a href="classHHashObject.md#e63536d1fd80fc0931ab7aa73d18d8c1" class="el">HHashObject</a>
+- GetNextKey() : <a href="classHTimeBasedKey.md#4182a72a8c6ac918c3929f518b084350" class="el">HTimeBasedKey</a>, <a href="classHAnimObject.md#e5c702148c17c9eff98f82ef6e271b35" class="el">HAnimObject</a>
+- GetNextLightInChor() : <a href="classHLight.md#aa41bdad507f073dcd47aa0e2657df5e" class="el">HLight</a>
+- GetNextLightListNode() : <a href="classHLightListNode.md#f350e90c9cb3a67502207fa553e0abc1" class="el">HLightListNode</a>
+- GetNextMatFXInChor() : <a href="classHMatFX.md#be971177669ac2a7137a22c3e80c6d32" class="el">HMatFX</a>
+- GetNextModelInChor() : <a href="classHModel.md#5e9bd7932a3a4e05beeab0e21e8628ee" class="el">HModel</a>
+- GetNextModifier() : <a href="classHPolyModifierShortcut.md#73369fada033cbc7bb717039d5ddee29" class="el">HPolyModifierShortcut</a>
+- GetNextPatch5() : <a href="classHPatch5.md#3aefc5015037cd7766500ec393ddfe7c" class="el">HPatch5</a>
+- GetNextPatchUV() : <a href="classHDecalStamp.md#e9fc0fd410c05d84c72c1ad18152f444" class="el">HDecalStamp</a>
+- GetNextRelationKey() : <a href="classHProperty.md#94b83658b5d0ebbc9ea3c5e71760973f" class="el">HProperty</a>
+- GetNextSpline() : <a href="classHSpline.md#d638e82fae03cc73eaeb2c9dbf8a4924" class="el">HSpline</a>
+- GetNonRelativePath() : <a href="classString.md#2fd33a03e2aa7c128fffa149501149aa" class="el">String</a>
+- GetNormalizedColorVector() : <a href="classHColorProperty.md#80c49a1b902376cc5e1475a83b19a9c8" class="el">HColorProperty</a>
+- GetNormalizedFloat() : <a href="classYAByte.md#300e66e25eaece252a7aa4e96f7d9139" class="el">YAByte</a>
+- GetNormalizedRGBAFloat() : <a href="classYAByte.md#ad10fc78115110de8a428f1216677c1e" class="el">YAByte</a>, <a href="classRGBAByte.md#ad10fc78115110de8a428f1216677c1e" class="el">RGBAByte</a>
+- GetNormalizedRGBFloat() : <a href="classHColorProperty.md#edabf03f9243223a1b19ec1b8e6d3a7d" class="el">HColorProperty</a>, <a href="classRGBAByte.md#edabf03f9243223a1b19ec1b8e6d3a7d" class="el">RGBAByte</a>, <a href="classRGBByte.md#edabf03f9243223a1b19ec1b8e6d3a7d" class="el">RGBByte</a>, <a href="classColorBuf.md#edabf03f9243223a1b19ec1b8e6d3a7d" class="el">ColorBuf</a>
+- GetNotes() : <a href="classHFileInfoProperty.md#aef3cf215c4db11c444f16e3ee597cb4" class="el">HFileInfoProperty</a>
+- getNoticeMethod : <a href="structTQADrawContext.md#3712da2d88b2594f87164769383b947e" class="el">TQADrawContext</a>
+- GetNumEdges() : <a href="classIETriModel.md#2da5a51849163e7398430b64f7830261" class="el">IETriModel</a>
+- GetNumFaces() : <a href="classIEPolyModel.md#f3d701e65827c2aa0ae4ab983c8d61a1" class="el">IEPolyModel</a>
+- getNumFaces() : <a href="classIEPolyModel.md#92a34c22492ff079fed6e5f2183c5093" class="el">IEPolyModel</a>
+- GetNumNormals() : <a href="classIEPolyModel.md#575a4986a38164da357d9ec46208822f" class="el">IEPolyModel</a>
+- GetNumPoints() : <a href="classHPatch.md#206247c6e736fa90f34cad1dd9c50224" class="el">HPatch</a>
+- GetNumProperties() : <a href="classDLLPlugin.md#68cef93ef1d645582bbfe362c654eedd" class="el">DLLPlugin</a>
+- GetNumSubDrivers() : <a href="classHPropertyDriver.md#dd1325cca892fb4d916acbbfd56bfa8c" class="el">HPropertyDriver</a>
+- GetNumVerts() : <a href="classIEPolyModel.md#648dbe0ff154458a3037d4f1a490084a" class="el">IEPolyModel</a>
+- getNumVerts() : <a href="classIEPolyModel.md#472e44e189abbc79deb52a9ccf01d4b4" class="el">IEPolyModel</a>
+- GetObject() : <a href="classHShading.md#df6befb16a611cdfcd5dadd41ce3d4cc" class="el">HShading</a>, <a href="classHTexInfo.md#df6befb16a611cdfcd5dadd41ce3d4cc" class="el">HTexInfo</a>, <a href="classHObjectListNode.md#df6befb16a611cdfcd5dadd41ce3d4cc" class="el">HObjectListNode</a>, <a href="classHAnimObject.md#df6befb16a611cdfcd5dadd41ce3d4cc" class="el">HAnimObject</a>
+- GetObjectType() : <a href="classHShading.md#effdee082fe387ec5dd54c03a2e22ed0" class="el">HShading</a>, <a href="classHTexInfo.md#effdee082fe387ec5dd54c03a2e22ed0" class="el">HTexInfo</a>, <a href="classHHashObject.md#effdee082fe387ec5dd54c03a2e22ed0" class="el">HHashObject</a>, <a href="classHTreeObject.md#effdee082fe387ec5dd54c03a2e22ed0" class="el">HTreeObject</a>
+- GetOpacity() : <a href="classVolumetric.md#a27bb6e2aba4c6257191578a18845e87" class="el">Volumetric</a>, <a href="classYAByte.md#3ff93e400445c24a8d552488a6564874" class="el">YAByte</a>, <a href="classRGBAByte.md#3ff93e400445c24a8d552488a6564874" class="el">RGBAByte</a>, <a href="classColorBuf.md#3ff93e400445c24a8d552488a6564874" class="el">ColorBuf</a>
+- GetOrganization() : <a href="classHOutputInfo.md#af0463b61a7e70fe923a38be6ebadc5b" class="el">HOutputInfo</a>
+- GetOsPath() : <a href="classString.md#9236b908060d7ecbc889d58092bde679" class="el">String</a>
+- GetOT1() : <a href="classHPatch.md#2d63252b29a507b4eca3a0d4768c199e" class="el">HPatch</a>
+- GetOT2() : <a href="classHPatch.md#be9f20fcc037fa45906cd5d3f9ef8a7d" class="el">HPatch</a>
+- GetOT3() : <a href="classHPatch.md#932a992cd5c7a737fc3cde88596558fc" class="el">HPatch</a>
+- GetOT4() : <a href="classHPatch.md#411f11dc80dbacef2e1f4cf26ff70b89" class="el">HPatch</a>
+- GetOT5() : <a href="classHPatch5.md#e37a61d52f55d0c92e28ca1db3d53b31" class="el">HPatch5</a>
+- GetOutAlpha() : <a href="classHCP.md#9fb2c978fd63bfae04f0322ceefb667d" class="el">HCP</a>
+- GetOutBias() : <a href="classHCPInstance.md#8eab1f8d9a66904bbdfd23f0f2a16738" class="el">HCPInstance</a>
+- GetOutGamma() : <a href="classHChannelCP.md#4969c532929758fe38daafc0bdd9a47d" class="el">HChannelCP</a>, <a href="classHCP.md#4969c532929758fe38daafc0bdd9a47d" class="el">HCP</a>
+- GetOutMagnitude() : <a href="classHChannelCP.md#7b2159d13a74a0a9e5884c6e90ffc944" class="el">HChannelCP</a>, <a href="classHCP.md#7b2159d13a74a0a9e5884c6e90ffc944" class="el">HCP</a>
+- GetOutputGamma() : <a href="classHOutputInfo.md#3528c8db602d6c9459aa27410c2882c5" class="el">HOutputInfo</a>
+- GetOutTangent() : <a href="classHChannelCP.md#e4c6198f9ffd63a54b327131576d14ee" class="el">HChannelCP</a>, <a href="classHCP.md#e4c6198f9ffd63a54b327131576d14ee" class="el">HCP</a>
+- GetOwner() : <a href="classDLLPlugin.md#3ba36241b4d77d9ed655a45db06da58f" class="el">DLLPlugin</a>
+- GetParent() : <a href="classHTreeObject.md#aea074b20b6f6571959609e921d58de5" class="el">HTreeObject</a>
+- GetParentActionCacheContainer() : <a href="classHActionCache.md#fcb437983a59d60cb01a9f3d36829889" class="el">HActionCache</a>
+- GetParentBone() : <a href="classHBone.md#1eac48ebb8f1217140a11ce4a58153bb" class="el">HBone</a>, <a href="classHAction.md#1eac48ebb8f1217140a11ce4a58153bb" class="el">HAction</a>
+- GetParentBoneCache() : <a href="classHBoneCache.md#c27c3c337c5c045153d6c237833e2286" class="el">HBoneCache</a>
+- GetParentChorContainer() : <a href="classHChor.md#a12110119a86995124d1f126dedce79d" class="el">HChor</a>
+- GetParentCompensation() 
