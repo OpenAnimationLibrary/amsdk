@@ -1,0 +1,189 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif\r\n"
+    "#include ""res\\HXT.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName", "\0"
+            VALUE "FileDescription", "WIZARD DLL\0"
+            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "InternalName", "WIZARD\0"
+            VALUE "LegalCopyright", "Copyright © 1900\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "WIZARD.DLL\0"
+            VALUE "ProductName", "WIZARD Dynamic Link Library\0"
+            VALUE "ProductVersion", "1, 0, 0, 1\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DUP DIALOGEX DISCARDABLE  0, 0, 322, 130
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Group Duplicator"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Duplication Method",IDC_STATIC,22,5,88,23
+    CONTROL         "&Copy",IDC_COPY,"Button",BS_AUTORADIOBUTTON | WS_GROUP | 
+                    WS_TABSTOP,27,14,32,10
+    CONTROL         "&Extrude",IDC_EXTRUDE,"Button",BS_AUTORADIOBUTTON,63,14,
+                    40,10
+    LTEXT           "Repeat #",IDC_STATIC,241,18,31,8
+    EDITTEXT        IDC_REPEAT,276,15,27,14,ES_AUTOHSCROLL
+    LTEXT           "X",IDC_STATIC,13,61,8,8
+    LTEXT           "Y",IDC_STATIC,13,75,8,8
+    LTEXT           "Z",IDC_STATIC,13,89,8,8
+    GROUPBOX        "Sweep",IDC_STATIC,22,35,152,69
+    GROUPBOX        "Translate",IDC_STATIC,24,46,43,56
+    EDITTEXT        IDC_TRANSX,26,57,40,14,ES_AUTOHSCROLL | WS_GROUP
+    EDITTEXT        IDC_TRANSY,26,72,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_TRANSZ,26,86,40,14,ES_AUTOHSCROLL
+    GROUPBOX        "Rotate",IDC_STATIC,68,46,43,56
+    EDITTEXT        IDC_ROTATEX,70,57,40,14,ES_AUTOHSCROLL | WS_GROUP
+    EDITTEXT        IDC_ROTATEY,70,72,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_ROTATEZ,70,86,40,14,ES_AUTOHSCROLL
+    GROUPBOX        "Taper",IDC_STATIC,112,46,60,56
+    EDITTEXT        IDC_OFFSETDISTTOCENTER,114,57,40,14,ES_AUTOHSCROLL
+    LTEXT           "cm",IDC_STATIC,156,60,10,8
+    LTEXT           "Stop at Dist.",IDC_STATIC,115,75,50,8
+    EDITTEXT        IDC_STOPATDIST,113,86,40,14,ES_AUTOHSCROLL
+    LTEXT           "cm",IDC_STATIC,157,89,10,8
+    GROUPBOX        "Tumble",IDC_STATIC,178,35,135,69
+    GROUPBOX        "Pivot",IDC_STATIC,180,46,43,56
+    EDITTEXT        IDC_PIVOTX,182,57,40,14,ES_AUTOHSCROLL | WS_GROUP
+    EDITTEXT        IDC_PIVOTY,182,72,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_PIVOTZ,182,86,40,14,ES_AUTOHSCROLL
+    GROUPBOX        "Rotate",IDC_STATIC,224,46,43,56
+    EDITTEXT        IDC_TUMBLEROTATEX,226,57,40,14,ES_AUTOHSCROLL | WS_GROUP
+    EDITTEXT        IDC_TUMBLEROTATEY,226,72,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_TUMBLEROTATEZ,226,86,40,14,ES_AUTOHSCROLL
+    GROUPBOX        "Scale",IDC_STATIC,268,46,43,56
+    EDITTEXT        IDC_SCALEX,270,57,40,14,ES_AUTOHSCROLL | WS_GROUP
+    EDITTEXT        IDC_SCALEY,270,72,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_SCALEZ,270,86,40,14,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,210,108,50,14,BS_CENTER
+    PUSHBUTTON      "Cancel",IDCANCEL,264,108,50,14,BS_VCENTER
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_MENUFILTER          "Duplicator..."
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif
+#include "res\HXT.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"         // Standard components
+#endif
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

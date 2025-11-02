@@ -1,0 +1,222 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Deutsch (Deutschland) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+#pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 7, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\primitive.rc2""  // Nicht mit Microsoft Visual C++ bearbeitete Ressourcen\r\n"
+    "#include ""afxres.rc""          // Standardkomponenten\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 0,0,0,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x21L
+#else
+ FILEFLAGS 0x20L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "Plugin for A:M V16 and higher"
+            VALUE "FileDescription", "Primitive HXT"
+            VALUE "FileVersion", "1, 0, 0, 1"
+            VALUE "InternalName", "primitive"
+            VALUE "LegalCopyright", "Copyright (C) 2002 - 2011"
+            VALUE "LegalTrademarks", "Steffen Gross"
+            VALUE "OriginalFilename", "primitive.hxt"
+            VALUE "ProductName", "primitive Dynamic Link Library"
+            VALUE "ProductVersion", "1"
+            VALUE "SpecialBuild", "04.10.2011"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG1 DIALOGEX 0, 0, 226, 274
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Primitive"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    COMBOBOX        IDC_COMBO1,7,7,126,74,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_EDIT1,58,82,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT2,58,99,40,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Magnitude in %",IDC_BUTTON2,105,99,63,14,BS_LEFT
+    EDITTEXT        IDC_EDIT9,173,99,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT3,58,116,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT4,58,133,40,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Magnitude in %",IDC_BUTTON3,105,133,63,14,BS_LEFT
+    EDITTEXT        IDC_EDIT11,173,133,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT5,58,150,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT6,58,167,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT7,58,184,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT8,173,150,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT10,173,167,40,14,ES_AUTOHSCROLL
+    CONTROL         "Gradient left",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,221,52,10
+    CONTROL         "Gradient right",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,72,221,56,10
+    CONTROL         "CP's smooth",IDC_CHECK3,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,233,54,10
+    CONTROL         "CP's peak",IDC_CHECK4,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,72,233,47,10
+    CONTROL         "Create Bones",IDC_CHECK5,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,233,59,10
+    DEFPUSHBUTTON   "Create",IDOK,109,253,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,169,253,50,14
+    CONTROL         6001,IDC_STATIC_BITMAP,"Static",SS_BITMAP | SS_NOTIFY | SS_REALSIZEIMAGE,143,7,81,75,WS_EX_STATICEDGE
+    LTEXT           "Radius XZ",IDC_STATIC1,7,85,49,8,NOT WS_GROUP
+    LTEXT           "Segments XZ",IDC_STATIC2,7,102,49,8,NOT WS_GROUP
+    LTEXT           "Radius XYZ ",IDC_STATIC3,7,119,49,8,NOT WS_GROUP
+    LTEXT           "Segments XYZ",IDC_STATIC4,7,136,49,8,NOT WS_GROUP
+    LTEXT           "Height (Y)",IDC_STATIC5,7,153,49,8,NOT WS_GROUP
+    LTEXT           "Width (X)",IDC_STATIC6,7,170,49,8,NOT WS_GROUP
+    LTEXT           "Depth (Z)",IDC_STATIC7,7,187,49,8
+    LTEXT           "Number of windings",IDC_STATIC8,105,153,63,8,NOT WS_GROUP
+    LTEXT           "0",IDC_STATIC10,173,187,33,8,NOT WS_GROUP
+    LTEXT           "Number of patches",IDC_STATIC,105,187,62,8,NOT WS_GROUP
+    LTEXT           "Segments Y",IDC_STATIC12,105,170,57,8,NOT WS_GROUP
+    LTEXT           "Subdivision",IDC_STATIC,7,205,37,8
+    EDITTEXT        IDC_EDIT12,58,202,40,14,ES_AUTOHSCROLL
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_DIALOG1, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 219
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 267
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP1             BITMAP                  "bitmap1.bmp"
+IDB_BITMAP2             BITMAP                  "bitmap2.bmp"
+IDB_BITMAP3             BITMAP                  "bitmap3.bmp"
+IDB_BITMAP4             BITMAP                  "bitmap4.bmp"
+IDB_BITMAP5             BITMAP                  "bitmap5.bmp"
+IDB_BITMAP6             BITMAP                  "bitmap6.bmp"
+IDB_BITMAP7             BITMAP                  "bitmap7.bmp"
+IDB_BITMAP8             BITMAP                  "bitmap8.bmp"
+IDB_BITMAP9             BITMAP                  "bitmap9.bmp"
+IDB_BITMAP10            BITMAP                  "bitmap10.bmp"
+IDB_BITMAP11            BITMAP                  "bitmap11.bmp"
+IDB_BITMAP12            BITMAP                  "bitmap12.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_STRING1             "Primitive"
+END
+
+#endif    // Deutsch (Deutschland) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+#ifdef _WIN32
+LANGUAGE 7, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\primitive.rc2"  // Nicht mit Microsoft Visual C++ bearbeitete Ressourcen
+#include "afxres.rc"          // Standardkomponenten
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

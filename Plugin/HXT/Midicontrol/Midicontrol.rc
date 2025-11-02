@@ -1,0 +1,285 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Deutsch (Deutschland) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+#pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 7, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\Midicontrol.rc2""  // Nicht mit Microsoft Visual C++ bearbeitete Ressourcen\r\n"
+    "#include ""l.deu\\afxres.rc""          // Standardkomponenten\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 0,0,0,4
+ PRODUCTVERSION 0,0,0,4
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x29L
+#else
+ FILEFLAGS 0x28L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040704b0"
+        BEGIN
+            VALUE "Comments", "Control some properties with a midikeyboard for A:M"
+            VALUE "FileDescription", "Midicontrol hxt"
+            VALUE "FileVersion", "0, 0, 0, 4"
+            VALUE "InternalName", "Midicontrol"
+            VALUE "LegalCopyright", "Copyright (C) 2003"
+            VALUE "LegalTrademarks", "Steffen Gross"
+            VALUE "OriginalFilename", "Midicontrol.hxt"
+            VALUE "PrivateBuild", "21.02.2004"
+            VALUE "ProductName", "Midicontrol"
+            VALUE "ProductVersion", "0, 0, 0, 4"
+            VALUE "SpecialBuild", "V0.4b"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x407, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG1 DIALOGEX 0, 0, 167, 75
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Select inputdevice"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,73,54,38,14
+    PUSHBUTTON      "Cancel",IDCANCEL,122,54,38,14
+    LISTBOX         IDC_LIST1,7,7,153,42,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_DIALOG2 DIALOGEX 0, 0, 281, 266
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Assign controller"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,167,245,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,224,245,50,14
+    COMBOBOX        IDC_COMBO1,50,7,217,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Object",IDC_STATIC,19,9,21,8
+    GROUPBOX        "Properties",IDC_STATIC_PROP,7,28,267,154
+    COMBOBOX        IDC_COMBO2,13,70,254,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Filter",IDC_STATIC,13,39,254,24
+    CONTROL         "None",IDC_RADIO1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,18,49,33,10
+    CONTROL         "Pose",IDC_RADIO2,"Button",BS_AUTORADIOBUTTON,65,49,32,10
+    CONTROL         "Transform",IDC_RADIO3,"Button",BS_AUTORADIOBUTTON,111,49,47,10
+    CONTROL         "Surface",IDC_RADIO4,"Button",BS_AUTORADIOBUTTON,172,49,39,10
+    CONTROL         "Color",IDC_RADIO5,"Button",BS_AUTORADIOBUTTON,225,49,32,10
+    GROUPBOX        "Value",IDC_STATIC,13,85,254,31
+    LTEXT           "minimum",IDC_STATIC,19,99,28,8
+    EDITTEXT        IDC_EDIT1,54,96,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    LTEXT           "maximum",IDC_STATIC,101,99,30,8
+    EDITTEXT        IDC_EDIT2,138,96,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    LTEXT           "actual",IDC_STATIC,185,99,19,8
+    LTEXT           "Static",IDC_STATIC_ACT,211,99,50,8
+    CONTROL         "Color",IDC_BUTTON1,"Button",BS_OWNERDRAW | WS_TABSTOP,53,96,40,14
+    CONTROL         "Color",IDC_BUTTON2,"Button",BS_OWNERDRAW | WS_TABSTOP,137,96,40,14
+    GROUPBOX        "Controlled with",IDC_STATIC,13,120,254,38
+    CONTROL         "None",IDC_RADIO6,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,19,131,33,10
+    CONTROL         "defined",IDC_RADIO7,"Button",BS_AUTORADIOBUTTON,64,131,39,10
+    PUSHBUTTON      "Select",IDC_BUTTON3,115,129,37,14
+    PUSHBUTTON      "Stop",IDC_BUTTON4,164,129,37,14
+    LTEXT           "30 seconds left",IDC_STATIC_TIME,213,132,46,8
+    LTEXT           "Controller",IDC_STATIC_CONTROLLER,19,145,182,8
+    CONTROL         "",IDC_BUTTON5,"Button",BS_OWNERDRAW | BS_FLAT | WS_DISABLED,210,96,40,14
+    DEFPUSHBUTTON   "",IDC_BUTTON6,20,96,13,14,NOT WS_VISIBLE | WS_DISABLED | NOT WS_TABSTOP
+    GROUPBOX        "Single step",IDC_STATIC,7,184,267,27
+    PUSHBUTTON      "Select key",IDC_BUTTON7,13,193,50,14
+    LTEXT           "",IDC_STATIC_FOR,71,196,194,8
+    PUSHBUTTON      "Save",IDC_BUTTON9,13,223,34,14
+    PUSHBUTTON      "Load",IDC_BUTTON10,58,223,34,14
+    CONTROL         "override data for Note On",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,165,91,10
+    PUSHBUTTON      "Show assigned properties",IDC_BUTTON8,183,163,83,14
+    CONTROL         "embed properties as Userpropertie",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,105,225,122,10
+    GROUPBOX        "Store/Reload assigned properties",IDC_STATIC,7,214,267,27
+    PUSHBUTTON      "About",IDC_BUTTON11,13,245,50,14
+END
+
+IDD_DIALOG3 DIALOGEX 0, 0, 74, 163
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "MC Record"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    PUSHBUTTON      "Button1",IDC_BUTTON1,7,7,15,14,BS_ICON
+    EDITTEXT        IDC_EDIT1,24,7,26,14,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
+    PUSHBUTTON      "Play",IDC_BUTTON2,52,7,15,14,BS_ICON
+    PUSHBUTTON      "Record",IDC_BUTTON3,7,25,60,14
+    PUSHBUTTON      "Record Single",IDC_BUTTON4,7,45,60,14
+    PUSHBUTTON      "Stop",IDC_BUTTON6,7,65,60,14
+    CONTROL         "1",IDC_RADIO1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,13,110,20,10
+    CONTROL         "5",IDC_RADIO2,"Button",BS_AUTORADIOBUTTON,37,110,20,10
+    CONTROL         "10",IDC_RADIO3,"Button",BS_AUTORADIOBUTTON,13,125,23,10
+    CONTROL         "25",IDC_RADIO4,"Button",BS_AUTORADIOBUTTON,37,124,23,10
+    DEFPUSHBUTTON   "OK",IDOK,7,142,26,14
+    PUSHBUTTON      "Cancel",IDCANCEL,41,142,26,14
+    DEFPUSHBUTTON   "",IDC_BUTTON5,52,85,15,14,NOT WS_VISIBLE | NOT WS_TABSTOP
+    GROUPBOX        "fps",IDC_STATIC,7,99,60,40
+    CONTROL         "delete keys",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,85,51,10
+END
+
+IDD_DIALOG4 DIALOGEX 0, 0, 331, 190
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "View assigned properties"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Close",IDOK,274,169,50,14
+    LISTBOX         IDC_LIST1,7,7,317,156,NOT LBS_NOTIFY | LBS_SORT | LBS_NOINTEGRALHEIGHT | LBS_NOSEL | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_DIALOG1, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 160
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 68
+    END
+
+    IDD_DIALOG2, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 274
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 259
+    END
+
+    IDD_DIALOG3, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 67
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 156
+    END
+
+    IDD_DIALOG4, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 324
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 183
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON1               ICON                    "icon1.ico"
+IDI_ICON2               ICON                    "icon2.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_STRING1             "Midicontrol"
+END
+
+#endif    // Deutsch (Deutschland) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+#ifdef _WIN32
+LANGUAGE 7, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\Midicontrol.rc2"  // Nicht mit Microsoft Visual C++ bearbeitete Ressourcen
+#include "l.deu\afxres.rc"          // Standardkomponenten
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

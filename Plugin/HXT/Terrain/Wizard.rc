@@ -1,0 +1,220 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Englisch (USA) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif\r\n"
+    "#include ""res\\Wizard.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "ToonNation"
+            VALUE "FileDescription", "WIZARD DLL"
+            VALUE "FileVersion", "1, 0, 0, 1"
+            VALUE "InternalName", "Terrain"
+            VALUE "LegalCopyright", "Copyright © 2003"
+            VALUE "OriginalFilename", "WIZARD.DLL"
+            VALUE "ProductName", "Terrain Dynamic Link Library"
+            VALUE "ProductVersion", "1, 0, 0, 1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_WIZARD, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 308
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 253
+        HORZGUIDE, 146
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_WIZARD DIALOGEX 0, 0, 311, 258
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Terrain - created by AW. http://toonnation.co.uk"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Terrain",IDC_STATIC,3,3,176,176
+    GROUPBOX        "Noise :",IDC_STATIC,185,3,123,168
+    GROUPBOX        "Grid ",IDC_STATIC,3,178,305,58
+    GROUPBOX        "Paint:",IDC_STATIC,3,139,95,21
+    CONTROL         "Slider1",IDC_GREY_VALUE,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,11,11,17,119
+    PUSHBUTTON      "<--Render",IDC_RENDERNOISE,173,75,42,14
+    PUSHBUTTON      "Render Mult",IDC_RENDERSHAPED,173,92,42,14
+    COMBOBOX        IDC_NOISE_TYPE,226,15,70,79,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_OCTAVES,255,34,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_LACUNARITY,255,50,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_GAIN,255,66,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_SCALE1,255,82,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_SEED,255,97,40,14,ES_AUTOHSCROLL
+    CONTROL         "Invert",IDC_INVERT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,258,117,34,10
+    CONTROL         "o",IDC_PAINT,"Button",BS_AUTORADIOBUTTON | BS_PUSHLIKE | WS_GROUP | WS_TABSTOP,31,147,20,10
+    CONTROL         "+",IDC_RAISE,"Button",BS_AUTORADIOBUTTON | BS_PUSHLIKE,53,147,20,10
+    CONTROL         "-",IDC_LOWER,"Button",BS_AUTORADIOBUTTON | BS_PUSHLIKE,75,147,18,10
+    LTEXT           "Seed :",IDC_STATIC,231,100,22,8
+    PUSHBUTTON      "Fill",IDC_FILL,107,145,18,14
+    PUSHBUTTON      "Load...",IDC_LOAD,143,145,31,15
+    COMBOBOX        IDC_FILTER_TYPE,43,161,85,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Apply",IDC_FILTER,129,161,29,13
+    EDITTEXT        IDC_SMOOTH_FROM,203,152,32,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_SMOOTH_TO,260,152,31,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_STEPWIDTH,57,186,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_WIDTH,146,186,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_MAGNITUDE,257,186,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_STEPHEIGHT,57,202,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_HEIGHT,146,202,40,14,ES_AUTOHSCROLL
+    CONTROL         "Edges flat",IDC_FLATEDGES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,213,204,47,10
+    CONTROL         "XY",IDC_RADIOXY,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,63,219,25,10
+    CONTROL         "XZ",IDC_RADIOXZ,"Button",BS_AUTORADIOBUTTON,97,219,25,10
+    CONTROL         "YZ",IDC_RADIOYZ,"Button",BS_AUTORADIOBUTTON,131,219,25,10
+    LTEXT           "Orientation",IDC_STATIC,11,220,35,8
+    DEFPUSHBUTTON   "OK",IDOK,129,239,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,258,239,50,14
+    LTEXT           "Width",IDC_STATIC,118,189,27,8
+    LTEXT           "Height",IDC_STATIC,118,204,27,8
+    LTEXT           "Step Width",IDC_STATIC,11,190,43,8
+    LTEXT           "Step Height",IDC_STATIC,11,205,43,8
+    LTEXT           "cm",IDC_STATIC,188,189,10,8
+    LTEXT           "cm",IDC_STATIC,188,204,10,8
+    LTEXT           "cm",IDC_STATIC,99,189,10,8
+    LTEXT           "cm",IDC_STATIC,99,204,10,8
+    RTEXT           "Scale :",IDC_STATIC,228,85,22,8
+    RTEXT           "Magnitude :",IDC_STATIC,213,189,39,8
+    LTEXT           "Type :",IDC_STATIC,199,17,21,8
+    RTEXT           "Octaves :",IDC_STATIC,214,36,37,8
+    RTEXT           "Lacunarity :",IDC_STATIC,213,53,38,8
+    RTEXT           "Gain :",IDC_STATIC,224,70,26,8
+    LTEXT           "Smoothstep :",IDC_STATIC,195,142,42,8
+    LTEXT           "-->",IDC_STATIC,245,156,9,8
+    RTEXT           "Filter :",IDC_STATIC,14,163,26,8
+    CTEXT           "255",IDC_STATICGREY,11,130,19,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_MENUFILTER          "Terrain"
+END
+
+#endif    // Englisch (USA) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif
+#include "res\Wizard.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"         // Standard components
+#endif
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

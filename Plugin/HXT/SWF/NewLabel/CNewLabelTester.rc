@@ -1,0 +1,400 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_CNEWLABELTESTER_DIALOG DIALOGEX 0, 0, 302, 338
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "CNewLabel Tester"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDED_TEXT,36,128,213,45,ES_MULTILINE | ES_AUTOHSCROLL | 
+                    NOT WS_TABSTOP
+    CTEXT           "This is a string",IDST_TESTZONE,38,26,224,83,
+                    SS_CENTERIMAGE | NOT WS_GROUP
+    GROUPBOX        "Test Zone",IDC_STATIC,7,7,288,118,BS_CENTER
+    CONTROL         "Text Color",IDCB_TEXTCOLOR,"Button",BS_AUTOCHECKBOX,7,
+                    180,72,10
+    CONTROL         "Text Back Color",IDCB_TEXTBKCOLOR,"Button",
+                    BS_AUTOCHECKBOX,7,195,72,10
+    CONTROL         "Background Color",IDCB_BKGNDCOLOR,"Button",
+                    BS_AUTOCHECKBOX,7,210,72,10
+    PUSHBUTTON      "",IDPB_TEXTCOLOR,81,179,30,12,NOT WS_TABSTOP
+    PUSHBUTTON      "",IDPB_TEXTBKCOLOR,81,194,30,12,NOT WS_TABSTOP
+    PUSHBUTTON      "",IDPB_BKGNDCOLOR,81,209,30,12,NOT WS_TABSTOP
+    CONTROL         "Set Font Bold",IDCB_SETFONTBOLD,"Button",
+                    BS_AUTOCHECKBOX,127,180,59,10
+    CONTROL         "Set Font Italic",IDCB_SETFONTITALIC,"Button",
+                    BS_AUTOCHECKBOX,127,192,59,10
+    CONTROL         "Set Font Underline",IDCB_SETFONTUNDERLINE,"Button",
+                    BS_AUTOCHECKBOX,127,203,75,10
+    LTEXT           "Font Size",IDC_STATIC,127,216,30,8,NOT WS_GROUP
+    EDITTEXT        IDED_FONTSIZE,161,214,29,12,ES_CENTER | NOT WS_TABSTOP
+    PUSHBUTTON      "Apply",IDPB_SETFONTSIZE,193,214,30,12,NOT WS_TABSTOP
+    COMBOBOX        IDCB_FONT,145,230,79,49,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL
+    LTEXT           "Font",IDC_STATIC,127,232,15,8,NOT WS_GROUP
+    CONTROL         "Set Border",IDCB_SETBORDER,"Button",BS_AUTOCHECKBOX,7,
+                    235,49,10
+    CONTROL         "Set Sunken",IDCB_SETSUNKEN,"Button",BS_AUTOCHECKBOX,7,
+                    247,53,10
+    CONTROL         "Set Link",IDCB_SETLINK,"Button",BS_AUTOCHECKBOX,7,259,
+                    42,10
+    CONTROL         "Use HighLighting",IDCB_USEHIGHLIGHTING,"Button",
+                    BS_AUTOCHECKBOX,7,270,70,10
+    PUSHBUTTON      "",IDPB_HIGHLIGHTCOLOR,79,269,30,12,NOT WS_TABSTOP
+    CONTROL         "Use Bevel Line",IDCB_USEBEVELLINE,"Button",
+                    BS_AUTOCHECKBOX,7,294,64,10
+    LTEXT           "Horz Align",IDC_STATIC,127,252,33,8,NOT WS_GROUP
+    COMBOBOX        IDCB_HORZALIGN,163,249,48,44,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL
+    LTEXT           "Vert Align",IDC_STATIC,127,268,31,8,NOT WS_GROUP
+    COMBOBOX        IDCB_VERTALIGN,163,265,48,44,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL
+    CONTROL         "Set Vertical Text",IDCB_SETVERTICALTEXT,"Button",
+                    BS_AUTOCHECKBOX,7,306,68,10
+    LTEXT           "TEXT =",IDC_STATIC,7,129,26,8,NOT WS_GROUP
+    CONTROL         "Flash Text",IDCB_TEXTFLASH,"Button",BS_AUTOCHECKBOX,133,
+                    295,49,10
+    CONTROL         "Flash background",IDCB_BKFLASH,"Button",BS_AUTOCHECKBOX,
+                    133,306,73,10
+    GROUPBOX        "Text Rotation",IDC_STATIC,237,176,55,65
+    CONTROL         "0°",IDRB_ROTATION_0,"Button",BS_AUTORADIOBUTTON | 
+                    WS_GROUP,244,190,23,10
+    CONTROL         "90°",IDRB_ROTATION_90,"Button",BS_AUTORADIOBUTTON,244,
+                    202,27,10
+    CONTROL         "180°",IDRB_ROTATION_180,"Button",BS_AUTORADIOBUTTON,244,
+                    214,31,10
+    CONTROL         "270°",IDRB_ROTATION_270,"Button",BS_AUTORADIOBUTTON,244,
+                    226,31,10
+    CONTROL         "Use Tool Tip",IDCB_USETOOLTIP,"Button",BS_AUTOCHECKBOX,
+                    237,246,57,10
+    CONTROL         "Use HighLighting only with tooltip",
+                    IDCB_USEHIGHLIGHTINGONLYWITHTOOLTIP,"Button",
+                    BS_AUTOCHECKBOX,7,282,120,10
+    CONTROL         "Show tooltip on mouse click only",
+                    IDCB_USETOOLTIPONMOUSECLICK,"Button",BS_AUTOCHECKBOX,7,
+                    317,119,10
+    CONTROL         "Use Left Mouse Button for ToolTip",IDCB_USELEFTBUTTON,
+                    "Button",BS_AUTOCHECKBOX,133,317,125,10
+    CONTROL         "Disable",IDCB_DISABLE,"Button",BS_AUTOCHECKBOX,237,257,
+                    39,10
+    EDITTEXT        IDED_FLASHTEXTTIME,182,293,21,12,ES_CENTER | ES_NUMBER | 
+                    NOT WS_TABSTOP
+    EDITTEXT        IDED_FLASHBACKTIME,206,305,21,12,ES_CENTER | ES_NUMBER | 
+                    NOT WS_TABSTOP
+    LTEXT           "ms",IDC_STATIC,204,295,10,8,NOT WS_GROUP
+    LTEXT           "ms",IDC_STATIC,228,307,10,8,NOT WS_GROUP
+    CONTROL         "Background Image",IDCB_USEBACKIMAGE,"Button",
+                    BS_AUTOCHECKBOX,7,223,76,10
+    CONTROL         "Lower Case",IDCB_LOWERCASE,"Button",BS_AUTOCHECKBOX,237,
+                    269,53,10
+    CONTROL         "Upper Case",IDCB_UPPERCASE,"Button",BS_AUTOCHECKBOX,237,
+                    280,53,10
+    CONTROL         "Strech Bitmap",IDCB_STRETCHBITMAP,"Button",
+                    BS_AUTOCHECKBOX,237,292,60,10
+    CONTROL         "Slider1",IDMSL_HORZ,"msctls_trackbar32",TBS_AUTOTICKS | 
+                    TBS_ENABLESELRANGE | NOT WS_VISIBLE | WS_DISABLED,36,106,
+                    252,15
+    CONTROL         "Slider1",IDMSL_VERT,"msctls_trackbar32",TBS_AUTOTICKS | 
+                    TBS_VERT | TBS_TOP | TBS_ENABLESELRANGE | NOT WS_VISIBLE | 
+                    WS_DISABLED,12,15,20,90
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName", "\0"
+            VALUE "FileDescription", "CNewLabelTester MFC Application\0"
+            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "InternalName", "CNewLabelTester\0"
+            VALUE "LegalCopyright", "Copyright (C) 2000\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "CNewLabelTester.EXE\0"
+            VALUE "ProductName", "CNewLabelTester Application\0"
+            VALUE "ProductVersion", "1, 0, 0, 1\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_CNEWLABELTESTER_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 295
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 331
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_CNEWLABELTESTER_DIALOG DLGINIT
+BEGIN
+    IDCB_HORZALIGN, 0x403, 5, 0
+0x454c, 0x5446, "\000" 
+    IDCB_HORZALIGN, 0x403, 7, 0
+0x4543, 0x544e, 0x5245, "\000" 
+    IDCB_HORZALIGN, 0x403, 6, 0
+0x4952, 0x4847, 0x0054, 
+    IDCB_VERTALIGN, 0x403, 4, 0
+0x4f54, 0x0050, 
+    IDCB_VERTALIGN, 0x403, 7, 0
+0x4543, 0x544e, 0x5245, "\000" 
+    IDCB_VERTALIGN, 0x403, 7, 0
+0x4f42, 0x5454, 0x4d4f, "\000" 
+    0
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// French (Belgium) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FRB)
+#ifdef _WIN32
+LANGUAGE LANG_FRENCH, SUBLANG_FRENCH_BELGIAN
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\CNewLabelTester.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON    DISCARDABLE     "res\\CNewLabelTester.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DEMODLG DIALOGEX 0, 0, 380, 210
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "NewLabel Class Demo Dialog"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "Text Color",IDST_TEXTCOLOR,7,7,33,8,NOT WS_GROUP
+    LTEXT           "Background Color",IDST_BACKGNDCOLOR,7,21,58,8,NOT 
+                    WS_GROUP
+    LTEXT           "Background Color + Back Text Color",IDST_BACKTEXTCOLOR,
+                    7,36,130,15,SS_CENTERIMAGE | NOT WS_GROUP
+    CTEXT           "Rotated 90° Text",IDST_ANGLE90,207,7,20,63,
+                    SS_CENTERIMAGE | NOT WS_GROUP
+    CTEXT           "Rotated 270° Text",IDST_ANGLE270,317,7,20,63,
+                    SS_CENTERIMAGE | NOT WS_GROUP
+    CTEXT           "Rotated 180° Text",IDST_ANGLE180,235,48,70,20,
+                    SS_CENTERIMAGE | NOT WS_GROUP
+    LTEXT           "Font Text + Border",IDST_FONTTEXT,7,59,70,30,NOT 
+                    WS_GROUP
+    LTEXT           "Multi Line Text",IDST_MULTILINETEXT,7,96,80,40,NOT 
+                    WS_GROUP
+    CTEXT           "Flashing Text",IDST_FLASHTEXT,204,75,50,15,
+                    SS_CENTERIMAGE | NOT WS_GROUP
+    CTEXT           "Flashing Background",IDST_FLASHBACK,265,75,75,15,
+                    SS_CENTERIMAGE | NOT WS_GROUP
+    LTEXT           "Disabled Text",IDST_DISABLEDTEXT,7,142,44,8,NOT 
+                    WS_GROUP
+    LTEXT           "www.microsoft.com",IDST_LINKTEXT,7,156,62,8,NOT 
+                    WS_GROUP
+    LTEXT           "Move mouse over text to highlight !",
+                    IDST_HIGHLIGHTINGTEXT,7,170,111,8,NOT WS_GROUP
+    LTEXT           "Text with a tooltip when mouse moves over",
+                    IDST_TEXTWITHTOOLTIP1,208,98,137,8,NOT WS_GROUP
+    LTEXT           "Text with a tooltip when left click on control",
+                    IDST_TEXTWITHTOOLTIP2,208,113,137,8,NOT WS_GROUP
+    LTEXT           "Text with a tooltip when right click on control",
+                    IDST_TEXTWITHTOOLTIP3,208,129,141,8,NOT WS_GROUP
+    RTEXT           "Bevel Text Right",IDST_BEVELTEXTRIGHT,208,143,139,8,NOT 
+                    WS_GROUP
+    CTEXT           "Bevel Text Center",IDST_BEVELTEXTCENTER,208,156,139,8,
+                    NOT WS_GROUP
+    LTEXT           "Bevel Text Left",IDST_BEVELTEXTLEFT,208,169,139,8,NOT 
+                    WS_GROUP
+    LTEXT           "Bevel Text Top",IDST_BEVELTEXTTOP,147,7,14,180,NOT 
+                    WS_GROUP
+    LTEXT           "Bevel Text Center",IDST_BEVELTEXTVCENTER,165,7,14,180,
+                    SS_CENTERIMAGE | NOT WS_GROUP
+    LTEXT           "Bevel Text Bottom",IDST_BEVELTEXTBOTTOM,183,7,14,180,
+                    NOT WS_GROUP
+    CTEXT           "Rotated 0° Text",IDST_ANGLE0,235,7,70,20,SS_CENTERIMAGE | 
+                    NOT WS_GROUP
+    CTEXT           "Vertical Text",IDST_VERTICALTEXT,356,7,13,180,NOT 
+                    WS_GROUP
+    CTEXT           "USE /TESTDLG COMAND LINE ARGUMENT FOR DISPLAYING TEST DIALOG BOX INSTEAD OF THIS BOX",
+                    IDC_STATIC,7,195,366,8,SS_CENTERIMAGE | NOT WS_GROUP
+    CTEXT           "",IDST_BITMAPWITHOUTTEXT,99,59,43,39,SS_CENTERIMAGE | 
+                    SS_SUNKEN | NOT WS_GROUP
+    CTEXT           "WITH TEXT",IDST_BITMAPWITHTEXT,99,102,43,39,
+                    SS_CENTERIMAGE | SS_SUNKEN | NOT WS_GROUP
+    LTEXT           "TRANSPARENT",IDST_TRANSPARENT,73,7,55,12,SS_CENTERIMAGE | 
+                    NOT WS_VISIBLE | WS_DISABLED | NOT WS_GROUP,
+                    WS_EX_TRANSPARENT
+    EDITTEXT        IDED_OVERTANSPARENT,80,7,40,12,ES_AUTOHSCROLL | NOT 
+                    WS_VISIBLE | WS_DISABLED
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_DEMODLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 373
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 203
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Cursor
+//
+
+IDC_HAND                CURSOR  DISCARDABLE     "res\\Hand.cur"
+IDC_DELETE              CURSOR  DISCARDABLE     "res\\delete.cur"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_MIKE                BITMAP  DISCARDABLE     "res\\mike.bmp"
+#endif    // French (Belgium) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\CNewLabelTester.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"         // Standard components
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

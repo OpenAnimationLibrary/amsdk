@@ -1,0 +1,335 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "Turbulence plugin for Animation Master\0"
+            VALUE "CompanyName", "Yves Poissant\0"
+            VALUE "FileDescription", "Musgrave DLL\0"
+            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "InternalName", "Musgrave\0"
+            VALUE "LegalCopyright", "Copyright © 2001\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "Musgrave.TRB\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "Extended noise Dynamic Link Library\0"
+            VALUE "ProductVersion", "1, 0, 0, 1\0"
+            VALUE "SpecialBuild", "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ATTRIBUTES_PAGE DIALOG DISCARDABLE  0, 0, 218, 81
+STYLE DS_3DLOOK | WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    RTEXT           "&Octaves:",IDC_STATIC,32,19,28,8
+    EDITTEXT        IDC_OCTAVES,62,17,44,14,ES_AUTOHSCROLL
+    CONTROL         "Spin5",IDC_OCTAVES_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,102,17,9,14
+    EDITTEXT        IDC_GAIN,162,3,48,14,ES_AUTOHSCROLL
+    CONTROL         "Spin4",IDC_GAIN_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,206,3,9,
+                    14
+    EDITTEXT        IDC_BIAS,162,18,48,14,ES_AUTOHSCROLL
+    CONTROL         "Spin5",IDC_BIAS_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,206,18,9,
+                    14
+    EDITTEXT        IDC_HI_CUTOFF,162,32,48,14,ES_AUTOHSCROLL
+    CONTROL         "Spin6",IDC_HI_CUTOFF_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,206,32,9,14
+    COMBOBOX        IDC_TURBULENCE_TYPE,24,3,82,69,CBS_DROPDOWN | WS_VSCROLL | 
+                    WS_TABSTOP
+    RTEXT           "Type:",IDC_STATIC,2,4,19,8
+    EDITTEXT        IDC_LO_CUTOFF,162,47,48,14,ES_AUTOHSCROLL
+    CONTROL         "Spin6",IDC_LO_CUTOFF_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,206,47,9,14
+    RTEXT           "Gain:",IDC_STATIC,140,5,19,8
+    RTEXT           "Bias:",IDC_STATIC,140,20,19,8
+    RTEXT           "High cutoff:",IDC_STATIC,120,34,39,8
+    RTEXT           "Low cutoff:",IDC_STATIC,120,49,39,8
+    LTEXT           "Plugin by Yves Poissant 2002",IDC_STATIC,116,72,94,8
+    CONTROL         "Smooth",IDC_SMOOTH,"Button",BS_AUTOCHECKBOX | 
+                    BS_LEFTTEXT | BS_RIGHT | WS_TABSTOP,169,62,40,10
+    RTEXT           "&Lacunarity:",IDC_STATIC,25,33,35,8
+    EDITTEXT        IDC_LACUNARITY,62,32,44,14,ES_AUTOHSCROLL
+    CONTROL         "Spin5",IDC_LACUNARITY_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,102,32,9,14
+    RTEXT           "&Fractal Dimension:",IDC_STATIC,0,48,60,8
+    EDITTEXT        IDC_DIMENSION,62,47,44,14,ES_AUTOHSCROLL
+    CONTROL         "Spin5",IDC_DIMENSION_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,102,47,9,14
+    RTEXT           "Offset:",IDC_EXTRA,0,63,61,8
+    EDITTEXT        IDC_OFFSET,62,61,44,14,ES_AUTOHSCROLL
+    CONTROL         "Spin5",IDC_OFFSET_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,102,61,9,
+                    14
+    PUSHBUTTON      ">>",IDC_UPDATE,112,4,12,8
+    LTEXT           "Static",IDC_MIN,112,12,24,8
+    LTEXT           "Static",IDC_MAX,112,20,24,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_ATTRIBUTES_PAGE, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 215
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 78
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_TURBULENCE          ICON    DISCARDABLE     "turbulen.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_ATTRIBUTES_PAGE DLGINIT
+BEGIN
+    IDC_TURBULENCE_TYPE, 0x403, 12, 0
+0x7246, 0x6361, 0x6174, 0x206c, 0x7553, 0x006d, 
+    IDC_TURBULENCE_TYPE, 0x403, 7, 0
+0x6550, 0x6c72, 0x6e69, "\000" 
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_TURBULENCENAME      "Musgrave"
+    IDS_NOISEFN             "Noise Function"
+    IDS_COMBINER            "Blending Function"
+    IDS_GAIN                "Gain"
+    IDS_BIAS                "Bias"
+    IDS_HICUTOFF            "High Cutoff"
+    IDS_LOCUTOFF            "Low Cutoff"
+    IDS_SMOOTH              "Smooth"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_OCTAVES             "Octaves"
+    IDS_LACUNARITY          "Lacunarity"
+    IDS_DIMENSIONS          "Dimensions"
+    IDS_OFFSET              "Offset"
+    IDS_SHARPNESS           "Sharpness"
+    IDS_PERTURB             "Perturbation"
+    IDS_N_FRACSUM           "Fractal Sum"
+    IDS_N_PERLIN            "Perlin"
+    IDS_N_FRACPERLIN        "Fractal Perlin"
+    IDS_N_SINE              "Sine"
+    IDS_N_FRACSINE          "Fractal Sine"
+    IDS_N_FBM               "fBM"
+    IDS_N_VLFBM             "VL fBM"
+    IDS_N_HETEROMF          "Hetero Multi Fractal"
+    IDS_N_HYBRIDMF          "Hybrid Multi Fractal"
+    IDS_N_RIDGEDMF          "Ridged Multi Fractal"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_B_ADD               "Add"
+    IDS_B_MULTIPLY          "Multiply"
+    IDS_B_DARKEN            "Darken"
+    IDS_B_LIGHTEN           "Lighten"
+    IDS_B_COMPRESS          "Compress"
+    IDS_B_EXPAND            "Expand"
+    IDS_B_EXCLUSION         "Exclusion"
+    IDS_B_SOFTLIGHT         "Soft Light"
+    IDS_B_DODGE             "Dodge"
+    IDS_B_BURN              "Burn"
+    IDS_B_REFLECT           "Reflect"
+    IDS_B_GLOW              "Glow"
+    IDS_B_FREEZE            "Freeze"
+    IDS_B_HEAT              "Heat"
+    IDS_B_STAMP             "Stamp"
+    IDS_B_INVDODGE          "Inverted Dodge"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_B_INVBURN           "Inverted Burn"
+    IDS_B_SOFTDODGE         "Soft Dodge"
+    IDS_B_SOFTBURN          "Soft Burn"
+    IDS_SAMPLOPTIONS        "Sampling Options"
+    IDS_TRANSFEROPTIONS     "Transfer Options"
+    IDS_S_POINT             "Point Sample"
+    IDS_S_RADCYLINDRICAL    "Radial Cylindrical"
+    IDS_S_RADSPHERICAL      "Radial Spherical"
+    IDS_S_POLANGLE          "Polar - Angle"
+    IDS_S_POLARC            "Polar - Arc"
+    IDS_S_CIRANGLE          "Circular - Angle"
+    IDS_S_CIRARC            "Circular - Arc"
+    IDS_SAMPLEFN            "Sampler Type"
+    IDS_NSAMPLES            "Number of Samples"
+    IDS_SAMPLELEN           "Length of Samples"
+    IDS_SAMPLEAXIS          "Sample Axis"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_T_LINEAR            "Linear Transfer"
+    IDS_T_TRIANGULAR        "Trangular Wave Transfer"
+    IDS_T_SINUSOIDAL        "Sinusoidal Wave Transfer"
+    IDS_T_RECTANGULAR       "Rectangular Wave Transfer"
+    IDS_WAVEFN              "Transfer Type"
+    IDS_CYCLES              "Number of Cycles"
+    IDS_TILT                "Wave Tilt"
+    IDS_SHAPE               "Wave Shape"
+    IDS_FRACTOPTIONS        "Noise Options"
+    IDS_DATA                "Global Data"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+ IDS_B_SUBTRACT              "Substract"
+ IDS_B_SCREEN                "Screen"
+ IDS_B_DIFFERENCE            "Difference"
+ IDS_B_NEGATION              "Negation"
+ IDS_B_OVERLAY               "Overlay"
+ IDS_B_HARDLIGHT             "Hard Light"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif
+#include "afxres.rc"         // Standard components
+#endif
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

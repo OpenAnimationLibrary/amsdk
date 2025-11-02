@@ -1,0 +1,204 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// German (Germany) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON1               ICON                    "Shader.ico"
+#endif    // German (Germany) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "Coded by Yves Poissant"
+            VALUE "CompanyName", "Hash Inc"
+            VALUE "FileDescription", "Shader based on Ward Anisotropic Paper"
+            VALUE "FileVersion", "1, 0, 0, 1"
+            VALUE "InternalName", "WARD SHADER"
+            VALUE "LegalCopyright", "Copyright © 2005, Hash Inc."
+            VALUE "OriginalFilename", "WARD.SHD"
+            VALUE "ProductName", "Shader Dynamic Link Library"
+            VALUE "ProductVersion", "1, 0, 0, 1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_MENUFILTER          "Ward|"
+    IDS_SHADERNAME          "Ward"
+    IDS_ROUGHNESSX          "Tangent Roughness"
+    IDS_ROUGHNESSY          "Perpendicular Roughness"
+    IDS_GRAINSTART          "Grain Start"
+    IDS_GRAINEND            "Grain End"
+    IDS_ALIGNMENT           "Tangent Type"
+    IDS_N_TANGENTVECT       "Simple Tangent"
+    IDS_N_UPVECT            "Up Vector"
+    IDS_N_AXISVECT          "Axis Vector"
+    IDS_ISISOTROPIC         "Isotropic"
+    IDS_AXISBONE            "Axis bone"
+    IDS_ISBRDF              "BRDF normalisation"
+    IDS_N_ROLLEDBRASS       "Rolled Brass"
+    IDS_N_ROLLEDALUMINUM    "Rolled Aluminum"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_N_LIGHTLYBRUSHEDALUMINUM "Lightly Brushed Aluminum"
+    IDS_N_VARNISHEDPLYWOOD  "Varnished Plywood"
+    IDS_N_ENAMELFINISHEDMETAL "Enamel Finished Metal"
+    IDS_N_PAINTEDCARDBOARDBOX "Painted Cardboard Box"
+    IDS_N_BRUSHEDLATEXSEMIGLOSSMETAL "Brushed Semi Gloss Latex on Metal"
+    IDS_N_BRUSHEDLATEXSEMIGLOSSSHEETROCK 
+                            "Brushed Semi Gloss Latex on Sheetrock"
+    IDS_N_BRUSHEDLATEXSEMIGLOSSWOOD "Brushed Semi Gloss Latex on Wood"
+    IDS_N_BRUSHEDLATEXGLOSSMETAL "Brushed Gloss Latex on Metal"
+    IDS_N_BRUSHEDLATEXGLOSSSHEETROCK "Brushed Gloss Latex on Sheetrock"
+    IDS_N_BRUSHEDLATEXGLOSSWOOD "Brushed Gloss Latex on Wood"
+    IDS_N_ROLLEDLATEXSEMIGLOSSMETAL "Rolled Semi Gloss Latex on Metal"
+    IDS_N_ROLLEDLATEXSEMIGLOSSSHEETROCK "Rolled Semi Gloss Latex on Sheetrock"
+    IDS_N_ROLLEDLATEXSEMIGLOSSWOOD "Rolled Semi Gloss Latex on Wood"
+    IDS_N_ROLLEDLATEXGLOSSMETAL "Rolled Gloss Latex on Metal"
+    IDS_N_ROLLEDLATEXGLOSSSHEETROCK "Rolled Gloss Latex on Sheetrock"
+    IDS_N_ROLLEDLATEXGLOSSWOOD "Rolled Gloss Latex on Wood"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_N_SPRAYEDLATEXSEMIGLOSSMETAL "Sprayed Semi Gloss Latex on Metal"
+    IDS_N_SPRAYEDLATEXSEMIGLOSSSHEETROCK 
+                            "Sprayed Semi Gloss Latex on Sheetrock"
+    IDS_N_SPRAYEDLATEXSEMIGLOSSWOOD "Sprayed Semi Gloss Latex on Wood"
+    IDS_N_SPRAYEDLATEXGLOSSMETAL "Sprayed Gloss Latex on Metal"
+    IDS_N_SPRAYEDLATEXGLOSSSHEETROCK "Sprayed Gloss Latex on Sheetrock"
+    IDS_N_SPRAYEDLATEXGLOSSWOOD "Sprayed Gloss Latex on Wood"
+    IDS_N_CERAMICTILE       "Ceramic Tile"
+    IDS_N_GLOSSYPAPER       "Glossy Paper"
+    IDS_N_COMPUTERPLASTIC   "Computer Plastic"
+    IDS_N_PLASTICLAMINATE   "Plastic Laminate"
+    IDS_N_CUSTOM            "Custom"
+    IDS_N_SPECULARITYBASED  "Based on Specularity"
+    IDS_MATERIAL            "Material Presets"
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif
+#include "afxres.rc"         // Standard components
+#endif
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

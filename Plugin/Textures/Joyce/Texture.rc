@@ -1,0 +1,423 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "Hash, Inc.\0"
+            VALUE "FileDescription", "Dented Texture\0"
+            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "InternalName", "DENTED\0"
+            VALUE "LegalCopyright", "Copyright © 1997\0"
+            VALUE "OriginalFilename", "DENTED.ATX\0"
+            VALUE "ProductName", "DENTED Dynamic Link Library\0"
+            VALUE "ProductVersion", "1, 0, 0, 1\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_TEXTURE             ICON    DISCARDABLE     "texture.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_COLOUR_PAGE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 211
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 74
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_COLOUR_PAGE DIALOGEX DISCARDABLE  0, 0, 218, 81
+STYLE DS_3DLOOK | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Pencil Line",IDC_STATIC,7,7,204,67
+    CONTROL         "",IDC_BACK_COLOUR,"Button",BS_OWNERDRAW | WS_TABSTOP,13,
+                    19,30,20
+    EDITTEXT        IDC_BACK_TRANSPARENT,37,53,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin4",IDC_BACK_TRANSPARENT_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,73,52,9,14
+    LTEXT           "Width:",IDC_STATIC,13,56,22,8
+    EDITTEXT        IDC_NOISE,161,36,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin1",IDC_NOISE_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,195,36,9,
+                    14
+    LTEXT           "Noise :",IDC_STATIC,131,39,23,8
+    EDITTEXT        IDC_FREQ,161,52,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin2",IDC_FREQ_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,196,53,9,
+                    14
+    LTEXT           "Frequency :",IDC_STATIC,119,54,38,8
+    EDITTEXT        IDC_PVAR,161,20,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin1",IDC_PVAR_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,195,20,9,
+                    14
+    LTEXT           "Line Variation :",IDC_STATIC,109,23,48,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_TEXTURENAME         "ToonNation|Joyce"
+    IDS_PROPERTYTAB1        "Control"
+    IDS_AMPLITUDE           "Amplitude"
+    IDS_RED                 "Red"
+    IDS_GREEN               "Green"
+    IDS_BLUE                "Blue"
+    IDS_NOISE               "Noise"
+    IDS_COLOURS             "Pencil"
+    IDS_BLEND               "Blend"
+    IDS_POSITION            "Position"
+    IDS_WASH                "Wash"
+    IDS_DARK1               "Dark Layer 1"
+    IDS_DARK2               "Dark Layer 2"
+    IDS_LIGHT               "Light"
+    IDS_PAPERCOLOR          "Paper Color"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_PENCILCOLOR         "Pencil Color"
+    IDS_PENCILNOISE         "Pencil Noise"
+    IDS_PENCILFREQ          "Pencil Frequency"
+    IDS_WASHCOLOR           "Wash Color"
+    IDS_WASHNOISE           "Wash Noise"
+    IDS_WASHFREQ            "Wash Frequency"
+    IDS_PENCILSIZE          "Pencil Size"
+    IDS_WASHSIZE            "Wash Size"
+    IDS_DARK1COLOR          "Dark1 Color"
+    IDS_DARK2COLOR          "Dark2 Color"
+    IDS_DARK1NOISE          "Dark1 Noise"
+    IDS_DARK2NOISE          "Dark2 Noise"
+    IDS_DARK1FREQ           "Dark1 Frequency"
+    IDS_DARK2FREQ           "Dark2 Frequency"
+    IDS_DARK1SIZE           "Dark1 Size"
+    IDS_DARK2SIZE           "Dark2 Size"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_MIX                 "Mix"
+    IDS_FREQ                "Frequency"
+    IDS_BITMAP              "Bitmap"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.K.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_BLEND_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 211
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 74
+    END
+
+    IDD_WASH_PANEL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 211
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 74
+    END
+
+    IDD_DARK1_PANEL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 211
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 74
+    END
+
+    IDD_DARK2_PANEL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 211
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 74
+    END
+
+    IDD_LIGHT_PANEL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 211
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 74
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_BLEND_DIALOG DIALOGEX DISCARDABLE  0, 0, 218, 81
+STYLE DS_3DLOOK | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Paper Texture",IDC_STATIC,7,7,204,67
+    EDITTEXT        IDC_BLEND_AMT,55,20,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin1",IDC_BLEND_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,89,20,10,
+                    14
+    LTEXT           "Paper % :",IDC_STATIC,13,22,33,8
+    EDITTEXT        IDC_PAPER_FREQ,55,36,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin1",IDC_PAPER_FREQ_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,91,36,9,14
+    LTEXT           "Paper Freq :",IDC_STATIC,13,39,40,8
+    EDITTEXT        IDC_TEXTURE_NAME,55,53,129,15,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_TEXTURE_BUT,184,53,21,15
+    LTEXT           "Texture :",IDC_STATIC,14,57,29,8
+END
+
+IDD_WASH_PANEL DIALOGEX DISCARDABLE  0, 0, 218, 81
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Wash",IDC_STATIC,7,7,204,67
+    CONTROL         "",IDC_WASH_COLOUR,"Button",BS_OWNERDRAW | WS_TABSTOP,13,
+                    19,30,20
+    EDITTEXT        IDC_WASH,37,53,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin4",IDC_WASH_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,73,52,9,
+                    14
+    LTEXT           "Width:",IDC_STATIC,13,56,22,8
+    EDITTEXT        IDC_WASH_NOISE,161,36,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin1",IDC_WASH_NOISE_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,195,36,9,14
+    LTEXT           "Noise :",IDC_STATIC,131,39,23,8
+    EDITTEXT        IDC_WASH_FREQ,161,52,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin2",IDC_WASH_FREQ_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,196,53,9,14
+    LTEXT           "Frequency :",IDC_STATIC,119,54,38,8
+END
+
+IDD_DARK1_PANEL DIALOGEX DISCARDABLE  0, 0, 218, 81
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    CONTROL         "",IDC_DARK1_COLOUR,"Button",BS_OWNERDRAW | WS_TABSTOP,
+                    13,19,30,20
+    EDITTEXT        IDC_DARK1,37,53,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin4",IDC_DARK1_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,73,52,9,
+                    14
+    LTEXT           "Width:",IDC_STATIC,13,56,22,8
+    EDITTEXT        IDC_DARK1_NOISE,161,36,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin1",IDC_DARK1_NOISE_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,195,36,9,14
+    LTEXT           "Noise :",IDC_STATIC,131,39,23,8
+    EDITTEXT        IDC_DARK1_FREQ,161,52,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin2",IDC_DARK1_FREQ_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,196,53,9,14
+    LTEXT           "Frequency :",IDC_STATIC,119,54,38,8
+    GROUPBOX        "Dark Layer 1",IDC_STATIC,7,7,204,67
+END
+
+IDD_DARK2_PANEL DIALOGEX DISCARDABLE  0, 0, 218, 81
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    CONTROL         "",IDC_DARK2_COLOUR,"Button",BS_OWNERDRAW | WS_TABSTOP,
+                    13,19,30,20
+    EDITTEXT        IDC_DARK2,37,53,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin4",IDC_DARK2_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,73,52,9,
+                    14
+    LTEXT           "Width:",IDC_STATIC,13,56,22,8
+    EDITTEXT        IDC_DARK2_NOISE,161,36,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin1",IDC_DARK2_NOISE_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,195,36,9,14
+    LTEXT           "Noise :",IDC_STATIC,131,39,23,8
+    EDITTEXT        IDC_DARK2_FREQ,161,52,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin2",IDC_DARK2_FREQ_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,196,53,9,14
+    LTEXT           "Frequency :",IDC_STATIC,119,54,38,8
+    GROUPBOX        "Dark Layer 2",IDC_STATIC,7,7,204,67
+END
+
+IDD_LIGHT_PANEL DIALOGEX DISCARDABLE  0, 0, 218, 81
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Light Position ",IDC_STATIC,7,7,204,67
+    LTEXT           "X :",IDC_STATIC,40,21,10,8
+    EDITTEXT        IDC_LIGHTX,59,18,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin1",IDC_LIGHTX_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,94,19,9,
+                    14
+    LTEXT           "Y :",IDC_STATIC,39,39,10,8
+    EDITTEXT        IDC_LIGHTY,59,35,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin2",IDC_LIGHTY_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,93,35,9,
+                    14
+    LTEXT           "Z :",IDC_STATIC,39,56,10,8
+    EDITTEXT        IDC_LIGHTZ,59,52,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin3",IDC_LIGHTZ_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,95,53,9,
+                    14
+    CONTROL         "",IDC_PAPER_COLOUR,"Button",BS_OWNERDRAW | WS_TABSTOP,
+                    169,30,30,20
+    LTEXT           "Paper Colour :",IDC_STATIC,119,37,46,8
+END
+
+#endif    // English (U.K.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif
+#include "afxres.rc"         // Standard components
+#endif
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

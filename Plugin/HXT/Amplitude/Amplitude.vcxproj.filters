@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{05ebe48b-5a1d-45f5-b829-3aaf8b32810b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header">
+      <UniqueIdentifier>{3d22f8a8-c2f8-4154-b26c-00b008d79cb9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{e5a077c2-4cd1-4206-81e5-548552319343}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Entry.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Amplitude.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="worker.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Wave.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="ImportDlg.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="SpectrumGraph.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Fft.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="BandDlg.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Amplitude.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="StdAfx.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Wave.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="ImportDlg.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="struct.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="SpectrumGraph.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="BandDlg.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Amplitude.rc">
+      <Filter>Resource</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\Amplitude.rc2">
+      <Filter>Resource</Filter>
+    </None>
+  </ItemGroup>
+</Project>

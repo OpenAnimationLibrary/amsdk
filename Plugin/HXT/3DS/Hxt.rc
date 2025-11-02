@@ -1,0 +1,296 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Englisch (USA) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\HXT.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "FileDescription", "HXT DLL"
+            VALUE "FileVersion", "1, 0, 0, 1"
+            VALUE "InternalName", "3D Studio Object  Plugin"
+            VALUE "LegalCopyright", "Copyright (C) 2000"
+            VALUE "OriginalFilename", "3DS.HXT"
+            VALUE "ProductName", "HXT Dynamic Link Library"
+            VALUE "ProductVersion", "1, 0, 0, 1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_EXPORTMODEL_DIALOG DIALOGEX 0, 0, 203, 183
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Export 3DS"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "File Name",IDC_STATIC,5,7,190,31
+    GROUPBOX        "Polygons Per Patch",IDC_POLYSUB_GR,7,43,188,42,WS_GROUP
+    GROUPBOX        "",IDC_STATIC,7,98,189,41,WS_GROUP
+    LTEXT           "",IDC_FILENAME,11,18,157,13,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "...",IDC_BROWSE,174,18,15,13
+    CONTROL         "1",IDC_SUB1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,13,55,20,10
+    CONTROL         "4",IDC_SUB4,"Button",BS_AUTORADIOBUTTON,46,55,20,10
+    CONTROL         "16",IDC_SUB16,"Button",BS_AUTORADIOBUTTON,79,55,24,10
+    CONTROL         "64",IDC_SUB32,"Button",BS_AUTORADIOBUTTON,116,55,24,10
+    CONTROL         "256",IDC_SUB64,"Button",BS_AUTORADIOBUTTON,153,55,24,10
+    CONTROL         "1024",IDC_SUB256,"Button",BS_AUTORADIOBUTTON,13,69,29,10
+    CONTROL         "4096",IDC_SUB512,"Button",BS_AUTORADIOBUTTON,79,69,34,10
+    CONTROL         "Variable",IDC_SUBVARIABLE,"Button",BS_AUTORADIOBUTTON,153,69,41,10
+    CONTROL         "Generate Model Maps ( if nessessary )",IDC_GENERATEMODELMAPS,
+                    "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,15,98,136,10
+    RTEXT           "M&in Size:",IDC_STATIC,14,120,30,8
+    COMBOBOX        IDC_MINSIZE_COMBO,48,118,48,86,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "M&ax Size:",IDC_STATIC,100,120,39,8
+    COMBOBOX        IDC_MAXSIZE_COMBO,140,118,48,86,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Apply displacement map to geometry",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,146,167,10
+    DEFPUSHBUTTON   "OK",IDOK,88,162,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,145,162,50,14
+END
+
+IDD_EXPORTMODELS_DIALOG DIALOGEX 0, 0, 203, 239
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Export 3DS"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Output Directory",IDC_STATIC,7,82,189,31
+    GROUPBOX        "Polygons Per Patch",IDC_POLYSUB_GR,7,118,191,44,WS_GROUP
+    GROUPBOX        "",IDC_STATIC,7,174,190,33,WS_GROUP
+    LTEXT           "Models to export:",IDC_LISTLABEL,7,7,67,8
+    LISTBOX         IDC_MODELLIST_COMBO,7,15,131,62,LBS_SORT | LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "",IDC_OUTPUTDIR,13,94,152,13,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "...",IDC_BROWSE,173,94,15,13
+    CONTROL         "1",IDC_SUB1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,13,130,20,10
+    CONTROL         "4",IDC_SUB4,"Button",BS_AUTORADIOBUTTON,46,130,20,10
+    CONTROL         "16",IDC_SUB16,"Button",BS_AUTORADIOBUTTON,79,130,24,10
+    CONTROL         "64",IDC_SUB32,"Button",BS_AUTORADIOBUTTON,116,130,24,10
+    CONTROL         "256",IDC_SUB64,"Button",BS_AUTORADIOBUTTON,153,130,24,10
+    CONTROL         "1024",IDC_SUB256,"Button",BS_AUTORADIOBUTTON,13,145,29,10
+    CONTROL         "4096",IDC_SUB512,"Button",BS_AUTORADIOBUTTON,79,145,34,10
+    CONTROL         "Variable",IDC_SUBVARIABLE,"Button",BS_AUTORADIOBUTTON,153,145,41,10
+    CONTROL         "Generate Model Maps ( if nessessary )",IDC_GENERATEMODELMAPS,
+                    "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,13,169,136,10
+    RTEXT           "M&in Size:",IDC_STATIC,15,192,30,8
+    COMBOBOX        IDC_MINSIZE_COMBO,49,188,48,86,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "M&ax Size:",IDC_STATIC,101,192,39,8
+    COMBOBOX        IDC_MAXSIZE_COMBO,141,188,48,86,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Apply displacement/bump mapping to geometry",IDC_CHECK1,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,214,167,10
+    DEFPUSHBUTTON   "OK",IDOK,146,15,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,146,33,50,14
+END
+
+IDD_IMPORT_DIALOG DIALOGEX 0, 0, 186, 46
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Import 3DS"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LTEXT           "&Peak points if greater than:",IDC_STATIC,7,7,116,8
+    EDITTEXT        IDC_PEAKTOLERANCE,7,16,40,14,ES_AUTOHSCROLL
+    LTEXT           "degrees.",IDC_STATIC,51,20,28,8
+    DEFPUSHBUTTON   "OK",IDOK,129,7,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,129,24,50,14
+END
+
+IDD_TEXTUREMAP_DIALOG DIALOGEX 0, 0, 286, 223
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Texture Maps"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LTEXT           "Texture map file names must be 8 characters or less to comply with MSDos 8.3 standard and the 3DS file format.",IDC_STATIC,7,12,212,22
+    LTEXT           "The following texture maps have been renamed in the exported 3DS file only.  To properly have the 3DS file load you must either rename the physical texture map filename or make a copy of it with the new truncated name.",IDC_STATIC,7,40,272,30
+    CONTROL         "List1",IDC_FILENAMES,"SysListView32",LVS_REPORT | WS_BORDER | WS_TABSTOP,7,70,272,79
+    LTEXT           "Let Animation Master create a copy of all texture maps and place them in the same directory as the exported 3DS file?  This will insure that all texture maps are 8 characters or less and consolidate them all in to one common location.",IDC_STATIC,7,153,272,26
+    LTEXT           "This will also help other software packages load the 3DS file's textures since the file format doesn't support file paths, just filenames.",IDC_STATIC,7,183,270,16
+    CONTROL         "Yes",IDC_COPYMAPSYES,"Button",BS_AUTORADIOBUTTON | WS_GROUP,107,206,28,10
+    CONTROL         "No",IDC_COPYMAPSNO,"Button",BS_AUTORADIOBUTTON,153,206,25,10
+    DEFPUSHBUTTON   "OK",IDOK,229,7,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,229,23,50,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_EXPORTMODEL_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 196
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 176
+    END
+
+    IDD_EXPORTMODELS_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 196
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 232
+    END
+
+    IDD_IMPORT_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 39
+    END
+
+    IDD_TEXTUREMAP_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 279
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 216
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_MENUFILTER          "3D Studio (Autodesk Ltd) (*.3DS)..."
+    IDS_EXPORTTITLE         "Export 3DS"
+    IDS_FILEFILTERS         "3D Studio (Autodesk Ltd)|*.3ds|HASH||"
+    IDS_CHOOSEDIRECTORY     "Choose Directory"
+    IDS_ERROREXPORTINGMODEL "Error Exporting Model [%1]."
+    IDS_IMPORTTITLE         "Import 3D Studio (Autodesk Ltd) (*.3DS)"
+    IDS_ERRORIMPORTINGMODEL "Error Importing Model [%1]."
+    IDS_ACTIONHASNOMODELASSIGNED 
+                            "Action [%1] has no Model assigned to it.  You must edit the Action to assign a Model."
+    IDS_ACTIONSTOEXPORT     "Actions to export:"
+    IDS_ERRORIMPORTING      "Error Importing"
+    IDS_INVALIDVERSION      "Invalid 3DS Model file version"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_INVALIDFILEFORMAT   "Invalid 3DS Model file %1"
+    IDS_CANTOPENFILE        "Can't open file %1, error = %2\n"
+    IDS_IMPORT3DS           "Import 3DS"
+    IDS_INVALIDNUMBEROFVERTICESPOLYS 
+                            "Invalid number of vertices or polygons.  Each must be less then 65535.\n This model has %1 vertices and %2 polygons.\n  Exported model will be truncated."
+    IDS_MATERIAL            "Material #%1"
+    IDS_ORIGINALFILENAME    "Original Filename"
+    IDS_NEWFILENAME         "New Filename"
+    IDS_UNABLETOCOPYFILE    "Unable to copy file %1 to %2."
+END
+
+#endif    // Englisch (USA) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\HXT.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"         // Standard components
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

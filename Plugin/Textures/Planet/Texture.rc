@@ -1,0 +1,333 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_INFO_PAGE, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 215
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 78
+    END
+
+    IDD_ATTRIBUTES_PAGE3, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 215
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 78
+    END
+
+    IDD_ATTRIBUTES_PAGE2, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 215
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 78
+    END
+
+    IDD_ATTRIBUTES_PAGE1, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 215
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 78
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_LOGO                BITMAP  DISCARDABLE     "ABlogo.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_INFO_PAGE DIALOGEX DISCARDABLE  0, 0, 218, 81
+STYLE DS_3DLOOK | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_INFO,3,3,212,75,ES_MULTILINE | ES_AUTOVSCROLL | 
+                    ES_READONLY | WS_VSCROLL | NOT WS_TABSTOP
+END
+
+IDD_ATTRIBUTES_PAGE3 DIALOGEX DISCARDABLE  0, 0, 218, 81
+STYLE DS_3DLOOK | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    RTEXT           "&Size:",IDC_STATIC,4,14,43,8
+    EDITTEXT        IDC_MOTTLE_SIZE,50,11,51,15,ES_AUTOHSCROLL
+    CONTROL         "Spin3",IDC_MOTTLE_SIZE_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,99,11,9,14
+    RTEXT           "&Depth Noise:",IDC_STATIC,8,40,41,8
+    EDITTEXT        IDC_DEPTH_NOISE,50,37,51,15,ES_AUTOHSCROLL
+    CONTROL         "Spin3",IDC_DEPTH_NOISE_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,99,37,9,14
+    RTEXT           "&More Snow:",IDC_STATIC,8,60,41,8
+    EDITTEXT        IDC_SNOW,50,57,51,14,ES_AUTOHSCROLL
+    CONTROL         "Spin4",IDC_SNOW_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,99,57,9,
+                    14
+    RTEXT           "M&agnitude:",IDC_STATIC,112,14,37,8
+    EDITTEXT        IDC_MOTTLE_MAG,150,11,51,14,ES_AUTOHSCROLL
+    CONTROL         "Spin5",IDC_MOTTLE_MAG_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,197,11,11,14
+    RTEXT           "&Max Depth:",IDC_STATIC,112,40,37,8
+    EDITTEXT        IDC_MAX_DEPTH,150,37,51,14,ES_AUTOHSCROLL
+    CONTROL         "Spin5",IDC_MAX_DEPTH_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,197,37,9,14
+    CONTROL         131,IDC_STATIC,"Static",SS_BITMAP,139,61,78,20
+    GROUPBOX        "Land Mottling",IDC_STATIC,3,2,211,26
+    GROUPBOX        "Water Coloring",IDC_STATIC,3,28,211,26
+END
+
+IDD_ATTRIBUTES_PAGE2 DIALOGEX DISCARDABLE  0, 0, 218, 81
+STYLE DS_3DLOOK | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    RTEXT           "&Octaves :",-1,4,14,43,8
+    EDITTEXT        IDC_OCTAVES,50,11,51,15,ES_AUTOHSCROLL
+    CONTROL         "Spin3",IDC_OCTAVES_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,99,11,9,14
+    RTEXT           "&Freq. Mult.:",-1,12,34,37,8
+    EDITTEXT        IDC_FREQ,50,31,51,15,ES_AUTOHSCROLL
+    CONTROL         "Spin3",IDC_FREQ_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,99,31,9,
+                    14
+    RTEXT           "&Ampl. Mult.:",-1,8,55,41,8
+    EDITTEXT        IDC_AMPL,50,52,51,14,ES_AUTOHSCROLL
+    CONTROL         "Spin4",IDC_AMPL_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,99,52,9,
+                    14
+    RTEXT           "&Noise mult.:",-1,112,14,37,8
+    EDITTEXT        IDC_NOISE_MULT,150,11,51,14,ES_AUTOHSCROLL
+    CONTROL         "Spin5",IDC_NOISE_MULT_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,197,11,11,14
+    RTEXT           "&Seed:",-1,121,34,28,8
+    EDITTEXT        IDC_SEED,150,31,51,14,ES_AUTOHSCROLL
+    CONTROL         "Spin5",IDC_SEED_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,197,31,9,
+                    14
+    RTEXT           "&Offset:",-1,121,54,28,8
+    EDITTEXT        IDC_OFFSET,149,51,51,14,ES_AUTOHSCROLL
+    CONTROL         "Spin5",IDC_OFFSET_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,197,51,9,
+                    14
+END
+
+IDD_ATTRIBUTES_PAGE1 DIALOGEX DISCARDABLE  0, 0, 218, 81
+STYLE DS_3DLOOK | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    RTEXT           "&Feature Size:",IDC_STATIC,8,14,41,8
+    EDITTEXT        IDC_FEATURE_SIZE,50,11,51,14,ES_AUTOHSCROLL
+    CONTROL         "Spin5",IDC_FEATURE_SIZE_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,98,11,9,14
+    RTEXT           "&Water Level:",IDC_STATIC,8,34,41,8
+    EDITTEXT        IDC_WATER,50,31,51,14,ES_AUTOHSCROLL
+    CONTROL         "Spin3",IDC_WATER_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,97,31,9,
+                    14
+    RTEXT           "&Ice Caps:",IDC_STATIC,10,55,39,8
+    EDITTEXT        IDC_ICE,50,52,51,14,ES_AUTOHSCROLL
+    CONTROL         "Spin4",IDC_ICE_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,97,52,9,
+                    14
+    CONTROL         131,IDC_STATIC,"Static",SS_BITMAP | SS_NOTIFY,136,58,81,
+                    23
+    RTEXT           "&Bump Size:",IDC_STATIC,112,34,37,8
+    EDITTEXT        IDC_BUMP,150,31,51,14,ES_AUTOHSCROLL
+    CONTROL         "Spin3",IDC_BUMP_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,198,31,9,
+                    14
+    RTEXT           "&Polar Dist.:",IDC_STATIC,108,13,41,8
+    EDITTEXT        IDC_POLAR_DIST,150,11,51,14,ES_AUTOHSCROLL
+    CONTROL         "Spin5",IDC_POLAR_DIST_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,198,11,9,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_TEXTURE             ICON    DISCARDABLE     "texture.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "Alibi Images\0"
+            VALUE "FileDescription", "Dented Texture\0"
+            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "InternalName", "DENTED\0"
+            VALUE "LegalCopyright", "Copyright © 1997\0"
+            VALUE "OriginalFilename", "DENTED.ATX\0"
+            VALUE "ProductName", "Elemental Shaders\0"
+            VALUE "ProductVersion", "1, 0, 0, 1\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_TEXTURENAME         "Alibi|Planet"
+    IDS_ATTRIBUTES_PAGE1    "Overall"
+    IDS_ATTRIBUTES_PAGE2    "Noise"
+    IDS_ATTRIBUTES_PAGE3    "More"
+    IDS_INFO_PAGE           "Help"
+    IDS_FEATURESIZE         "Feature Size"
+    IDS_POLARDISTANCE       "Polar Distance"
+    IDS_WATER               "Water"
+    IDS_BUMPSTRENGTH        "Bump Strength"
+    IDS_ICE                 "Ice"
+    IDS_FREQUENCYFACTOR     "Frequency Factor"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_AMPLITUDEFACTOR     "Amplitude Factor"
+    IDS_OCTAVES             "Octaves"
+    IDS_NOISEFACTOR         "Noise Factor"
+    IDS_SEED                "Seed"
+    IDS_OFFSET              "Offset"
+    IDS_MOTTLESIZE          "Mottle Size"
+    IDS_MOTTLEMAGNITUDE     "Mottle Magnitude"
+    IDS_DEPTHNOISE          "Depth Noise"
+    IDS_MAXDEPTH            "Max Depth"
+    IDS_SNOW                "Snow"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif
+#include "afxres.rc"         // Standard components
+#endif
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

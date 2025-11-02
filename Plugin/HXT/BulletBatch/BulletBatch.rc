@@ -1,0 +1,242 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// German (Germany) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+#pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 7, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\BulletBatch.rc2""  // Nicht mit Microsoft Visual C++ bearbeitete Ressourcen\r\n"
+    "#include ""afxres.rc""          // Standardkomponenten\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+#endif    // German (Germany) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x29L
+#else
+ FILEFLAGS 0x28L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040704b0"
+        BEGIN
+            VALUE "Comments", "Plugin for A:M  V19"
+            VALUE "CompanyName", "Steffen Gross"
+            VALUE "FileDescription", "BulletBatch HXT"
+            VALUE "FileVersion", "1, 0, 0, 1"
+            VALUE "InternalName", "BulletBatch"
+            VALUE "LegalCopyright", "Copyright (C) 2017"
+            VALUE "LegalTrademarks", "Steffen Gross"
+            VALUE "OriginalFilename", "BulletBatch.hxt"
+            VALUE "ProductName", "BulletBatch Dynamic Link Library"
+            VALUE "ProductVersion", "1, 0, 0, 1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x407, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG1 DIALOGEX 0, 0, 305, 245
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Add a BulletConstraint to the selected models"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Create",IDOK,7,224,38,14
+    PUSHBUTTON      "Cancel",IDCANCEL,260,224,38,14
+    LISTBOX         IDC_LIST1,7,7,162,190,LBS_SORT | LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Select All",IDC_BUTTON1,7,204,50,14
+    PUSHBUTTON      "Deselect All",IDC_BUTTON2,73,204,50,14
+    COMBOBOX        IDC_COMBO1,182,23,97,87,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Calculate Weight",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,182,44,70,10
+    EDITTEXT        IDC_EDIT7,245,59,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT1,245,75,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT2,245,91,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT3,245,107,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT8,245,123,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT9,245,139,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT4,245,155,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT5,245,171,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT6,245,187,40,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Set to default values",IDC_BUTTON3,181,204,103,14
+    LTEXT           "Hulltype",IDC_STATIC,182,7,26,8
+    LTEXT           "Weight",IDC_STATIC2,182,78,24,8
+    LTEXT           "Bounce",IDC_STATIC3,182,94,26,8
+    LTEXT           "Friction",IDC_STATIC4,182,110,24,8
+    LTEXT           "Linear Damping",IDC_STATIC5,182,158,50,8
+    LTEXT           "Angular Damping",IDC_STATIC6,182,174,55,8
+    LTEXT           "Margin",IDC_STATIC7,182,190,22,8
+    LTEXT           "Density",IDC_STATIC8,182,62,24,8
+    LTEXT           "Rolling Friction",IDC_STATIC9,181,126,47,8
+    LTEXT           "Spinning Friction",IDC_STATIC10,181,142,53,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_DIALOG1, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 298
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 238
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_DIALOG1 AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_DIALOG1 DLGINIT
+BEGIN
+    IDC_COMBO1, 0x403, 4, 0
+0x6f42, 0x0078, 
+    IDC_COMBO1, 0x403, 7, 0
+0x7053, 0x6568, 0x6572, "\000" 
+    IDC_COMBO1, 0x403, 8, 0
+0x6143, 0x7370, 0x6c75, 0x0065, 
+    IDC_COMBO1, 0x403, 9, 0
+0x7943, 0x696c, 0x646e, 0x7265, "\000" 
+    IDC_COMBO1, 0x403, 5, 0
+0x6f43, 0x656e, "\000" 
+    IDC_COMBO1, 0x403, 12, 0
+0x6f43, 0x766e, 0x7865, 0x4820, 0x6c75, 0x006c, 
+    IDC_COMBO1, 0x403, 5, 0
+0x654d, 0x6873, "\000" 
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_STRING1             "Add Bullet Constraints to multiple models"
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+#ifdef _WIN32
+LANGUAGE 7, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\BulletBatch.rc2"  // Nicht mit Microsoft Visual C++ bearbeitete Ressourcen
+#include "afxres.rc"          // Standardkomponenten
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

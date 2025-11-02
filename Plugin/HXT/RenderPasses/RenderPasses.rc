@@ -1,0 +1,232 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Deutsch (Deutschland) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+#pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 7, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\RenderPasses.rc2""  // Nicht mit Microsoft Visual C++ bearbeitete Ressourcen\r\n"
+    "#include ""l.deu\\afxres.rc""          // Standardkomponenten\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+#endif    // Deutsch (Deutschland) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Englisch (USA) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x21L
+#else
+ FILEFLAGS 0x20L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040704b0"
+        BEGIN
+            VALUE "Comments", "Plugin for A:M V16 and higher"
+            VALUE "FileDescription", "RenderPasses hxt"
+            VALUE "FileVersion", "1, 0, 0, 1"
+            VALUE "InternalName", "passes"
+            VALUE "LegalCopyright", "Copyright (C) 2003"
+            VALUE "LegalTrademarks", "Steffen Gross"
+            VALUE "OriginalFilename", "RenderPasses.hxt"
+            VALUE "ProductName", "RenderPasses Dynamic Link Library"
+            VALUE "ProductVersion", "0.3"
+            VALUE "SpecialBuild", "27.06.2010"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x407, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG1 DIALOGEX 0, 0, 138, 131
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Passes"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,7,110,36,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,51,110,36,14
+    CONTROL         "Diffuse shading",IDC_RADIO1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,14,13,62,10
+    CONTROL         "Specularity",IDC_RADIO2,"Button",BS_AUTORADIOBUTTON,14,31,50,10
+    CONTROL         "Shadow",IDC_RADIO3,"Button",BS_AUTORADIOBUTTON,14,49,41,10
+    CONTROL         "Depth of field",IDC_RADIO4,"Button",BS_AUTORADIOBUTTON,14,67,55,10
+    CONTROL         "user defined shading",IDC_RADIO5,"Button",BS_AUTORADIOBUTTON,14,85,79,10
+END
+
+IDD_DIALOG2 DIALOGEX 0, 0, 323, 277
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "User defined shading"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,166,256,58,14
+    PUSHBUTTON      "Cancel",IDCANCEL,254,256,58,14
+    CONTROL         "color",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,18,37,10
+    PUSHBUTTON      "Color",IDC_BUTTON1,52,16,34,14,WS_DISABLED
+    CONTROL         "color",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,52,37,10
+    PUSHBUTTON      "Color",IDC_BUTTON2,52,50,34,14,WS_DISABLED
+    CONTROL         "intensity",IDC_CHECK3,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,74,37,10
+    EDITTEXT        IDC_EDIT1,52,72,34,14,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    CONTROL         "color",IDC_CHECK4,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,109,37,10
+    PUSHBUTTON      "Color",IDC_BUTTON3,52,107,34,14,WS_DISABLED
+    CONTROL         "intensity",IDC_CHECK5,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,128,37,10
+    EDITTEXT        IDC_EDIT2,52,126,34,14,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    CONTROL         "size",IDC_CHECK9,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,146,37,10
+    EDITTEXT        IDC_EDIT5,52,144,34,14,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    CONTROL         "intensity",IDC_CHECK6,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,181,37,10
+    EDITTEXT        IDC_EDIT3,52,179,34,14,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    CONTROL         "intensity",IDC_CHECK7,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,212,37,10
+    EDITTEXT        IDC_EDIT4,52,210,34,14,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    CONTROL         "all types",IDC_CHECK8,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,13,231,41,10
+    CONTROL         "all",IDC_RADIO1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,99,17,23,10
+    CONTROL         "models",IDC_RADIO2,"Button",BS_AUTORADIOBUTTON,136,17,39,10
+    CONTROL         "models/groups",IDC_RADIO3,"Button",BS_AUTORADIOBUTTON,192,17,63,10
+    CONTROL         "models/groups/ decals",IDC_RADIO4,"Button",BS_AUTORADIOBUTTON,99,30,84,10
+    CONTROL         "models/groups/decals/materials",IDC_RADIO5,"Button",BS_AUTORADIOBUTTON,192,30,115,10
+    LISTBOX         IDC_LIST1,98,47,213,199,LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    GROUPBOX        "Diffuse",IDC_STATIC,7,7,83,28
+    GROUPBOX        "Ambience",IDC_STATIC,7,40,83,49
+    GROUPBOX        "Specular",IDC_STATIC,7,94,83,70
+    GROUPBOX        "Reflection",IDC_STATIC,7,169,83,28
+    GROUPBOX        "Affected",IDC_STATIC,94,7,222,244
+    GROUPBOX        "Decal",IDC_STATIC,7,202,83,49
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_DIALOG1, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 131
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 124
+    END
+
+    IDD_DIALOG2, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 316
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 270
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_STRING1             "RenderPasses"
+END
+
+#endif    // Englisch (USA) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+#ifdef _WIN32
+LANGUAGE 7, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\RenderPasses.rc2"  // Nicht mit Microsoft Visual C++ bearbeitete Ressourcen
+#include "l.deu\afxres.rc"          // Standardkomponenten
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
