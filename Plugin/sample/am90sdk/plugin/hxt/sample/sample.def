@@ -1,0 +1,7 @@
+; sample.def : Deklariert die Modul-Parameter für die DLL.
+
+LIBRARY      "sample"
+DESCRIPTION  'sample Windows Dynamic Link Library'
+
+EXPORTS
+    ; Explizite Exporte können hier eingefügt werden
