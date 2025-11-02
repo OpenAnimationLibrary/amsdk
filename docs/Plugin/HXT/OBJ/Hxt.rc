@@ -1,0 +1,383 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\Hxt.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "Created by Arthur Walasek"
+            VALUE "CompanyName", "Assist Consulting"
+            VALUE "FileDescription", "HXT DLL"
+            VALUE "FileVersion", "1, 0, 0, 1"
+            VALUE "InternalName", "Object Model Plugin for A:M"
+            VALUE "LegalCopyright", "Copyright (C) 2006"
+            VALUE "OriginalFilename", "OBJ.HXT"
+            VALUE "ProductName", "HXT Dynamic Link Library"
+            VALUE "ProductVersion", "1, 0, 0, 1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_IMPORT_DIALOG DIALOGEX 0, 0, 121, 114
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Import OBJ"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LTEXT           "&Peak points, if greater than:",IDC_STATIC,7,7,103,8
+    EDITTEXT        IDC_PEAKTOLERANCE,7,21,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    LTEXT           "degrees.",IDC_STATIC,52,24,28,8
+    EDITTEXT        IDC_IMPORTSCALE,52,38,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    LTEXT           "Scale model",IDC_STATIC,7,41,39,8
+    DEFPUSHBUTTON   "OK",IDOK,7,93,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,64,93,50,14
+    CONTROL         "Display info messagebox",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,55,93,10
+    CONTROL         "Open view after import",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,72,87,10
+END
+
+IDD_EXPORTMODELDIALOG DIALOGEX 0, 0, 206, 273
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Export OBJ"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LTEXT           "",IDC_FILENAME,11,18,157,13,0,WS_EX_STATICEDGE
+    LTEXT           "Scale model",IDC_STATIC,15,233,39,8
+    GROUPBOX        "File Name",IDC_STATIC,5,7,190,31
+    GROUPBOX        "Polygons Per Patch",IDC_POLYSUB_GR,7,43,191,40,WS_GROUP
+    GROUPBOX        "",IDC_STATIC,7,98,192,40
+    RTEXT           "M&in Size:",IDC_STATIC,15,119,30,8
+    RTEXT           "M&ax Size:",IDC_STATIC,101,119,39,8
+    PUSHBUTTON      "...",IDC_BROWSE,174,18,15,13
+    CONTROL         "1",IDC_SUB1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,13,54,25,10
+    CONTROL         "4",IDC_SUB4,"Button",BS_AUTORADIOBUTTON,48,54,23,10
+    CONTROL         "16",IDC_SUB16,"Button",BS_AUTORADIOBUTTON,81,54,24,10
+    CONTROL         "64",IDC_SUB32,"Button",BS_AUTORADIOBUTTON,115,54,24,10
+    CONTROL         "256",IDC_SUB64,"Button",BS_AUTORADIOBUTTON,149,54,24,10
+    CONTROL         "1024",IDC_SUB256,"Button",BS_AUTORADIOBUTTON,13,68,29,10
+    CONTROL         "4096",IDC_SUB512,"Button",BS_AUTORADIOBUTTON,81,68,34,10
+    CONTROL         "Variable",IDC_SUBVARIABLE,"Button",BS_AUTORADIOBUTTON,149,68,48,10
+    CONTROL         "Generate Model Maps ( if nessessary )",IDC_GENERATEMODELMAPS,
+                    "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,13,97,136,10
+    COMBOBOX        IDC_MINSIZE_COMBO,49,116,48,86,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_MAXSIZE_COMBO,141,116,48,86,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Export only Triangles in mesh",IDC_TRIANGLES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,141,127,12
+    CONTROL         "Apply displacement map to geometry",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,161,167,10
+    CONTROL         "Remove degenerated faces at export",IDC_CHECK4,"Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,15,179,133,10
+    CONTROL         "Export normals",IDC_CHECK5,"Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,15,197,133,10
+    CONTROL         "Export only visible patches",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,215,99,10
+    EDITTEXT        IDC_EXPORTSCALE,67,230,40,14,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,88,252,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,145,252,50,14
+END
+
+IDD_EXPORTCHORDIALOG DIALOGEX 0, 0, 224, 295
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Export OBJ"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "",IDC_STATIC,5,86,214,40
+    GROUPBOX        "Polygons Per Patch",IDC_POLYSUB_GR,5,43,214,38,WS_GROUP
+    GROUPBOX        "File Name",IDC_STATIC,5,7,214,31
+    GROUPBOX        "Export Triangles",IDC_STATIC,5,131,214,29
+    GROUPBOX        "Export Options",IDC_STATIC,5,204,214,27
+    LTEXT           "",IDC_FILENAME,11,18,184,13,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "...",IDC_BROWSE,200,18,15,13
+    CONTROL         "1",IDC_SUB1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,13,54,25,10
+    CONTROL         "4",IDC_SUB4,"Button",BS_AUTORADIOBUTTON,53,54,23,10
+    CONTROL         "16",IDC_SUB16,"Button",BS_AUTORADIOBUTTON,91,54,24,10
+    CONTROL         "64",IDC_SUB32,"Button",BS_AUTORADIOBUTTON,130,54,24,10
+    CONTROL         "256",IDC_SUB64,"Button",BS_AUTORADIOBUTTON,169,54,24,10
+    CONTROL         "1024",IDC_SUB256,"Button",BS_AUTORADIOBUTTON,13,67,29,10
+    CONTROL         "4096",IDC_SUB512,"Button",BS_AUTORADIOBUTTON,91,67,34,10
+    CONTROL         "Variable",IDC_SUBVARIABLE,"Button",BS_AUTORADIOBUTTON,169,67,48,10
+    CONTROL         "Generate Model Maps ( if nessessary )",IDC_GENERATEMODELMAPS,
+                    "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,16,86,136,10
+    COMBOBOX        IDC_MINSIZE_COMBO,54,104,48,86,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_MAXSIZE_COMBO,159,104,48,86,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Export only Triangles in mesh",IDC_TRIANGLES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,142,127,12
+    EDITTEXT        IDC_EXPORTSCALE,59,167,40,14,ES_AUTOHSCROLL
+    CONTROL         "Export all Frames",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,189,69,10
+    CONTROL         "all in one",IDC_RADIO1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,11,215,44,10
+    CONTROL         "single models",IDC_RADIO2,"Button",BS_AUTORADIOBUTTON,61,215,58,10
+    CONTROL         "single models in one obj",IDC_RADIO3,"Button",BS_AUTORADIOBUTTON,125,215,91,10
+    RTEXT           "M&in Size:",IDC_STATIC,15,106,30,8
+    RTEXT           "M&ax Size:",IDC_STATIC,111,106,39,8
+    LTEXT           "Scale model",IDC_STATIC,7,170,39,8
+    CONTROL         "Rebuild Normallist",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,189,72,10
+    CONTROL         "Apply displacement/bump mapping to geometry",IDC_CHECK3,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,237,167,10
+    CONTROL         "Remove degenerated faces at export",IDC_CHECK4,"Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,250,133,10
+    DEFPUSHBUTTON   "OK",IDOK,107,275,50,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,169,275,50,14
+    CONTROL         "Export normals",IDC_CHECK5,"Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,263,62,10
+END
+
+IDD_EXPORTMODELSDIALOG DIALOGEX 0, 0, 206, 306
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Export OBJ"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Output Directory",IDC_STATIC,7,82,192,31
+    GROUPBOX        "",IDC_STATIC,7,162,192,40
+    GROUPBOX        "Export Triangles",IDC_STATIC,7,204,192,29
+    LTEXT           "Models to export:",IDC_LISTLABEL,7,7,67,8
+    LISTBOX         IDC_MODELLIST_COMBO,7,15,131,62,LBS_SORT | LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    LTEXT           "",IDC_OUTPUTDIR,13,94,152,13,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "...",IDC_BROWSE,173,94,15,13
+    GROUPBOX        "Polygons Per Patch",IDC_POLYSUB_GR,7,118,192,37,WS_GROUP
+    CONTROL         "1",IDC_SUB1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,13,129,25,10
+    CONTROL         "4",IDC_SUB4,"Button",BS_AUTORADIOBUTTON,48,129,23,10
+    CONTROL         "16",IDC_SUB16,"Button",BS_AUTORADIOBUTTON,81,129,24,10
+    CONTROL         "64",IDC_SUB32,"Button",BS_AUTORADIOBUTTON,115,129,24,10
+    CONTROL         "256",IDC_SUB64,"Button",BS_AUTORADIOBUTTON,149,129,24,10
+    CONTROL         "1024",IDC_SUB256,"Button",BS_AUTORADIOBUTTON,13,142,29,10
+    CONTROL         "4096",IDC_SUB512,"Button",BS_AUTORADIOBUTTON,81,142,34,10
+    CONTROL         "Variable",IDC_SUBVARIABLE,"Button",BS_AUTORADIOBUTTON,149,141,38,10
+    CONTROL         "Generate Model Maps ( if nessessary )",IDC_GENERATEMODELMAPS,
+                    "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,13,162,136,10
+    RTEXT           "M&in Size:",IDC_STATIC,15,183,30,8
+    COMBOBOX        IDC_MINSIZE_COMBO,49,181,48,86,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "M&ax Size:",IDC_STATIC,101,183,39,8
+    COMBOBOX        IDC_MAXSIZE_COMBO,141,181,48,86,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Export only Triangles in mesh",IDC_TRIANGLES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,214,127,12
+    LTEXT           "Scale models",IDC_STATIC,14,253,43,8
+    EDITTEXT        IDC_EXPORTSCALE,67,250,40,14,ES_AUTOHSCROLL
+    CONTROL         "Apply displacement/bump mapping to geometry",IDC_CHECK1,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,238,167,10
+    CONTROL         "Remove degenerated faces at export",IDC_CHECK4,"Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,14,266,133,10
+    DEFPUSHBUTTON   "OK",IDOK,149,15,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,149,33,50,14
+    CONTROL         "Export normals",IDC_CHECK5,"Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,14,281,62,10
+END
+
+IDD_TEXTUREMAP_DIALOG DIALOGEX 0, 0, 286, 223
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Texture Maps"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    CONTROL         "List1",IDC_FILENAMES,"SysListView32",LVS_REPORT | WS_BORDER | WS_TABSTOP,7,70,272,79
+    CONTROL         "Yes",IDC_COPYMAPSYES,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,107,206,28,10
+    CONTROL         "No",IDC_COPYMAPSNO,"Button",BS_AUTORADIOBUTTON,153,206,25,10
+    LTEXT           "Texture map file names must be 8 characters or less to comply with MSDos 8.3 standard and the OBJ file format.",IDC_STATIC,7,12,212,22
+    LTEXT           "The following texture maps have been renamed in the exported OBJ file only.  To properly have the OBJ file load you must either rename the physical texture map filename or make a copy of it with the new truncated name.",IDC_STATIC,7,40,272,30
+    LTEXT           "Let Animation Master create a copy of all texture maps and place them in the same directory as the exported OBJ file?  This will insure that all texture maps are 8 characters or less and consolidate them all in to one common location.",IDC_STATIC,7,153,272,26
+    LTEXT           "This will also help other software packages load the OBJ file's textures since the file format doesn't support file paths, just filenames.",IDC_STATIC,7,183,270,16
+    DEFPUSHBUTTON   "OK",IDOK,229,7,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,229,23,50,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_IMPORT_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 114
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 107
+    END
+
+    IDD_EXPORTMODELDIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 199
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 266
+    END
+
+    IDD_EXPORTCHORDIALOG, DIALOG
+    BEGIN
+        RIGHTMARGIN, 219
+        BOTTOMMARGIN, 289
+    END
+
+    IDD_EXPORTMODELSDIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 199
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 299
+    END
+
+    IDD_TEXTUREMAP_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 279
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 216
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_EXPORTMODELSDIALOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_EXPORTMODELDIALOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_IMPORT_DIALOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_MENUFILTER          "Object Model (*.OBJ)..."
+    IDS_EXPORTTITLE         "Export OBJ"
+    IDS_FILEFILTERS         "Object Model (*.OBJ)|*.obj|HASH||"
+    IDS_CHOOSEDIRECTORY     "Choose Directory"
+    IDS_ERROREXPORTINGMODEL "Error Exporting Model [%1]."
+    IDS_IMPORTTITLE         "Import OBJ"
+    IDS_ERRORIMPORTINGMODEL "Error Importing Model [%1]."
+    IDS_ACTIONHASNOMODELASSIGNED 
+                            "Action [%1] has no Model assigned to it.  You must edit the Action to assign a Model."
+    IDS_ACTIONSTOEXPORT     "Actions to export:"
+    IDS_ERRORIMPORTING      "Error Importing"
+    IDS_INVALIDVERSION      "Invalid Object Model file version"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_INVALIDFILEFORMAT   "Invalid Object Model file %1"
+    IDS_CANTOPENFILE        "Can't open file %1, error = %2\n"
+    IDS_IMPORTOBJ           "Import OBJ"
+    IDS_INVALIDNUMBEROFVERTICESPOLYS 
+                            "Invalid number of vertices or polygons.  Each must be less then 65535.\n This model has %1 vertices and %2 polygons.\n  Exported model will be truncated."
+    IDS_MATERIAL            "Material #%1"
+    IDS_ORIGINALFILENAME    "Original Filename"
+    IDS_NEWFILENAME         "New Filename"
+    IDS_UNABLETOCOPYFILE    "Unable to copy file %1 to %2."
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\Hxt.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"         // Standard components
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

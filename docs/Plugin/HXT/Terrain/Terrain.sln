@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33815.320
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Terrain", "Terrain.vcxproj", "{76038245-6EBB-47AE-9E8E-2066A4162726}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{76038245-6EBB-47AE-9E8E-2066A4162726}.Debug|x64.ActiveCfg = Debug|x64
+		{76038245-6EBB-47AE-9E8E-2066A4162726}.Debug|x64.Build.0 = Debug|x64
+		{76038245-6EBB-47AE-9E8E-2066A4162726}.Debug|x86.ActiveCfg = Debug|Win32
+		{76038245-6EBB-47AE-9E8E-2066A4162726}.Debug|x86.Build.0 = Debug|Win32
+		{76038245-6EBB-47AE-9E8E-2066A4162726}.Release|x64.ActiveCfg = Release|x64
+		{76038245-6EBB-47AE-9E8E-2066A4162726}.Release|x64.Build.0 = Release|x64
+		{76038245-6EBB-47AE-9E8E-2066A4162726}.Release|x86.ActiveCfg = Release|Win32
+		{76038245-6EBB-47AE-9E8E-2066A4162726}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E514623F-2684-4EFE-99F4-413B81F75304}
+	EndGlobalSection
+EndGlobal

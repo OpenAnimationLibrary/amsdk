@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Quellcodedateien">
+      <UniqueIdentifier>{27f822bf-b268-45c2-89ce-1574aed747e6}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Header-Dateien">
+      <UniqueIdentifier>{95bdf55a-7022-4bdb-aa4b-047d75125c23}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Ressourcendateien">
+      <UniqueIdentifier>{fd34f81e-fd51-46fe-ae60-7eefe40f56c9}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Entry.cpp">
+      <Filter>Quellcodedateien</Filter>
+    </ClCompile>
+    <ClCompile Include="PDialog.cpp">
+      <Filter>Quellcodedateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Primitive.cpp">
+      <Filter>Quellcodedateien</Filter>
+    </ClCompile>
+    <ClCompile Include="worker.cpp">
+      <Filter>Quellcodedateien</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="bitmap1.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="res\bitmap1.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="bitmap10.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="res\bitmap10.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="bitmap11.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="res\bitmap11.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="bitmap2.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="res\bitmap2.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="bitmap3.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="res\bitmap3.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="bitmap4.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="res\bitmap4.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="bitmap5.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="res\bitmap5.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="bitmap6.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="res\bitmap6.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="bitmap7.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="res\bitmap7.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="bitmap8.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="res\bitmap8.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="bitmap9.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="res\bitmap9.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="res\Primitive.rc2">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="bitmap12.bmp">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="PDialog.h">
+      <Filter>Header-Dateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Primitive.h">
+      <Filter>Header-Dateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header-Dateien</Filter>
+    </ClInclude>
+    <ClInclude Include="StdAfx.h">
+      <Filter>Header-Dateien</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Primitive.rc">
+      <Filter>Ressourcendateien</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

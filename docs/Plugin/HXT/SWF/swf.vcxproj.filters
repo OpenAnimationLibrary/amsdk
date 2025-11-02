@@ -1,0 +1,352 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{b14855d5-e1a4-4b8c-8866-83bef111b016}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{a6131243-3d84-44e9-ab68-b69d12fe165e}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{f9c13dd3-9abb-4f29-bb8e-98277e475880}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+    <Filter Include="Flash">
+      <UniqueIdentifier>{983b3e02-9644-4bab-9a1a-5736fccd409b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gpc">
+      <UniqueIdentifier>{dfdc74c0-b1da-44da-9ff2-efa446a790eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NewLabel">
+      <UniqueIdentifier>{21df9ddb-9cff-41cf-8a6c-3e8674a98dd8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Entry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Export.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ExportActionDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HXT.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FAction.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FCT.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FDT.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FDTBitmaps.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FDTButtons.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FDTFonts.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FDTShapes.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FDTSounds.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FDTSprite.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FDTText.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FExampleBitsLossless.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FExampleButton.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FExampleCircle.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FExampleClip.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FExampleEditText.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FExampleFont.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FExampleJPeg.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FExampleMorph.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FExampleOval.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FExampleOverlap.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FExampleRectangle.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FExampleSound.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FExampleSprite.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FExampleTwoColorTriangle.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FExampleTwoShape.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FObj.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FPrimitive.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FSound.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\FSWFStream.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFAction.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFBitmap.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFButton.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFExample.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFExampleButton.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFExampleCircle.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFExampleFont.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFExampleOval.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFExampleRectangle.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFExampleSound.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFExampleSquare.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFFont.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFFrame.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFMovie.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFObject.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFOval.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFPolygon.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFRectangle.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFShape.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFSound.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\HFText.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="Flash\swfproduce.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="NewLabel\ControlToolTip.cpp">
+      <Filter>NewLabel</Filter>
+    </ClCompile>
+    <ClCompile Include="NewLabel\NewLabel.cpp">
+      <Filter>NewLabel</Filter>
+    </ClCompile>
+    <ClCompile Include="gpc\gpc.cpp">
+      <Filter>gpc</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ExportActionDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HXT.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StdAfx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\F3SDK.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\FAction.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\FCT.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\FDT.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\FDTBitmaps.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\FDTButtons.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\FDTFonts.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\FDTShapes.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\FDTSounds.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\FDTSprite.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\FDTText.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\FExample.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\FFixed.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\FObj.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\FPrimitive.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\FSound.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\FSWFStream.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\HF3SDK.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\HFAction.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\HFBitmap.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\HFButton.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\HFColors.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\HFExample.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\HFFont.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\HFFrame.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\HFMovie.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\HFObject.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\HFOval.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\HFPolygon.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\HFRectangle.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\HFShape.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\HFSound.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\HFText.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="Flash\Macromedia.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="gpc\gpc.h">
+      <Filter>gpc</Filter>
+    </ClInclude>
+    <ClInclude Include="NewLabel\ControlToolTip.h">
+      <Filter>NewLabel</Filter>
+    </ClInclude>
+    <ClInclude Include="NewLabel\NewLabel.h">
+      <Filter>NewLabel</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\HXT.rc2">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="icon1.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="interface.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="kci.bmp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="logo_am2swf.bmp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="logo_new.bmp">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="HXT.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

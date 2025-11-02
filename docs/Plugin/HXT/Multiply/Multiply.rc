@@ -1,0 +1,210 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Deutsch (Deutschland) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+#ifdef _WIN32
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 7, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\Multiply.rc2""  // Nicht mit Microsoft Visual C++ bearbeitete Ressourcen\r\n"
+    "#include ""afxres.rc""          // Standardkomponenten\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+#endif    // Deutsch (Deutschland) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Englisch (USA) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x29L
+#else
+ FILEFLAGS 0x28L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040704b0"
+        BEGIN
+            VALUE "Comments", "Plugin for A:M  V15 and higher"
+            VALUE "CompanyName", "Steffen Gross"
+            VALUE "FileDescription", "Multiply HXT"
+            VALUE "FileVersion", "1, 0, 0, 1"
+            VALUE "InternalName", "Multiply"
+            VALUE "LegalCopyright", "Copyright (C) 2004"
+            VALUE "LegalTrademarks", "Steffen Gross"
+            VALUE "OriginalFilename", "Multiply.hxt"
+            VALUE "PrivateBuild", "08.11.2008"
+            VALUE "ProductName", "Multiply Dynamic Link Library"
+            VALUE "ProductVersion", "1, 0, 0, 1"
+            VALUE "SpecialBuild", "0.5"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x407, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG1 DIALOGEX 0, 0, 194, 173
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Multiple import"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,7,151,38,14
+    PUSHBUTTON      "Cancel",IDCANCEL,149,151,38,14
+    LISTBOX         IDC_LIST1,7,7,180,74,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_EDIT1,7,100,33,14,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "copies into the chor",IDC_STATIC,61,103,98,8
+    LTEXT           "Static",IDC_STATIC1,7,86,180,8
+    LTEXT           "Translate offset",IDC_STATIC3,7,32,47,8
+    LTEXT           "Rotate offset",IDC_STATIC4,7,51,39,8
+    EDITTEXT        IDC_EDIT2,60,29,38,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT3,104,29,38,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT4,148,29,38,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT5,60,48,38,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT6,104,48,38,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT7,148,48,38,14,ES_AUTOHSCROLL
+    LTEXT           "X",IDC_STATIC5,75,15,8,8
+    LTEXT           "Y",IDC_STATIC6,119,15,8,8
+    LTEXT           "Z",IDC_STATIC7,163,15,8,8
+    LTEXT           "Scale offset (%)",IDC_STATIC8,7,69,48,8
+    EDITTEXT        IDC_EDIT8,60,66,38,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT9,104,66,38,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT10,148,66,38,14,ES_AUTOHSCROLL
+    LTEXT           "Width of object on axis (modelspace):",IDC_STATIC,7,120,113,8
+    LTEXT           "X",IDC_STATIC_X,7,134,51,8
+    LTEXT           "Y",IDC_STATIC_Y,70,134,51,8
+    LTEXT           "Z",IDC_STATIC_Z,133,134,51,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_DIALOG1, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 187
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 165
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    IDS_STRING1             "Multiple copies"
+END
+
+#endif    // Englisch (USA) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+#ifdef _WIN32
+LANGUAGE 7, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\Multiply.rc2"  // Nicht mit Microsoft Visual C++ bearbeitete Ressourcen
+#include "afxres.rc"          // Standardkomponenten
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

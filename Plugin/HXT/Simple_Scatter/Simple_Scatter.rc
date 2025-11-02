@@ -1,0 +1,274 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// German (Germany) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+#pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 7, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\Simple_Scatter.rc2""  // Nicht mit Microsoft Visual C++ bearbeitete Ressourcen\r\n"
+    "#include ""afxres.rc""          // Standardkomponenten\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+#endif    // German (Germany) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x29L
+#else
+ FILEFLAGS 0x28L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040704b0"
+        BEGIN
+            VALUE "Comments", "Plugin for A:M V11.1 and higher"
+            VALUE "CompanyName", "Steffen Gross"
+            VALUE "FileDescription", "Simple_Scatter HXT"
+            VALUE "FileVersion", "1, 0, 0, 1"
+            VALUE "InternalName", "Simple_Scatter"
+            VALUE "LegalCopyright", "Copyright (C) 2005"
+            VALUE "LegalTrademarks", "Steffen Gross"
+            VALUE "OriginalFilename", "Simple_Scatter.hxt"
+            VALUE "PrivateBuild", "0.2"
+            VALUE "ProductName", "Simple_Scatter Dynamic Link Library"
+            VALUE "ProductVersion", "1, 0, 0, 1"
+            VALUE "SpecialBuild", "24.07.2005"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x407, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG1 DIALOGEX 0, 0, 387, 246
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Simple_Scatter"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    COMBOBOX        IDC_COMBO1,70,30,185,126,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_EDIT1,333,29,40,14,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "X-Axis",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,83,35,10
+    EDITTEXT        IDC_EDIT2,79,80,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT3,145,82,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    CONTROL         "Y-Axis",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,103,35,10
+    EDITTEXT        IDC_EDIT4,79,101,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT5,145,101,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    CONTROL         "Z-Axis",IDC_CHECK3,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,123,35,10
+    EDITTEXT        IDC_EDIT6,79,120,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT7,145,120,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    CONTROL         "Uniform",IDC_CHECK7,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,199,76,40,10
+    EDITTEXT        IDC_EDIT14,265,74,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT15,331,74,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    CONTROL         "X-Axis",IDC_CHECK4,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,199,98,35,10
+    EDITTEXT        IDC_EDIT8,265,96,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT9,331,96,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    CONTROL         "Y-Axis",IDC_CHECK5,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,199,120,35,10
+    EDITTEXT        IDC_EDIT10,265,118,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT11,331,118,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    CONTROL         "Z-Axis",IDC_CHECK6,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,199,142,35,10
+    EDITTEXT        IDC_EDIT12,265,140,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT13,331,140,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,7,225,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,330,225,50,14
+    LTEXT           "Model to import",IDC_STATIC,7,32,49,8
+    LTEXT           "Target Model",IDC_STATIC_1,45,14,334,8
+    LTEXT           "Number of copies",IDC_STATIC,263,32,56,8
+    LTEXT           "min",IDC_STATIC,61,84,12,8
+    LTEXT           "max",IDC_STATIC,125,84,14,8
+    LTEXT           "min",IDC_STATIC,61,104,12,8
+    LTEXT           "max",IDC_STATIC,125,104,14,8
+    LTEXT           "min",IDC_STATIC,61,124,12,8
+    LTEXT           "max",IDC_STATIC,125,124,14,8
+    LTEXT           "min",IDC_STATIC,247,99,12,8
+    LTEXT           "max",IDC_STATIC,311,99,14,8
+    LTEXT           "min",IDC_STATIC,247,121,12,8
+    LTEXT           "max",IDC_STATIC,311,121,14,8
+    LTEXT           "min",IDC_STATIC,247,143,12,8
+    LTEXT           "max",IDC_STATIC,311,129,14,8
+    GROUPBOX        "Rotate",IDC_STATIC,7,64,183,76
+    GROUPBOX        "Scale",IDC_STATIC,193,64,183,96
+    LTEXT           "Target",IDC_STATIC,7,14,21,8
+    LTEXT           "min",IDC_STATIC,247,77,12,8
+    LTEXT           "max",IDC_STATIC,311,77,14,8
+    CONTROL         "Apply Bullet Constraint",IDC_CHECK8,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,153,86,10
+    LTEXT           "Bounce",IDC_STATIC,13,177,26,8
+    EDITTEXT        IDC_EDIT16,55,174,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    LTEXT           "Friction",IDC_STATIC,111,177,24,8
+    EDITTEXT        IDC_EDIT17,151,174,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    COMBOBOX        IDC_COMBO2,207,176,79,48,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Density",IDC_STATIC,13,199,24,8
+    EDITTEXT        IDC_EDIT18,55,196,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    LTEXT           "Weight",IDC_STATIC,111,199,24,8
+    EDITTEXT        IDC_EDIT19,151,196,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    CONTROL         "Calculate Weight",IDC_CHECK9,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,207,198,70,10
+    CONTROL         "Align on surface",IDC_CHECK10,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,49,67,10
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_DIALOG1, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 380
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 239
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_DIALOG1 AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_DIALOG1 DLGINIT
+BEGIN
+    IDC_COMBO2, 0x403, 4, 0
+0x6f42, 0x0078, 
+    IDC_COMBO2, 0x403, 7, 0
+0x7053, 0x6568, 0x6572, "\000" 
+    IDC_COMBO2, 0x403, 8, 0
+0x6143, 0x7370, 0x6c75, 0x0065, 
+    IDC_COMBO2, 0x403, 9, 0
+0x7943, 0x696c, 0x646e, 0x7265, "\000" 
+    IDC_COMBO2, 0x403, 5, 0
+0x6f43, 0x656e, "\000" 
+    IDC_COMBO2, 0x403, 12, 0
+0x6f43, 0x766e, 0x7865, 0x4820, 0x6c75, 0x006c, 
+    IDC_COMBO2, 0x403, 5, 0
+0x654d, 0x6873, "\000" 
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_STRING1             "Simple_Scatter"
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+#ifdef _WIN32
+LANGUAGE 7, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\Simple_Scatter.rc2"  // Nicht mit Microsoft Visual C++ bearbeitete Ressourcen
+#include "afxres.rc"          // Standardkomponenten
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

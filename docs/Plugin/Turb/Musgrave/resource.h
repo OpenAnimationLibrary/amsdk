@@ -1,0 +1,125 @@
+//{{NO_DEPENDENCIES}}
+// Microsoft Developer Studio generated include file.
+// Used by Turb.rc
+//
+#define IDS_TURBULENCENAME              1
+#define IDS_LENGTH                      2
+#define IDS_SAMPLES                     3
+#define IDS_COMPENSATE                  4
+#define IDS_LRADIUSX                    5
+#define IDS_LRADIUSY                    6
+#define IDS_LRADIUSZ                    7
+#define IDS_WARP                        8
+#define IDS_NOISEFN                     9
+#define IDS_COMBINER                    10
+#define IDS_GAIN                        11
+#define IDS_BIAS                        12
+#define IDS_HICUTOFF                    13
+#define IDS_LOCUTOFF                    14
+#define IDS_SMOOTH                      15
+#define IDS_OCTAVES                     16
+#define IDS_LACUNARITY                  17
+#define IDS_DIMENSIONS                  18
+#define IDS_OFFSET                      19
+#define IDS_SHARPNESS                   20
+#define IDS_PERTURB                     21
+#define IDS_N_FRACSUM                   22
+#define IDS_N_PERLIN                    23
+#define IDS_N_FRACPERLIN                24
+#define IDS_N_SINE                      25
+#define IDS_N_FRACSINE                  26
+#define IDS_N_FBM                       27
+#define IDS_N_VLFBM                     28
+#define IDS_N_HETEROMF                  29
+#define IDS_N_HYBRIDMF                  30
+#define IDS_N_RIDGEDMF                  31
+#define IDS_B_ADD                       32
+#define IDS_B_MULTIPLY                  33
+#define IDS_B_DARKEN                    34
+#define IDS_B_LIGHTEN                   35
+#define IDS_B_COMPRESS                  36
+#define IDS_B_EXPAND                    37
+#define IDS_B_EXCLUSION                 38
+#define IDS_B_SOFTLIGHT                 39
+#define IDS_B_DODGE                     40
+#define IDS_B_SOFTDODGE                 41
+#define IDS_B_INVDODGE                  42
+#define IDS_B_BURN                      43
+#define IDS_B_SOFTBURN                  44
+#define IDS_B_INVBURN                   45
+#define IDS_B_REFLECT                   46
+#define IDS_B_GLOW                      47
+#define IDS_B_FREEZE                    48
+#define IDS_B_HEAT                      49
+#define IDS_B_STAMP                     50
+#define IDS_SAMPLOPTIONS                54
+#define IDS_TRANSFEROPTIONS             55
+#define IDS_S_POINT                     56
+#define IDS_S_RADCYLINDRICAL            57
+#define IDS_S_RADSPHERICAL              58
+#define IDS_S_POLANGLE                  59
+#define IDS_S_POLARC                    60
+#define IDS_S_CIRANGLE                  61
+#define IDS_S_CIRARC                    62
+#define IDS_SAMPLEFN                    63
+#define IDS_NSAMPLES                    64
+#define IDS_SAMPLELEN                   65
+#define IDS_SAMPLEAXIS                  66
+#define IDS_T_LINEAR                    67
+#define IDS_T_TRIANGULAR                68
+#define IDS_T_SINUSOIDAL                69
+#define IDS_T_RECTANGULAR               70
+#define IDS_WAVEFN                      71
+#define IDS_CYCLES                      72
+#define IDS_TILT                        73
+#define IDS_SHAPE                       74
+#define IDS_FRACTOPTIONS                75
+#define IDS_DATA                        76
+#define IDS_B_SUBTRACT                  77
+#define IDS_B_SCREEN                    78
+#define IDS_B_DIFFERENCE                79
+#define IDS_B_NEGATION                  80
+#define IDS_B_OVERLAY                   81
+#define IDS_B_HARDLIGHT                 82
+#define IDI_TURBULENCE                  129
+#define IDD_ATTRIBUTES_PAGE             247
+#define IDC_GAIN                        1000
+#define IDC_GAIN_SPIN                   1001
+#define IDC_BIAS                        1002
+#define IDC_BIAS_SPIN                   1003
+#define IDC_HI_CUTOFF                   1004
+#define IDC_HI_CUTOFF_SPIN              1005
+#define IDC_LRADIUSX                    1006
+#define IDC_LRADIUSX_SPIN               1007
+#define IDC_LRADIUSY                    1008
+#define IDC_LRADIUSY_SPIN               1009
+#define IDC_LRADIUSZ                    1010
+#define IDC_LRADIUSZ_SPIN               1011
+#define IDC_TURBULENCE_TYPE             1012
+#define IDC_LO_CUTOFF                   1013
+#define IDC_LO_CUTOFF_SPIN              1014
+#define IDC_CONTRAST_SLIDER             1015
+#define IDC_SMOOTH                      1016
+#define IDC_UPDATE                      1018
+#define IDC_MIN                         1019
+#define IDC_MAX                         1020
+#define IDC_EXTRA                       1021
+#define IDC_OCTAVES                     1544
+#define IDC_OCTAVES_SPIN                1545
+#define IDC_LACUNARITY                  1546
+#define IDC_LACUNARITY_SPIN             1547
+#define IDC_DIMENSION                   1548
+#define IDC_DIMENSION_SPIN              1549
+#define IDC_OFFSET                      1550
+#define IDC_OFFSET_SPIN                 1551
+
+// Next default values for new objects
+// 
+#ifdef APSTUDIO_INVOKED
+#ifndef APSTUDIO_READONLY_SYMBOLS
+#define _APS_NEXT_RESOURCE_VALUE        131
+#define _APS_NEXT_COMMAND_VALUE         32771
+#define _APS_NEXT_CONTROL_VALUE         1022
+#define _APS_NEXT_SYMED_VALUE           101
+#endif
+#endif

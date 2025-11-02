@@ -1,0 +1,249 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "Import/Export plugin for Animation Master"
+            VALUE "CompanyName", "Hash, Inc."
+            VALUE "FileDescription", "HXT DLL"
+            VALUE "FileVersion", "1, 0, 0, 1"
+            VALUE "InternalName", "BVH Plugin"
+            VALUE "LegalCopyright", "Copyright © 2000"
+            VALUE "OriginalFilename", "BVH.hie"
+            VALUE "ProductName", "HXT Dynamic Link Library"
+            VALUE "ProductVersion", "1, 0, 0, 1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_CHOOSEMODEL DIALOGEX  0, 0, 177, 154
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Choose Model"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LTEXT           "&Default model for action:",IDC_STATIC,7,6,94,8
+    LISTBOX         IDC_MODELLIST_COMBO,7,15,161,60,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "&Frames Per Secomd of imported action:",IDC_STATIC,7,84,124,8
+    EDITTEXT        IDC_FPS_EDIT,135,81,34,14,ES_AUTOHSCROLL
+    LTEXT           "&Error tolerance for reducing action:",IDC_STATIC,7,102,110,12
+    EDITTEXT        IDC_ERRORTOL_EDIT,135,100,34,14,ES_AUTOHSCROLL
+    CONTROL         "&Use for all actions",IDC_USEFORALLACTIONS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,117,113,10
+    DEFPUSHBUTTON   "OK",IDOK,38,133,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,97,133,50,14
+END
+
+IDD_EXPORTACTIONS DIALOGEX 0, 0, 266, 176
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Export BVH"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LISTBOX         IDC_ACTIONLIST_COMBO,7,15,198,63,LBS_SORT | LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BROWSE,237,91,15,13
+    CONTROL         "Pad motion on motionless bones",IDC_PADMOTION_CHECK,
+                    "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,13,115,118,15
+    CONTROL         "do not export motion data",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,145,115,96,15
+    CONTROL         "all",IDC_RADIO1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,15,150,23,10
+    CONTROL         "with geometry",IDC_RADIO2,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,39,150,59,10
+    CONTROL         "with motion",IDC_RADIO3,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,107,150,51,10
+    CONTROL         "with geometry or motion",IDC_RADIO4,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,167,150,90,10
+    DEFPUSHBUTTON   "OK",IDOK,209,14,50,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,209,31,50,14
+    LTEXT           "",IDC_OUTPUTDIR,13,92,217,13,0,WS_EX_STATICEDGE
+    LTEXT           "Actions to export:",IDC_STATIC,7,7,67,8
+    GROUPBOX        "Output Directory",IDC_STATIC,7,80,252,31
+    GROUPBOX        "Export only bones",IDC_STATIC,7,135,252,34
+END
+
+IDD_EXPORTACTION DIALOGEX 0, 0, 266, 121
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Export BVH"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    PUSHBUTTON      "...",IDC_BROWSE,236,17,15,13
+    CONTROL         "all",IDC_RADIO1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,15,56,23,10
+    CONTROL         "with geometry",IDC_RADIO2,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,39,56,59,10
+    CONTROL         "with motion",IDC_RADIO3,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,107,56,51,10
+    CONTROL         "with geometry or motion",IDC_RADIO4,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,167,56,90,10
+    CONTROL         "Pad motion on motionless bones",IDC_PADMOTION_CHECK,
+                    "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,7,80,118,10
+    CONTROL         "do not export motion data",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,145,80,96,10
+    PUSHBUTTON      "Cancel",IDCANCEL,153,100,50,14
+    DEFPUSHBUTTON   "OK",IDOK,209,100,50,14
+    LTEXT           "",IDC_FILENAME,11,18,217,13,0,WS_EX_STATICEDGE
+    GROUPBOX        "File Name",IDC_STATIC,7,7,252,30
+    GROUPBOX        "Export only bones",IDC_STATIC,7,41,252,34
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_CHOOSEMODEL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 169
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 147
+    END
+
+    IDD_EXPORTACTIONS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 259
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 169
+    END
+
+    IDD_EXPORTACTION, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 259
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 114
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    IDS_MENUFILTER          "BVH (*.BVH)..."
+    IDS_EXPORTTITLE         "Export BVH"
+    IDS_FILEFILTERS         "BVH (*.BVH)|*.bvh|HASH||"
+    IDS_CHOOSEDIRECTORY     "Choose Directory"
+    IDS_ERROREXPORTINGACTION "Error Exporting Action [%1]."
+    IDS_IMPORTTITLE         "Import BVH"
+    IDS_ERRORIMPORTINGACTION "Error Importing Action [%1]."
+    IDS_ACTIONHASNOMODELASSIGNED 
+                            "Action [%1] has no Model assigned to it.  You must edit the Action to assign a Model."
+    IDS_ERRORIMPORTING      "Error Importing"
+    IDS_INVALIDVERSION      "Invalid BVH file version"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_INVALIDFILEFORMAT   "Invalid BVH file %1"
+    IDS_DIALOGTITLE         "Import Action [%1]"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif
+#include "afxres.rc"         // Standard components
+#endif
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

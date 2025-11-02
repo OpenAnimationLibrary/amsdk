@@ -1,0 +1,369 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "Hash, Inc.\0"
+            VALUE "FileDescription", "Dented Texture\0"
+            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "InternalName", "DENTED\0"
+            VALUE "LegalCopyright", "Copyright © 1997\0"
+            VALUE "OriginalFilename", "DENTED.ATX\0"
+            VALUE "ProductName", "DENTED Dynamic Link Library\0"
+            VALUE "ProductVersion", "1, 0, 0, 1\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_TEXTURE             ICON    DISCARDABLE     "texture.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_ATTRIBUTES_PAGE, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 215
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 78
+    END
+
+    IDD_COLOUR_PAGE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 211
+        VERTGUIDE, 13
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 74
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ATTRIBUTES_PAGE DIALOGEX DISCARDABLE  0, 0, 218, 81
+STYLE DS_3DLOOK | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    RTEXT           "&Amplitude:",IDC_STATIC,11,26,43,8
+    EDITTEXT        IDC_AMPLITUDE,58,22,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin3",IDC_AMPLITUDE_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,90,19,9,14
+    EDITTEXT        IDC_WOCTAVES,58,39,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin1",IDC_WOCTAVES_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,92,38,9,14
+    LTEXT           "Octaves :",IDC_STATIC,25,41,32,8
+    EDITTEXT        IDC_WLAC,161,21,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin2",IDC_WLAC_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,194,21,9,
+                    14
+    EDITTEXT        IDC_WGAIN,161,38,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin3",IDC_WGAIN_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,196,39,9,
+                    14
+    LTEXT           "Wind Amp:",IDC_STATIC,115,41,36,8
+    LTEXT           "Wind Freq:",IDC_STATIC,115,26,36,8
+    EDITTEXT        IDC_WAMP,161,55,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin4",IDC_WAMP_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,195,54,9,
+                    14
+    LTEXT           "Wind Min % :",IDC_STATIC,115,56,42,8
+    GROUPBOX        "Major Waves",IDC_STATIC,3,3,212,75
+    EDITTEXT        IDC_BUMP_AMT,58,55,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin1",IDC_BUMP_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,92,55,9,
+                    14
+    RTEXT           "Bump Amt :",IDC_STATIC,9,57,44,8
+END
+
+IDD_COLOUR_PAGE DIALOGEX DISCARDABLE  0, 0, 218, 81
+STYLE DS_3DLOOK | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Sharp Colour",IDC_STATIC,110,7,101,67
+    GROUPBOX        "Flat Colour ",IDC_STATIC,7,7,99,67
+    CONTROL         "",IDC_BACK_COLOUR,"Button",BS_OWNERDRAW | WS_TABSTOP,13,
+                    19,29,17
+    CONTROL         "",IDC_FORE_COLOUR,"Button",BS_OWNERDRAW | WS_TABSTOP,
+                    117,19,28,17
+    EDITTEXT        IDC_BACK_REFLECT,55,39,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin3",IDC_BACK_REFLECT_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,90,38,9,14
+    EDITTEXT        IDC_BACK_TRANSPARENT,55,54,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin4",IDC_BACK_TRANSPARENT_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,91,54,9,14
+    LTEXT           "Reflect :",IDC_STATIC,20,42,28,8
+    LTEXT           "Opacity :",IDC_STATIC,19,58,29,8
+    LTEXT           "Reflect :",IDC_STATIC,121,42,28,8
+    LTEXT           "Opacity :",IDC_STATIC,119,57,29,8
+    EDITTEXT        IDC_FORE_REFLECT,160,39,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin5",IDC_FORE_REFLECT_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,195,39,9,14
+    EDITTEXT        IDC_FORE_TRANSPARENT,160,54,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin6",IDC_FORE_TRANSPARENT_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,195,54,9,14
+    CONTROL         "Use Current",IDC_USE_CURRENT,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,49,22,49,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_TEXTURENAME         "ToonNation|Lake"
+    IDS_PROPERTYTAB1        "Waves"
+    IDS_AMPLITUDE           "Amplitude"
+    IDS_RED                 "Red"
+    IDS_GREEN               "Green"
+    IDS_BLUE                "Blue"
+    IDS_NOISE               "Noise"
+    IDS_COLOURS             "Colours"
+    IDS_BLEND               "About"
+    IDS_POSITION            "Position"
+    IDS_USECURRENT          "Use Current"
+    IDS_BCOLOR              "Flat Color"
+    IDS_FCOLOR              "Sharp Color"
+    IDS_BREF                "Flat Reflectivity"
+    IDS_FREF                "Sharp Reflectivity"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_BOPAC               "Flat Opacity"
+    IDS_FOPAC               "Sharp Opacity"
+    IDS_BUMP                "Bump Amount"
+    IDS_MIX                 "Mix"
+    IDS_OFFSET              "Offset"
+    IDS_SCALE               "Scale"
+    IDS_WO                  "Wind Octaves"
+    IDS_WAMP                "Wind Min %"
+    IDS_WLAC                "Wind Frequency"
+    IDS_WGAIN               "Wind Amplitude"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.K.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_BLEND_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 211
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 74
+    END
+
+    IDD_POSITION_PAGE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 211
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 74
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_BLEND_DIALOG DIALOGEX DISCARDABLE  0, 0, 218, 81
+STYLE DS_3DLOOK | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "About",IDC_STATIC,7,7,204,67
+    LTEXT           "A ToonNation Product",IDC_STATIC,132,60,73,8
+    LTEXT           "Lake - A simpl noisy texture for water.",IDC_STATIC,15,
+                    19,118,8
+    LTEXT           "Small ripples create an effect like wind blown waves\non a lake.",
+                    IDC_STATIC,15,31,185,29
+END
+
+IDD_POSITION_PAGE DIALOGEX DISCARDABLE  0, 0, 218, 81
+STYLE DS_3DLOOK | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Offset",IDC_STATIC,7,7,100,67
+    GROUPBOX        "Scale",IDC_STATIC,117,7,94,67
+    EDITTEXT        IDC_OFF_X,33,19,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin1",IDC_OFF_X_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,65,18,9,
+                    14
+    EDITTEXT        IDC_OFF_Y,33,36,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin2",IDC_OFF_Y_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,63,37,9,
+                    14
+    EDITTEXT        IDC_OFF_Z,33,53,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin3",IDC_OFF_Z_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | 
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,63,54,9,
+                    14
+    LTEXT           "X :",IDC_STATIC,16,22,10,8
+    LTEXT           "Y :",IDC_STATIC,15,38,10,8
+    LTEXT           "Z :",IDC_STATIC,15,54,10,8
+    EDITTEXT        IDC_SCALE_X,156,19,39,14,ES_AUTOHSCROLL
+    CONTROL         "Spin4",IDC_SCALE_X_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,186,18,9,14
+    EDITTEXT        IDC_SCALE_Y,155,36,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin5",IDC_SCALE_Y_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,187,38,10,14
+    EDITTEXT        IDC_SCALE_Z,155,52,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin6",IDC_SCALE_Z_SPIN,"msctls_updown32",
+                    UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | 
+                    UDS_NOTHOUSANDS,185,53,9,14
+    LTEXT           "X :",IDC_STATIC,125,23,10,8
+    LTEXT           "Y :",IDC_STATIC,124,38,10,8
+    LTEXT           "Z :",IDC_STATIC,125,54,10,8
+END
+
+#endif    // English (U.K.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif
+#include "afxres.rc"         // Standard components
+#endif
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

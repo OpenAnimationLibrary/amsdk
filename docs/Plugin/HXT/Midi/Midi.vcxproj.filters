@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{05ebe48b-5a1d-45f5-b829-3aaf8b32810b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header">
+      <UniqueIdentifier>{3d22f8a8-c2f8-4154-b26c-00b008d79cb9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{e5a077c2-4cd1-4206-81e5-548552319343}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Entry.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Midi.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="midifile.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="NDialog.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="PDialog.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="poseselect.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="worker.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Midi.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="midifile.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="NDialog.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="PDialog.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="poseselect.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="StdAfx.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="structuren.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Midi.rc">
+      <Filter>Resource</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\Midi.rc2">
+      <Filter>Resource</Filter>
+    </None>
+  </ItemGroup>
+</Project>

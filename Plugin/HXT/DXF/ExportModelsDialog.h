@@ -1,0 +1,63 @@
+// KB  9/25/02  \Ken95\Plugin\HXT\DXF\ExportModelsDialog.h
+
+#if !defined(AFX_EXPORTMODELSDIALOG_H__58C09837_D8D2_11D3_83A5_00E0811049D9__INCLUDED_)
+#define AFX_EXPORTMODELSDIALOG_H__58C09837_D8D2_11D3_83A5_00E0811049D9__INCLUDED_
+
+#if _MSC_VER > 1000
+#pragma once
+#endif // _MSC_VER > 1000
+// ExportModelsDialog.h : header file
+//
+#include <afxtempl.h>
+#ifndef __STRCLASS_H
+#include "StrClass.h"
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+// CExportModelsDialog dialog
+
+class HModelCache;
+class HObjectCacheContainer;
+
+class CExportModelsDialog final : public CPluginDialog {
+    // Construction
+public:
+    CExportModelsDialog() noexcept = default; // standard constructor
+    explicit CExportModelsDialog(HObjectCacheContainer *hocc);
+
+    // Dialog Data
+    IEModelParms *m_iemp{};
+    HObjectCacheContainer *m_hocc{};
+    String m_dir;
+    CCheckListBox m_checklistbox;
+    CList<HModelCache *, HModelCache *> m_selected;
+
+    //{{AFX_DATA(CExportModelsDialog)
+    enum { IDD = IDD_EXPORTMODELSDIALOG };
+
+    int m_subtype{};
+    BOOL m_applybump{};
+    //}}AFX_DATA
+
+    // Overrides
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CExportModelsDialog)
+protected:
+    void DoDataExchange(CDataExchange *pDX) override; // DDX/DDV support
+    //}}AFX_VIRTUAL
+
+    // Implementation
+protected:
+    // Generated message map functions
+    //{{AFX_MSG(CExportModelsDialog)
+    void OnOK() override;
+    BOOL OnInitDialog() override;
+    afx_msg void OnBrowse();
+    //}}AFX_MSG
+DECLARE_MESSAGE_MAP()
+};
+
+//{{AFX_INSERT_LOCATION}}
+// Microsoft Visual C++ will insert additional declarations immediately before the previous line.
+
+#endif // !defined(AFX_EXPORTMODELSDIALOG_H__58C09837_D8D2_11D3_83A5_00E0811049D9__INCLUDED_)
