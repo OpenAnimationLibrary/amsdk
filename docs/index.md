@@ -39,7 +39,7 @@ Also, Marcel Bricman have setup a sort of forum designed specifically to structu
 
 ## <span id="vcsetup" class="anchor">How to setup a Visual C++ project for A:M plugins</span>
 
-See the tutorial provided by Steffen Gross at <http://www.sgross.com/tutorial/Plugin_Erstellung/create.html>
+See the tutorial provided by Steffen Gross at <http://www.sgross.com/tutorial/plugin_erstellung/create.html>
 
 Currently, developing plugins can be made on a Windows platform and on a Macintosh platform.
 
