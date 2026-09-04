@@ -1,0 +1,6 @@
+{
+  "vc_tools_version": "14.44.35207",
+  "compiler_version": "19.44.35228",
+  "windows_sdk_version": "10.0.26100.0",
+  "provenance": "Versions recorded by Windows run 33928660776; its Release plugin was tested by Rodney in A:M 19.5g, Group context. Change deliberately and repeat the host test when a runner update removes these versions. The runner image itself is not frozen."
+}

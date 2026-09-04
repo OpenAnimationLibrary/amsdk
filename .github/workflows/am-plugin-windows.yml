@@ -1,0 +1,95 @@
+name: Animation Master Windows Build
+
+on:
+  pull_request:
+    paths: ['tools/am-cloud/**', '.github/workflows/am-plugin-windows.yml']
+  push:
+    branches: [main]
+    paths: ['tools/am-cloud/**', '.github/workflows/am-plugin-windows.yml']
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: Debug requires a matching debug A:M host
+        type: choice
+        options: [Both, Release, Debug]
+        default: Both
+      project:
+        description: Standalone command HXT project under tools/am-cloud/plugins/
+        type: string
+        default: tools/am-cloud/plugins/AMBuildSmoke/AMBuildSmoke.vcxproj
+
+permissions:
+  contents: read
+
+concurrency:
+  group: am-plugin-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Windows ${{ matrix.configuration }}
+    runs-on: windows-2022
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: ${{ fromJSON(inputs.configuration == 'Release' && '["Release"]' || inputs.configuration == 'Debug' && '["Debug"]' || '["Release","Debug"]') }}
+    env:
+      AM_PROJECT: ${{ inputs.project || 'tools/am-cloud/plugins/AMBuildSmoke/AMBuildSmoke.vcxproj' }}
+      AM_CONFIGURATION: ${{ matrix.configuration }}
+      AM_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      AM_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      PYTHONUTF8: '1'
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Select Python 3.11
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+          architecture: x64
+      - name: Run helper and failure-path tests
+        run: |
+          New-Item -ItemType Directory -Force tools/am-cloud/test-results | Out-Null
+          python -m unittest discover -s tools/am-cloud/tests -v 2>&1 | Tee-Object tools/am-cloud/test-results/tests.log
+          exit $LASTEXITCODE
+      - name: Build and audit the plugin
+        run: python tools/am-cloud/build.py --configuration "$env:AM_CONFIGURATION" --project "$env:AM_PROJECT"
+      - name: Test the packaged verifier
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $false
+          $packages = @(Get-ChildItem tools/am-cloud/artifacts/packages/*.zip)
+          if ($packages.Count -ne 1) { throw 'Expected one package ZIP.' }
+          $dest = Join-Path $PWD 'tools/am-cloud/.work/package-verification'
+          Expand-Archive -LiteralPath $packages[0].FullName -DestinationPath $dest
+          pwsh -NoProfile -File "$dest/Verify-Package.ps1" 2>&1 | Tee-Object tools/am-cloud/artifacts/diagnostics/package-verification.log
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged verifier rejected the output.' }
+          # Prove the shipped verifier rejects a modified plugin, without executing it.
+          $hxt = @(Get-ChildItem $dest -File | Where-Object { $_.Extension -in '.hxt', '.hxtd' })
+          if ($hxt.Count -ne 1) { throw 'Expected one plugin.' }
+          [IO.File]::AppendAllText($hxt[0].FullName, 'tamper-test')
+          pwsh -NoProfile -File "$dest/Verify-Package.ps1" 2>&1 | Tee-Object tools/am-cloud/artifacts/diagnostics/tamper-rejection.log
+          if ($LASTEXITCODE -eq 0) { throw 'Verifier incorrectly accepted a modified plugin.' }
+          exit 0
+      - name: Publish installable test package
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: AMBuild-Package-${{ matrix.configuration }}-x64-r${{ github.run_number }}-a${{ github.run_attempt }}
+          path: tools/am-cloud/artifacts/packages/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Preserve diagnostics even on failure
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: AMBuild-Diagnostics-${{ matrix.configuration }}-r${{ github.run_number }}-a${{ github.run_attempt }}
+          path: |
+            tools/am-cloud/artifacts/diagnostics/
+            tools/am-cloud/test-results/
+          if-no-files-found: warn
+          retention-days: 14

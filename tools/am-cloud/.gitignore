@@ -1,0 +1,10 @@
+artifacts*/
+test-results/
+.work/
+__pycache__/
+*.user
+.vs/
+x64/
+vendor/*
+!vendor/README.md
+!vendor/sdk195.zip

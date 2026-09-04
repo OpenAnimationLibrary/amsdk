@@ -1,3 +1,5 @@
+> **Current Windows plugin workflow (SDK 19.5):** see the [development guide](plugin-development.md), [automation runbook](plugin-automation.md), and [dated validation record](plugin-build-validation.md). The v12 documentation and older compiler instructions below are preserved as historical reference, not the current cloud-build recipe.
+
 <div class="tabs">
 
 - <span id="current">[Main Page](index.md)</span>
