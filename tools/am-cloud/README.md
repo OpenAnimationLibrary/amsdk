@@ -1,133 +1,147 @@
 # A:M virtual Windows build system
 
-Build Animation:Master 19.5 x64 plugins without installing a compiler on the
-computer running A:M. The first target, **AMBuildSmoke**, only displays a message:
-it does not change a model or write files.
+Develop Animation:Master 19.5 x64 command plugins without a local C++ compiler.
+The Windows build runs on GitHub Actions. Testing the resulting plugin in A:M
+is a separate step. The initial `AMBuildSmoke` plugin is intended only to display
+a message; it does not edit a model or write files.
 
-## Architecture
+## Verified status - September 4, 2026
 
-Source code lives in GitHub. The `Animation Master Windows Build` workflow
-creates a clean `windows-2022` VM for each job, discovers Visual Studio 2022 with
-MSVC v143 and MFC, downloads and verifies SDK 19.5, compiles, and publishes a
-short-lived build artifact. The VM is discarded after the job. It is **not** a
-persistent Windows desktop, RDP session, or installation of A:M.
+Two actual `windows-2022` jobs discovered VS 2022, MSVC 19.44.35228 and MFC,
+and passed all 11 helper tests. **Neither job compiled a plugin.** The current
+Hash SDK download is a valid ZIP but lacks `Include/SDK` and
+`Include/3rdParty/Imath`. Its four x64 Release library fingerprints match the
+supplied complete SDK. Do not substitute the repository's older libraries.
 
-The existing repository `Include/`, `Lib/`, and `Plugin/` remain unchanged. They
-are not the dependency used by this build. The SDK archive's checksum is locked
-to the separately supplied `sdk195.zip`; the vendor download must match it.
-Neither the SDK archive nor A:M license files are committed by this setup.
+Run 33922068138 received 6,374,782 bytes with SHA-256
+`bbab3856d5cdf85e64764f87574f5fe139c6f4034454b1065304a496ffe39dfd`.
+The supplied complete SDK is 6,529,791 bytes, with the digest in `sdk.lock.json`.
+**Checksum verification stopped both runs; the lock has not been weakened.**
+MSBuild compilation, linking, binary auditing and A:M runtime validation are
+still pending. The public setup PR remains blocked on complete-SDK delivery.
 
-## First build and runtime check
+## Private cloud-build route
 
-1. Open the setup pull request and its **Checks** tab. The pull-request workflow
-   starts a Release x64 build. An approval may be needed if repository policy
-   requires it. After merging, the workflow also appears under **Actions** with
-   a **Run workflow** button, configuration choice and project-path input.
-2. Open the successful run and download `AMBuild-Release-x64-<run number>` from
-   **Artifacts**. Extract it and inspect `build-receipt.json`. A successful build
-   includes `AMBuildSmoke_64.hxt`, a PDB, a checksum, and build/inspection logs.
-   Failed runs publish available diagnostics, not a valid plugin.
-3. Close A:M. Copy **only the release .hxt** into the HXT plugin directory of
-   the A:M 19.5 64-bit installation being tested. Do not replace another plugin,
-   copy SDK import libraries into A:M, or place debug output in a release host.
-4. Start A:M and open a disposable test model. Select a control point, open its
-   context menu and look under **Wizards** for **A:M Cloud Build Test**. Run it.
-   Seeing its message confirms menu/resource loading, an SDK call and MFC UI in
-   the actual host. A successful compiler run alone does not establish this.
-5. Close A:M before replacing/removing the plugin. Record the exact A:M version
-   and runtime result in the PR. A later SDK/host/toolchain change needs retesting.
+The workflow accepts a complete SDK at `tools/am-cloud/vendor/sdk195.zip`, using
+the same checksum. That directory is ignored by Git to prevent accidental
+publication. The public PR and source-only ZIP do not include SDK files.
+The separately supplied private kit includes the owner's original archive.
+Keep that kit private; SDK/application rights are unchanged.
 
-## Development loop
+Use Python 3.10+, Git and the GitHub CLI (`gh`) on your Windows computer.
+No local Visual Studio, MFC, Windows SDK or working C++ compiler is needed.
+From the extracted kit's root:
 
-Edit plugin sources in a branch and open a PR. Changes under `tools/am-cloud/`
-run the Release smoke build. For another plugin, add its sources/project under
-`tools/am-cloud/plugins/`, retaining the matching SDK include/library settings.
-After merging this workflow, choose its `.vcxproj` path with **Run workflow**.
-The builder accepts one plugin project and expects one HXT output with the three
-command-plugin exports. Texture, image-format and other plugin types need a
-separate audit contract; this initial setup intentionally targets HXT commands.
+```powershell
+gh auth login --hostname github.com --git-protocol https --web --scopes workflow
+python tools/am-cloud/start_private_build.py
+```
 
-A manual dispatch project path must refer to a project in the selected branch.
-The workflow is a build system and executes project build steps: only run code
-you trust. It has read-only repository permissions, does not persist Git checkout
-credentials, and does not use secrets or install an A:M license.
+Type `CREATE` when prompted. The launcher creates a new private repository
+`<your-login>/am-plugin-build` and a working copy at `~/AMDev/am-plugin-build`.
+It verifies the remote is private before pushing build sources and the SDK.
+It never reuses an existing repository or overwrites an existing directory.
+Failures leave created resources in place; nothing is deleted automatically.
 
-## Build contract and diagnostics
+The push triggers a Windows build. Inspect its result under **Actions**; this is
+not a promise that the as-yet-untested plugin will compile or load. Private hosted
+builds consume the owner's Actions allowance and can incur overage charges.
+Review the account's Actions budget first. No paid VM or A:M activation is
+provisioned. No A:M license is uploaded. Allow the new private repository in the
+GitHub app connection for ChatGPT to participate in development there.
 
-- Windows x64, Visual Studio **2022** (`vswhere` range `[17.0,18.0)`), MSVC v143,
-  C++20, dynamic MFC, MultiByte character set, `DEFAULT_INITIALIZED`.
-- Release: `/MD`, release `_64` SDK libraries, `_64.hxt`.
-- Debug: `/MDd`, debug `_64d` SDK libraries, `_64d.hxtd`; requires a matching
-  debug A:M environment and is not a substitute for Release runtime testing.
-- The binary audit checks PE32+/AMD64/DLL, all three HXT command exports, and
-  rejects common debug-runtime dependencies in Release. It never loads the DLL.
-- Receipt records source commit (on Actions), SDK SHA-256, exact selected VC/SDK
-  versions and runner image version. `windows-2022` is a maintained image label,
-  not an immutable disk snapshot; tool updates can require revalidation.
-- Only generated output/diagnostics are uploaded, retained for seven days. The
-  SDK and complete process environment are not uploaded.
+Use `--repository OWNER/NAME` for a different unused name, `--destination PATH`
+for a new working directory, or `--sdk-zip C:\path\to\sdk195.zip` with the
+source-only kit. Install GitHub CLI separately if `gh` is not recognized.
 
-There are 11 platform-independent helper tests covering digest validation,
-unsafe archive paths/symlinks/layout, and basic binary architecture checking.
-They are **not** an MSVC build or A:M compatibility certification.
+## Build architecture and development loop
 
-## Reuse on a persistent Windows VM
+Each job receives a fresh Windows Server 2022 VM with Visual Studio 2022/v143
+and MFC. The script checks the required tools and headers, verifies/extracts the
+SDK in a temporary directory, builds with MSBuild and audits the resulting DLL.
+The VM is discarded after the job. This is not a persistent desktop, RDP session
+or installation of A:M. The public repository's existing `Include`, `Lib` and
+`Plugin` files are unchanged and are not used as the build dependency.
 
-The same code works on a separately provisioned Windows x64 VM with VS 2022,
-Python 3.10+, and Git. `windows.vsconfig` lists compiler/MFC/Windows SDK components
-for import through Visual Studio Installer. Provisioning/operating-system and
-Visual Studio licensing, VM billing and any A:M activation must be handled
-separately. This change does not purchase or provision such a VM, change local
-Visual Studio, or connect a self-hosted runner.
+Edit sources in a branch and open a PR. Changes under `tools/am-cloud/`
+run the Release smoke build. A workflow on the default branch also offers **Run workflow**,
+with configuration and project-path choices. Add another command plugin under
+`tools/am-cloud/plugins/` and select its `.vcxproj` path for a manual build.
+The builder currently expects one HXT with three command exports; texture,
+image-format and other plugin types require a different audit contract.
 
-Run from the repository root:
+Build projects execute code. Run only trusted project sources. The workflow has
+read-only repository permissions, does not persist checkout credentials and
+uploads only generated diagnostics/output, not the SDK or process environment.
+Actions artifacts are retained seven days.
+
+## Build and binary contract
+
+- VS 2022 (`vswhere` range `[17.0,18.0)`), x64, v143, C++20, dynamic MFC,
+  MultiByte, `DEFAULT_INITIALIZED`.
+- Release: `/MD`, release `_64` SDK libraries, `_64.hxt` output.
+- Debug: `/MDd`, debug `_64d` SDK libraries, `_64d.hxtd`; matching debug A:M
+  is required. Debug output is not a substitute for Release runtime testing.
+- Audit: PE32+/AMD64/DLL, `HxtLoadCommandEntry`, `HxtOnAddCommandMenu`,
+  `HxtOnCommand`, and no common debug-runtime dependencies in Release.
+  The audit does not load the plugin.
+- A build receipt records source commit on Actions, SDK digest, selected
+  compiler/Windows SDK versions, runner image, result and plugin checksum.
+  The runner label is maintained, not an immutable disk snapshot.
+
+The 11 helper tests check checksum validation, unsafe archive paths/symlinks,
+SDK layout and binary architecture. They do not certify MSVC or A:M compatibility.
+
+## First successful build and runtime check
+
+Resolve complete-SDK delivery before expecting a plugin artifact. After a
+successful run, download `AMBuild-Release-x64-<run number>` from **Artifacts**.
+Inspect `build-receipt.json`; successful outputs include `AMBuildSmoke_64.hxt`,
+a PDB, checksum and logs. Failed jobs contain diagnostics, not a valid plugin.
+
+Close A:M and copy only the Release `.hxt` into the HXT plugin directory of the
+A:M 19.5 x64 installation being tested. Do not overwrite another plugin or copy
+SDK libraries/debug output into a Release installation. Start A:M, open a
+disposable model, select a control point and look under the context menu's
+**Wizards** for **A:M Cloud Build Test**. Its message tests resource loading,
+an SDK call and MFC UI in the actual host. Record the exact A:M version/result.
+Close A:M before replacing or removing the plugin. A clean compile alone does
+not establish host compatibility; model-changing plugins need separate tests.
+
+## Reuse on a separately provisioned Windows VM
+
+`windows.vsconfig` lists compiler/MFC/Windows SDK components for VS Installer.
+VM/OS/Visual Studio licensing and A:M activation remain separate. This setup
+does not provision a persistent VM or change your local compiler installation.
+On a Windows VM with VS 2022 and Python, run from the repository root:
 
 ```powershell
 python -m unittest discover -s tools/am-cloud/tests -v
 python tools/am-cloud/build.py --sdk-zip C:\AMDev\sdk195.zip --output C:\AMDev\build-001
 ```
 
-The output directory must be empty; choose a new directory for each build.
-Omit `--sdk-zip` to download the vendor archive with the same checksum check.
-To build a different command plugin:
-
-```powershell
-python tools/am-cloud/build.py --project tools/am-cloud/plugins/MyPlugin/MyPlugin.vcxproj --sdk-zip C:\AMDev\sdk195.zip --output C:\AMDev\build-002
-```
+The output directory must be empty. Select a new directory for each build.
+Use `--project` to select another command-plugin `.vcxproj`.
 
 ## Failure boundaries
 
-**SDK download blocked or checksum mismatch:** preserve the error. The original
-archive can be supplied with `--sdk-zip` on a Windows machine/VM. Do not weaken the
-checksum, silently switch to this repository's older SDK, or publish proprietary
-SDK/application files as a workaround. Review any vendor archive change before
-updating the lock. An HTTP error is a dependency-delivery failure, not an MSVC
-failure.
+An SDK checksum mismatch or missing header folder must not be bypassed. Supply
+the complete archive; do not silently replace it with another SDK. Review any
+vendor archive change before updating the lock. `diagnose_sdk.py` reports vendor
+response metadata/fingerprints after failure, without extracting or trusting it.
 
-**Missing MFC, crtdbg.h, rc.exe or mt.exe:** the preflight reports the missing
-component before compilation. On a persistent VM import `windows.vsconfig` into
-VS 2022; the script does not modify the installation itself.
+Missing MFC, `crtdbg.h`, `rc.exe` or `mt.exe` is a toolchain-preflight failure.
+Link errors belong in `msbuild.log`; do not hide them with `/FORCE`. A plugin
+that fails to appear/load requires host-version, architecture, Release/Debug,
+installation-path and dependency checks. Remove it with A:M closed.
 
-**Link failure:** examine `msbuild.log` for mismatched architecture, missing SDK
-symbols or CRT/MFC incompatibility. Do not hide failures with `/FORCE`, disable
-architecture checks or relabel a 32-bit DLL as a 64-bit plugin.
+## Primary references
 
-**Plugin does not appear or crashes:** check the exact A:M version/architecture,
-release-vs-debug pairing, HXT directory and `dependencies.log`. Remove this test
-plugin with A:M closed. A clean build is necessary but not sufficient for host
-compatibility. Test model-changing plugins on copies in a separate step.
-
-## Source references
-
-- Hash v19.5E release / official SDK link:
-  https://forums.animationmaster.com/topic/53766-v195e/
-- GitHub Windows 2022 image (VS 2022 and MFC inventory):
-  https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md
-- GitHub hosted runner model:
-  https://docs.github.com/en/actions/reference/runners/github-hosted-runners
-- Codespaces are Linux development environments, not Windows MSVC hosts:
-  https://docs.github.com/en/codespaces/overview
+- Hash SDK release: https://forums.animationmaster.com/topic/53766-v195e/
+- Windows image: https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md
+- Hosted VMs: https://docs.github.com/en/actions/reference/runners/github-hosted-runners
+- Private repo creation: https://cli.github.com/manual/gh_repo_create
+- Billing: https://docs.github.com/en/billing/concepts/product-billing/github-actions
 
 Build infrastructure and the new smoke test were developed with AI assistance.
-Hash SDK/application rights are unchanged. SDK headers, libraries and license
-files are not included in this new directory.
+No SDK headers, libraries or A:M license files are added by the public setup PR.

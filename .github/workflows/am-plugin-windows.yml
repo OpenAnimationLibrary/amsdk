@@ -42,7 +42,13 @@ jobs:
       - name: Compile and audit plugin
         id: compile
         shell: pwsh
-        run: python tools/am-cloud/build.py --configuration "$env:AM_CONFIGURATION" --project "$env:AM_PROJECT"
+        run: |
+          $buildArgs = @('--configuration', $env:AM_CONFIGURATION, '--project', $env:AM_PROJECT)
+          $bundledSdk = 'tools/am-cloud/vendor/sdk195.zip'
+          if (Test-Path -LiteralPath $bundledSdk) {
+            $buildArgs += @('--sdk-zip', $bundledSdk)
+          }
+          python tools/am-cloud/build.py @buildArgs
       - name: Diagnose SDK download after a build failure
         if: failure() && steps.compile.conclusion == 'failure'
         run: python tools/am-cloud/diagnose_sdk.py
