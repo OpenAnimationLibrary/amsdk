@@ -178,9 +178,14 @@ def audit_warnings(text: str, sdk: Path) -> list[str]:
                           if re.search(r'\bwarning\s+[A-Z]+\d+\s*:', line, re.I)))
     expected = str((sdk / 'Include/FileCons.h').resolve()).replace('\\', '/').casefold()
     for line in warnings:
-        normalized = line.replace('\\', '/').casefold()
-        if not any(f'{expected}({row},21): warning c4244:' in normalized or
-                   f'{expected}({row},20): warning c4244:' in normalized for row in (83, 84, 85, 86)):
+        match = re.match(r'^(.+?)\((\d+),(\d+)\): warning ([A-Z]+\d+):', line, re.I)
+        accepted = False
+        if match:
+            filename = str(Path(match[1]).resolve()).replace('\\', '/').casefold()
+            row, column = int(match[2]), int(match[3])
+            accepted = (filename == expected and match[4].upper() == 'C4244' and
+                        (row, column) in ((83, 21), (84, 21), (85, 20), (86, 20)))
+        if not accepted:
             raise ValueError('Unreviewed build warning (see msbuild.log): ' + line)
     return warnings
 
