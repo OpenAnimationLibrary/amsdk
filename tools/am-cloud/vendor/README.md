@@ -1,25 +1,16 @@
-# Complete A:M 19.5 SDK upload location
+# Approved complete A:M 19.5 SDK
 
-Upload the original **sdk195.zip** into this directory on branch
-**build/am-plugins-sdk195**, not `main` or the old development branch.
-Leave the archive zipped. The required repository path is:
+`sdk195.zip` is already committed here with the repository owner's approval.
+It is the complete Library copy supplied on August 24, 2026: 6,529,791 bytes,
+SHA-256 `0e917a67d9ac386ea3ad512ce97518f764cddc032957682717c862e64c112977`.
+No further upload or private-repository bootstrap is required.
 
-```text
-tools/am-cloud/vendor/sdk195.zip
-```
+The build verifies this archive against `../sdk.lock.json` before extraction.
+It never substitutes the older top-level SDK or downloads an alternative.
+`Include/SDK` and `Include/3rdParty/Imath` must be present alongside the selected
+Release/Debug x64 libraries. Existing SDK/third-party rights and notices remain
+unchanged. Do not place A:M application, activation or personal files here.
 
-Expected size: **6,529,791 bytes**.
-Expected SHA-256 (unchanged from `../sdk.lock.json`):
-
-```text
-0e917a67d9ac386ea3ad512ce97518f764cddc032957682717c862e64c112977
-```
-
-The repository owner has authorized adding this Library copy to this public
-repository. This README is only a placeholder; it does not contain the SDK.
-The existing workflow automatically uses an archive at this path and verifies
-its checksum. Keep the setup PR in draft until compilation, binary auditing
-and a local A:M runtime check are complete.
-
-Do not upload an A:M installation, activation/license files or personal settings.
-Existing SDK notices and licenses remain unchanged; no relicensing is implied.
+To update the SDK, review the actual archive, its provenance and header/library
+pairing, then update this archive and the lock together in a PR. Run both native
+builds and repeat the intended A:M host test before adopting it as known-good.

@@ -1,221 +1,315 @@
 #!/usr/bin/env python3
-"""Build A:M 19.5 x64 HXT plugins using Visual Studio 2022; Python 3.10+.
+"""Build and package one A:M 19.5 x64 command HXT. Python 3.10+; Windows/VS 2022.
 
-The SDK is a separately downloaded, checksum-locked dependency. This script
-never installs A:M, changes a Visual Studio installation, or runs a plugin.
+No downloads, installation, host execution, automatic deployment or SDK fallback.
 """
 from __future__ import annotations
 
 import argparse
-import hashlib
+from datetime import datetime, timezone
 import json
 import os
-from pathlib import Path, PurePosixPath
+from pathlib import Path
+import platform
 import re
 import shutil
-import stat
-import struct
 import subprocess
 import sys
 import tempfile
-from datetime import datetime, timezone
-import urllib.request
-import zipfile
+import xml.etree.ElementTree as ET
+
+from build_support import (audit_dependencies, audit_exports, audit_warnings,
+                           check_pe, extract_sdk, seal_package, sha256,
+                           validate_project, verify_hash, write_json)
 
 HERE = Path(__file__).resolve().parent
-EXPORTS = ("HxtLoadCommandEntry", "HxtOnAddCommandMenu", "HxtOnCommand")
+REPOSITORY = HERE.parent.parent
+DEFAULT_PROJECT = 'tools/am-cloud/plugins/AMBuildSmoke/AMBuildSmoke.vcxproj'
 
 
-def sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            h.update(block)
-    return h.hexdigest()
+def utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
-def verify_hash(path: Path, expected: str) -> None:
-    if not re.fullmatch(r"[0-9a-f]{64}", expected):
-        raise ValueError("The SDK lock must contain a full SHA-256 digest.")
-    if sha256(path) != expected:
-        raise ValueError("SDK checksum mismatch. Do not bypass this check or mix SDK versions.")
+def capture(command: list[str], *, env: dict | None = None) -> str:
+    result = subprocess.run(command, cwd=REPOSITORY, env=env, capture_output=True,
+                            text=True, encoding='utf-8', errors='replace', timeout=60)
+    if result.returncode:
+        # Do not include the full environment/command or a credential-bearing URL.
+        raise RuntimeError(f'{Path(command[0]).name} failed with exit code {result.returncode}.')
+    return result.stdout.strip()
 
 
-def extract_sdk(archive: Path, destination: Path) -> Path:
-    """Reject unsafe names and symlinks before writing any archive members."""
-    with zipfile.ZipFile(archive) as z:
-        entries = z.infolist()
-        if sum(e.file_size for e in entries) > 256 * 1024 * 1024:
-            raise ValueError("Unexpectedly large SDK archive.")
-        for entry in entries:
-            path = PurePosixPath(entry.filename.replace("\\", "/"))
-            if path.is_absolute() or ".." in path.parts or ":" in str(path):
-                raise ValueError("Unsafe SDK archive member: " + entry.filename)
-            if stat.S_ISLNK(entry.external_attr >> 16):
-                raise ValueError("Symlinks are not allowed in the SDK archive.")
-        z.extractall(destination)
-    roots = [p.parent.parent.parent for p in destination.rglob("Entry.h")
-             if p.parent.name == "SDK" and p.parent.parent.name == "Include"]
-    if len(roots) != 1 or not (roots[0] / "Lib/PC/Plugin_64.lib").is_file():
-        raise ValueError("Expected one SDK root with Include/SDK and Lib/PC.")
-    return roots[0]
+def run(command: list[str], env: dict[str, str], log: Path, timeout: int = 600) -> str:
+    """Save output as it arrives; terminate the process tree on timeout."""
+    print('Running ' + Path(command[0]).name + ' -> ' + log.name, flush=True)
+    with log.open('w', encoding='utf-8') as stream:
+        with subprocess.Popen(command, cwd=REPOSITORY, env=env, stdout=stream,
+                              stderr=subprocess.STDOUT) as process:
+            try:
+                code = process.wait(timeout=timeout)
+            except (subprocess.TimeoutExpired, KeyboardInterrupt):
+                if os.name == 'nt':
+                    taskkill = Path(os.environ['SystemRoot']) / 'System32/taskkill.exe'
+                    subprocess.run([str(taskkill), '/PID', str(process.pid), '/T', '/F'],
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                   timeout=15, check=False)
+                process.kill()
+                process.wait()
+                raise RuntimeError(f'{Path(command[0]).name} interrupted/timed out; see {log.name}.')
+    text = log.read_text(encoding='utf-8', errors='replace')
+    print(text, end='', flush=True)
+    if code:
+        raise RuntimeError(f'{Path(command[0]).name} failed ({code}); see {log.name}.')
+    return text
 
 
-def check_pe(path: Path) -> None:
-    """Check PE32+ / AMD64 / DLL without loading the plugin."""
-    data = path.read_bytes()
-    if len(data) < 64 or data[:2] != b"MZ":
-        raise ValueError("Output is not a Windows PE file.")
-    offset = struct.unpack_from("<I", data, 0x3c)[0]
-    if offset + 26 > len(data) or data[offset:offset + 4] != b"PE\0\0":
-        raise ValueError("Invalid PE header.")
-    machine = struct.unpack_from("<H", data, offset + 4)[0]
-    characteristics = struct.unpack_from("<H", data, offset + 22)[0]
-    magic = struct.unpack_from("<H", data, offset + 24)[0]
-    if machine != 0x8664 or magic != 0x20b or not characteristics & 0x2000:
-        raise ValueError("Expected an x64 PE32+ DLL, not an EXE or 32-bit plugin.")
+def source_info() -> dict:
+    commit = capture(['git', 'rev-parse', 'HEAD'])
+    tree = capture(['git', 'rev-parse', 'HEAD^{tree}'])
+    dirty = bool(capture(['git', 'status', '--porcelain', '--untracked-files=normal', '--',
+                          'tools/am-cloud', '.github/workflows/am-plugin-windows.yml']))
+    if os.environ.get('GITHUB_ACTIONS') == 'true':
+        if dirty or os.environ.get('GITHUB_SHA') != commit:
+            raise ValueError('CI checkout is modified or differs from GITHUB_SHA.')
+    return {'checkout_commit': commit, 'checkout_tree': tree, 'dirty': dirty,
+            'pr_head_commit': os.environ.get('AM_PR_HEAD_SHA') or None,
+            'base_commit': os.environ.get('AM_BASE_SHA') or None,
+            'repository': os.environ.get('GITHUB_REPOSITORY'),
+            'branch': os.environ.get('GITHUB_HEAD_REF') or os.environ.get('GITHUB_REF_NAME'),
+            'event': os.environ.get('GITHUB_EVENT_NAME'),
+            'run_id': os.environ.get('GITHUB_RUN_ID'),
+            'run_number': os.environ.get('GITHUB_RUN_NUMBER'),
+            'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT')}
 
 
-def run(args: list[str], env: dict[str, str], log: Path,
-        check: bool = True) -> str:
-    result = subprocess.run(args, env=env, stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT, text=True,
-                            errors="replace", check=False)
-    log.write_text(result.stdout, encoding="utf-8")
-    print(result.stdout, end="", flush=True)
-    if check and result.returncode:
-        raise RuntimeError(f"{Path(args[0]).name} failed ({result.returncode}); see {log.name}.")
-    return result.stdout
-
-
-def visual_studio_environment(work: Path) -> tuple[dict[str, str], str]:
-    if os.name != "nt":
-        raise RuntimeError("Compile on Windows: use the included GitHub Actions workflow.")
-    vswhere = Path(os.environ.get("ProgramFiles(x86)", "C:/Program Files (x86)")) / \
-        "Microsoft Visual Studio/Installer/vswhere.exe"
-    if not vswhere.is_file():
-        raise RuntimeError("Visual Studio Installer/vswhere.exe was not found.")
-    install = subprocess.check_output([
-        str(vswhere), "-latest", "-products", "*", "-version", "[17.0,18.0)",
-        "-requires", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
-        "Microsoft.VisualStudio.Component.VC.ATLMFC", "-property", "installationPath"
-    ], text=True, errors="replace").strip()
-    if not install:
-        raise RuntimeError("VS 2022 with C++ x64 tools and MFC is required. See windows.vsconfig.")
-    # A private temporary batch file imports the developer environment. Do not
-    # log its 'set' output: environment variables may contain runner secrets.
-    batch = work / "vc-env.cmd"
-    batch.write_text('@echo off\ncall "' + install +
-                     '\\Common7\\Tools\\VsDevCmd.bat" -no_logo -arch=x64 -host_arch=x64 >nul\n'
-                     'if errorlevel 1 exit /b 1\nset\n', encoding="utf-8")
-    text = subprocess.check_output(["cmd.exe", "/d", "/c", str(batch)],
-                                   text=True, errors="replace")
+def visual_studio_environment(work: Path, lock: dict) -> tuple[dict[str, str], Path]:
+    if os.name != 'nt':
+        raise RuntimeError('Compile on Windows using the included GitHub Actions workflow.')
+    for key in ('vc_tools_version', 'compiler_version', 'windows_sdk_version'):
+        if not re.fullmatch(r'\d+\.\d+\.\d+(?:\.\d+)?', lock[key]):
+            raise ValueError('Invalid toolchain lock field: ' + key)
+    vswhere = Path(os.environ.get('ProgramFiles(x86)', 'C:/Program Files (x86)')) / \
+        'Microsoft Visual Studio/Installer/vswhere.exe'
+    installation = capture([str(vswhere), '-latest', '-products', '*', '-version', '[17.0,18.0)',
+                            '-requires', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
+                            'Microsoft.VisualStudio.Component.VC.ATLMFC', '-property', 'installationPath'])
+    if not installation:
+        raise RuntimeError('VS 2022 with x64 C++ tools and MFC is required; see windows.vsconfig.')
+    install = Path(installation)
+    tools = install / 'VC/Tools/MSVC' / lock['vc_tools_version']
+    if not (tools / 'bin/Hostx64/x64/cl.exe').is_file():
+        raise RuntimeError('Locked MSVC toolset is absent. Review toolchain.lock.json and revalidate; '
+                           'the builder will not silently select another compiler.')
+    # Remove inherited command-line overrides and prior developer-shell state.
     env = {k.upper(): v for k, v in os.environ.items()}
+    exact = {'CL', '_CL_', 'LINK', '_LINK_', 'INCLUDE', 'LIB', 'LIBPATH',
+             'VCTARGETSPATH', 'VCINSTALLDIR', 'VSINSTALLDIR', 'VISUALSTUDIOVERSION'}
+    for key in list(env):
+        if key in exact or key.startswith(('VSCMD_', 'VCTOOLS', 'WINDOWSSDK')):
+            del env[key]
+    env['VSLANG'] = '1033'
+    env['DOTNET_CLI_UI_LANGUAGE'] = 'en-US'
+    env['VSCMD_SKIP_SENDTELEMETRY'] = '1'
+    # Values passed through cmd.exe are restricted; the path comes from vswhere.
+    if any(c in installation for c in '%!\r\n"'):
+        raise ValueError('Unsupported metacharacter in Visual Studio installation path.')
+    batch = work / 'vc-env.cmd'
+    batch.write_text('@echo off\ncall "' + str(install / 'VC/Auxiliary/Build/vcvarsall.bat') +
+                     '" x64 ' + lock['windows_sdk_version'] + ' -vcvars_ver=' +
+                     lock['vc_tools_version'] + ' >nul\nif errorlevel 1 exit /b 1\nset\n',
+                     encoding='utf-8')
+    # set output is parsed in memory, never saved as a diagnostic or artifact.
+    text = capture(['cmd.exe', '/d', '/c', str(batch)], env=env)
     for line in text.splitlines():
-        if "=" in line and not line.startswith("="):
-            key, value = line.split("=", 1)
+        if '=' in line and not line.startswith('='):
+            key, value = line.split('=', 1)
             env[key.upper()] = value
-    for name in ("cl.exe", "link.exe", "rc.exe", "mt.exe", "msbuild.exe", "dumpbin.exe"):
-        if not shutil.which(name, path=env.get("PATH", "")):
-            raise RuntimeError("Missing Windows build tool: " + name)
-    for header in ("afxwin.h", "crtdbg.h", "windows.h"):
-        if not any((Path(p) / header).is_file() for p in env.get("INCLUDE", "").split(";") if p):
-            raise RuntimeError("Missing required build header: " + header)
+    for key, expected in [('VCTOOLSVERSION', lock['vc_tools_version']),
+                          ('WINDOWSSDKVERSION', lock['windows_sdk_version'])]:
+        if env.get(key, '').rstrip('\\/') != expected:
+            raise RuntimeError('Developer environment did not select the locked ' + key)
+    for name in ('cl.exe', 'link.exe', 'rc.exe', 'mt.exe', 'dumpbin.exe'):
+        if not shutil.which(name, path=env.get('PATH', '')):
+            raise RuntimeError('Missing build tool: ' + name)
+    for header in ('afxwin.h', 'crtdbg.h', 'windows.h'):
+        if not any((Path(p) / header).is_file() for p in env.get('INCLUDE', '').split(';') if p):
+            raise RuntimeError('Missing build header: ' + header)
     return env, install
 
 
+def prepare_output(path: Path) -> Path:
+    # Never delete/reuse a caller-specified directory, even if it is empty.
+    if path.exists() or path.is_symlink():
+        raise ValueError('Output must be a NEW directory; choose another --output path.')
+    path.mkdir(parents=True)
+    (path / 'diagnostics').mkdir()
+    return path
+
+
 def build(args: argparse.Namespace, receipt: dict, output: Path) -> None:
-    lock = json.loads((HERE / "sdk.lock.json").read_text(encoding="utf-8"))
-    receipt.update(sdk_version=lock["version"], sdk_sha256=lock["sha256"],
-                   configuration=args.configuration, architecture="x64", runtime_tested=False)
-    project = args.project.resolve()
-    if project.suffix.lower() != ".vcxproj" or not project.is_file():
-        raise ValueError("--project must name an existing .vcxproj file.")
-    # Fresh intermediate and SDK directories prevent stale output or dependency mixing.
-    with tempfile.TemporaryDirectory(prefix="am-cloud-") as temp:
-        work = Path(temp)
-        env, install = visual_studio_environment(work)
-        receipt["toolchain"] = {"visual_studio": install,
-            "vc_tools_version": env.get("VCTOOLSVERSION"),
-            "windows_sdk_version": env.get("WINDOWSSDKVERSION"),
-            "runner_image": os.environ.get("ImageVersion"),
-            "runner_os": os.environ.get("ImageOS")}
-        run([shutil.which("cl.exe", path=env["PATH"]), "/Bv"], env,
-            output / "compiler-version.log", check=False)
-        archive = args.sdk_zip.resolve() if args.sdk_zip else work / "sdk195.zip"
-        if not args.sdk_zip:
-            request = urllib.request.Request(lock["url"], headers={"User-Agent": "AM-Cloud-Build/0.1"})
-            try:
-                with urllib.request.urlopen(request, timeout=60) as response, archive.open("wb") as stream:
-                    shutil.copyfileobj(response, stream)
-            except Exception as error:
-                raise RuntimeError("SDK download failed. On a Windows VM use --sdk-zip with your "
-                                   "original sdk195.zip; never substitute the repository's older SDK. "
-                                   + str(error)) from error
-        verify_hash(archive, lock["sha256"])
-        sdk = extract_sdk(archive, work / "sdk")
-        bin_dir = work / "bin"
+    diagnostics = output / 'diagnostics'
+    receipt['stage'] = 'input-validation'
+    project = validate_project(args.project, REPOSITORY)
+    if ET.parse(project).find('.//{*}ProjectReference') is not None:
+        raise ValueError('This builder handles one standalone HXT project, not ProjectReference graphs.')
+    receipt['source'] = source_info()
+    receipt['project'] = project.relative_to(REPOSITORY).as_posix()
+    sdk_lock = json.loads((HERE / 'sdk.lock.json').read_text(encoding='utf-8'))
+    tool_lock = json.loads((HERE / 'toolchain.lock.json').read_text(encoding='utf-8'))
+    archive = (args.sdk_zip or HERE / 'vendor/sdk195.zip').resolve()
+    if not archive.is_file():
+        raise ValueError('Complete SDK missing: tools/am-cloud/vendor/sdk195.zip. '
+                         'Restore it from this branch; there is no website fallback.')
+    if archive.stat().st_size != sdk_lock['size_bytes']:
+        raise ValueError('Unexpected SDK size; the approved complete archive has 6,529,791 bytes.')
+    verify_hash(archive, sdk_lock['sha256'])
+    receipt['sdk'] = {'version': sdk_lock['version'], 'sha256': sha256(archive),
+                      'size_bytes': archive.stat().st_size}
+    # Rebuild in a fresh checkout-local directory, not Windows TEMP. Only this
+    # internally allocated directory is automatically removed on exit.
+    work_parent = HERE / '.work'
+    work_parent.mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix='build-', dir=work_parent) as temporary:
+        work = Path(temporary).resolve()
+        receipt['stage'] = 'sdk-validation'
+        sdk = extract_sdk(archive, work / 'sdk', args.configuration)
+        receipt['stage'] = 'toolchain-preflight'
+        env, install = visual_studio_environment(work, tool_lock)
+        compiler = install / 'VC/Tools/MSVC' / tool_lock['vc_tools_version'] / 'bin/Hostx64/x64/cl.exe'
+        dumpbin = compiler.with_name('dumpbin.exe')
+        msbuild = install / 'MSBuild/Current/Bin/MSBuild.exe'
+        probe = work / 'compiler-probe.cpp'
+        probe.write_text('#include <crtdbg.h>\nstatic_assert(sizeof(void*) == 8);\n', encoding='utf-8')
+        version_text = run([str(compiler), '/Bv', '/c', str(probe),
+                            '/Fo' + str(work / 'compiler-probe.obj')], env,
+                           diagnostics / 'compiler-version.log', timeout=60)
+        actual = re.search(r'Compiler Version ([0-9.]+) for x64', version_text)
+        if actual is None or actual.group(1) != tool_lock['compiler_version']:
+            raise RuntimeError('Compiler patch version differs from toolchain.lock.json; review and revalidate.')
+        receipt['toolchain'] = {**{k: tool_lock[k] for k in
+            ('vc_tools_version', 'compiler_version', 'windows_sdk_version')},
+            'compiler_sha256': sha256(compiler), 'msbuild_sha256': sha256(msbuild),
+            'msbuild_version': capture([str(msbuild), '/nologo', '/version'], env=env),
+            'python': platform.python_version(), 'runner_image': os.environ.get('ImageVersion'),
+            'runner_os': os.environ.get('ImageOS')}
+        receipt['stage'] = 'compile-link'
+        bin_dir, obj_dir = work / 'bin', work / 'obj'
         bin_dir.mkdir()
-        msbuild = shutil.which("msbuild.exe", path=env["PATH"])
-        run([msbuild, str(project), "/nologo", "/m", "/t:Rebuild",
-             "/p:Configuration=" + args.configuration, "/p:Platform=x64",
-             "/p:PlatformToolset=v143", "/p:AMSdkRoot=" + str(sdk),
-             "/p:OutDir=" + str(bin_dir) + "\\",
-             "/p:IntDir=" + str(work / "obj") + "\\"], env, output / "msbuild.log")
-        extension = ".hxt" if args.configuration == "Release" else ".hxtd"
-        plugins = list(bin_dir.glob("*" + extension))
-        if len(plugins) != 1:
-            raise RuntimeError("Expected exactly one freshly built " + extension + " plugin.")
-        plugin = plugins[0]
-        check_pe(plugin)
-        dumpbin = shutil.which("dumpbin.exe", path=env["PATH"])
-        exports = run([dumpbin, "/nologo", "/exports", str(plugin)], env, output / "exports.log")
-        for name in EXPORTS:
-            if not re.search(r"\b" + name + r"\b", exports):
-                raise RuntimeError("Missing HXT entry point: " + name)
-        dependencies = run([dumpbin, "/nologo", "/dependents", str(plugin)], env,
-                           output / "dependencies.log")
-        # Dependency names, not DLL loading, are inspected here. A:M owns the host DLLs.
-        if args.configuration == "Release" and re.search(
-                r"\b(?:mfc140ud|mfc140d|msvcp140d|vcruntime140d|ucrtbased)\.dll\b",
-                dependencies, re.I):
-            raise RuntimeError("Release output depends on a debug runtime.")
-        for p in [plugin, *bin_dir.glob("*.pdb")]:
-            shutil.copy2(p, output / p.name)
-        receipt["plugin"] = {"file": plugin.name, "sha256": sha256(plugin),
-                              "exports_checked": list(EXPORTS), "pe_checked": "x64 PE32+ DLL"}
-        (output / "SHA256SUMS.txt").write_text(
-            sha256(plugin) + "  " + plugin.name + "\n", encoding="utf-8")
-        receipt["status"] = "build-and-binary-audit-passed; A:M runtime test pending"
+        # Pin both developer-shell and MSBuild selections; MSBuild does not simply
+        # inherit toolset selection from vcvarsall. Forward slashes avoid trailing
+        # backslash/quote ambiguity when Python marshals Windows arguments.
+        command = [str(msbuild), str(project), '/nologo', '/m:1', '/t:Rebuild',
+                   '/nodeReuse:false', '/noAutoResponse', '/verbosity:normal',
+                   '/p:Configuration=' + args.configuration, '/p:Platform=x64',
+                   '/p:PlatformToolset=v143', '/p:VCToolsVersion=' + tool_lock['vc_tools_version'],
+                   '/p:WindowsTargetPlatformVersion=' + tool_lock['windows_sdk_version'],
+                   '/p:AMSdkRoot=' + sdk.as_posix(),
+                   '/p:OutDir=' + bin_dir.as_posix() + '/',
+                   '/p:IntDir=' + obj_dir.as_posix() + '/']
+        text = run(command, env, diagnostics / 'msbuild.log')
+        receipt['stage'] = 'warning-policy'
+        receipt['accepted_sdk_warnings'] = audit_warnings(text, sdk)
+        extension = '.hxt' if args.configuration == 'Release' else '.hxtd'
+        suffix = '_64' if args.configuration == 'Release' else '_64d'
+        expected_name = project.stem + suffix + extension
+        outputs = sorted(p for p in bin_dir.iterdir() if p.suffix.lower() in ('.hxt', '.hxtd'))
+        if len(outputs) != 1 or outputs[0].name != expected_name:
+            raise ValueError('Expected exactly one fresh plugin named ' + expected_name)
+        plugin = outputs[0]
+        receipt['stage'] = 'binary-audit'
+        pe = check_pe(plugin)
+        exports = audit_exports(run([str(dumpbin), '/nologo', '/exports', str(plugin)], env,
+                                    diagnostics / 'exports.log', timeout=60))
+        dependencies = audit_dependencies(run([str(dumpbin), '/nologo', '/dependents', str(plugin)],
+                                              env, diagnostics / 'dependencies.log', timeout=60),
+                                          args.configuration)
+        receipt['plugin'] = {'file': plugin.name, 'size_bytes': plugin.stat().st_size,
+                             'sha256': sha256(plugin), 'pe': pe,
+                             'exports': exports, 'dependencies': dependencies}
+        receipt['stage'] = 'packaging'
+        package = work / 'package'
+        package.mkdir()
+        shutil.copy2(plugin, package / plugin.name)
+        pdb = plugin.with_suffix('.pdb')
+        if not pdb.is_file():
+            raise ValueError('Matching PDB was not produced.')
+        (package / 'symbols').mkdir()
+        shutil.copy2(pdb, package / 'symbols' / pdb.name)
+        for name in ('Verify-Package.ps1', 'HOST-TEST.md'):
+            shutil.copy2(HERE / name, package / name)
+        source = receipt['source']
+        readme = (f'A:M CLOUD-BUILD TEST PACKAGE\n\nConfiguration: {args.configuration} x64\n'
+                  f'Plugin: {plugin.name}\nSHA-256: {sha256(plugin)}\n'
+                  f'Checkout commit: {source["checkout_commit"]}\n'
+                  f'PR head: {source["pr_head_commit"]}\n'
+                  f'Run: {source["run_number"]}; attempt: {source["run_attempt"]}\n\n'
+                  'BUILD AND BINARY AUDIT PASSED. THIS BINARY HAS NOT BEEN HOST-TESTED BY CI.\n'
+                  'Read HOST-TEST.md. Run Verify-Package.ps1 before manual installation.\n'
+                  'Close A:M, keep a backup OUTSIDE scanned HXT folders, and copy ONLY the plugin.\n'
+                  'No compiler or SDK needs to be installed on the test computer.\n')
+        if args.configuration == 'Debug':
+            readme += '\nDEBUG ONLY: needs the matching DEBUG A:M host and debug runtimes.\nDO NOT install in ordinary Release A:M.\n'
+        (package / 'READ-ME-FIRST.txt').write_text(readme, encoding='utf-8')
+        payload_receipt = {**receipt, 'status': 'passed', 'stage': 'complete', 'finished_utc': utc_now()}
+        write_json(package / 'build-receipt.json', payload_receipt)
+        label = re.sub(r'[^A-Za-z0-9_.-]', '-', project.stem)
+        run_id = source['run_id'] or 'local'
+        attempt = source['run_attempt'] or '1'
+        if not re.fullmatch(r'(?:\d+|local)', run_id) or not attempt.isdecimal():
+            raise ValueError('Unexpected build identity.')
+        name = f'{label}-AM19.5-{args.configuration}-x64-{run_id}-a{attempt}-{source["checkout_commit"][:12]}.zip'
+        digest = seal_package(package, output / 'packages' / name)
+        receipt.update(payload_receipt)
+        receipt['package'] = {'file': name, 'sha256': digest}
 
 
-def main() -> int:
+def finish(receipt: dict, diagnostics: Path) -> None:
+    receipt.setdefault('finished_utc', utc_now())
+    write_json(diagnostics / 'build-receipt.json', receipt)
+    summary = (f'## A:M {receipt["configuration"]} x64\n\n'
+               f'Build/binary audit: **{receipt["status"]}**. Stage: `{receipt["stage"]}`.\n\n'
+               '**Host runtime: not tested by CI.** Previous user tests apply only to their recorded binary.\n')
+    plugin = receipt.get('plugin')
+    if plugin:
+        summary += f'\nPlugin: `{plugin["file"]}`\n\nSHA-256: `{plugin["sha256"]}`\n'
+    summary += f'\nAccepted locked-SDK diagnostic lines: {len(receipt.get("accepted_sdk_warnings", []))}. See diagnostics.\n'
+    if 'error' in receipt:
+        # Avoid injecting untrusted text into a Markdown summary; full error is in JSON/logs.
+        summary += '\nSee diagnostics/build-receipt.json for the error. No installable artifact is published.\n'
+    (diagnostics / 'summary.md').write_text(summary, encoding='utf-8')
+    if os.environ.get('GITHUB_STEP_SUMMARY'):
+        with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as f:
+            f.write(summary)
+
+
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--configuration", choices=("Release", "Debug"), default="Release")
-    parser.add_argument("--project", type=Path,
-                        default=HERE / "plugins/AMBuildSmoke/AMBuildSmoke.vcxproj")
-    parser.add_argument("--sdk-zip", type=Path, help="Use a local, checksum-matching SDK archive")
-    parser.add_argument("--output", type=Path, default=HERE / "artifacts")
-    args = parser.parse_args()
-    output = args.output.resolve()
-    # Refuse to delete user files or publish artifacts left over from an earlier run.
-    if output.exists() and any(output.iterdir()):
-        parser.error("Output directory must be empty. Select a new --output directory.")
-    output.mkdir(parents=True, exist_ok=True)
-    receipt = {"started_utc": datetime.now(timezone.utc).isoformat(),
-               "source_commit": os.environ.get("GITHUB_SHA"), "status": "failed"}
+    parser.add_argument('--configuration', choices=('Release', 'Debug'), default='Release')
+    parser.add_argument('--project', default=DEFAULT_PROJECT)
+    parser.add_argument('--sdk-zip', type=Path, help='Optional local copy; must match the same SDK lock')
+    parser.add_argument('--output', type=Path, default=HERE / 'artifacts')
+    args = parser.parse_args(argv)
+    try:
+        output = prepare_output(args.output.absolute())
+    except (OSError, ValueError) as error:
+        parser.error(str(error))
+    receipt = {'schema_version': 2, 'started_utc': utc_now(), 'status': 'failed',
+               'stage': 'starting', 'configuration': args.configuration,
+               'architecture': 'x64', 'runtime_tested': False}
     try:
         build(args, receipt, output)
-        print("Build and binary audit passed. Loading in A:M remains a separate test.")
-        return 0
-    except Exception as error:
-        receipt["error"] = str(error)
-        print("ERROR: " + str(error), file=sys.stderr)
-        return 1
-    finally:
-        receipt["finished_utc"] = datetime.now(timezone.utc).isoformat()
-        (output / "build-receipt.json").write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+    except (Exception, KeyboardInterrupt) as error:
+        receipt['status'] = 'failed'
+        receipt['error'] = str(error) or 'Interrupted'
+        print('ERROR: ' + receipt['error'], file=sys.stderr)
+        return_code = 1
+    else:
+        print('Build, binary audit and package integrity passed. A:M runtime test remains separate.')
+        return_code = 0
+    finish(receipt, output / 'diagnostics')
+    return return_code
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     raise SystemExit(main())

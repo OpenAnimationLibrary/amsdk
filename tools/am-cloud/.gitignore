@@ -1,4 +1,6 @@
 artifacts*/
+test-results/
+.work/
 __pycache__/
 *.user
 .vs/

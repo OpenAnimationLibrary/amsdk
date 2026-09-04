@@ -2,5 +2,6 @@
   "version": "19.5",
   "url": "https://www.hash.com/ftp/pub/Sdk/sdk195.zip",
   "sha256": "0e917a67d9ac386ea3ad512ce97518f764cddc032957682717c862e64c112977",
-  "provenance": "Official SDK link in Hash's v19.5E release post. Digest calculated from Rodney's sdk195.zip uploaded August 24, 2026. A different download must be reviewed, not silently accepted."
+  "provenance": "Complete sdk195.zip supplied by Rodney on August 24, 2026 and committed with owner approval. Used by successful Windows run #7 and the user-reported A:M 19.5g Group test. The URL is provenance only; builds do not download it.",
+  "size_bytes": 6529791
 }

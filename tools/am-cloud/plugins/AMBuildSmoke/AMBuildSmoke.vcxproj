@@ -8,7 +8,7 @@
     <ProjectGuid>{08513A99-91A5-49CB-B686-F4DB06CF0E91}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>AMBuildSmoke</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
@@ -19,12 +19,16 @@
     <UseOfMfc>Dynamic</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <PropertyGroup>
+    <PropertyGroup>
     <TargetName>$(ProjectName)_64</TargetName><TargetExt>.hxt</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <TargetName>$(ProjectName)_64d</TargetName><TargetExt>.hxtd</TargetExt>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <LinkIncremental>false</LinkIncremental>
+    <TargetPath>$(OutDir)$(TargetName)$(TargetExt)</TargetPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -32,10 +36,14 @@
       <LanguageStandard>stdcpp20</LanguageStandard><ConformanceMode>true</ConformanceMode>
       <RuntimeTypeInfo>true</RuntimeTypeInfo><PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(AMSdkRoot)\Include;$(AMSdkRoot)\Include\3rdParty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>DEFAULT_INITIALIZED;_WIN64;WIN32;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WINVER=0x0A00;_WIN32_WINNT=0x0A00;DEFAULT_INITIALIZED;_WIN64;WIN32;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
+      <OutputFile>$(TargetPath)</OutputFile>
+      <ProgramDatabaseFile>$(OutDir)$(TargetName).pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
       <AdditionalLibraryDirectories>$(AMSdkRoot)\Lib\PC;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem><TargetMachine>MachineX64</TargetMachine>
@@ -52,6 +60,7 @@
   <ItemGroup><ClCompile Include="AMBuildSmoke.cpp" /><ClInclude Include="StdAfx.h" /><ResourceCompile Include="AMBuildSmoke.rc" /></ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Target Name="ValidateAMBuild" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug'" Text="Only Release or Debug configurations are supported." />
     <Error Condition="'$(Platform)'!='x64'" Text="This project targets A:M x64 only." />
     <Error Condition="!Exists('$(AMSdkRoot)\Include\SDK\Entry.h')" Text="A checksum-verified A:M 19.5 SDK is required; use tools/am-cloud/build.py." />
   </Target>
