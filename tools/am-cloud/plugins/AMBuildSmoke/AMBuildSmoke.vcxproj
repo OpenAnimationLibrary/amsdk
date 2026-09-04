@@ -7,6 +7,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{08513A99-91A5-49CB-B686-F4DB06CF0E91}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
     <RootNamespace>AMBuildSmoke</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -19,13 +20,13 @@
     <UseOfMfc>Dynamic</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
-    <PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
     <TargetName>$(ProjectName)_64</TargetName><TargetExt>.hxt</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <TargetName>$(ProjectName)_64d</TargetName><TargetExt>.hxtd</TargetExt>
   </PropertyGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <PropertyGroup>
     <LinkIncremental>false</LinkIncremental>
     <TargetPath>$(OutDir)$(TargetName)$(TargetExt)</TargetPath>
