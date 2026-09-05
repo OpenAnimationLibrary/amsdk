@@ -1,0 +1,6 @@
+#include <winres.h>
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+STRINGTABLE
+BEGIN
+    101 "AMSelectionReport v1"
+END

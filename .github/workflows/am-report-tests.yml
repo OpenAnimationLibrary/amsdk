@@ -1,0 +1,93 @@
+name: Read-only A:M Report Plugins
+
+on:
+  pull_request:
+    paths: ['tools/am-cloud/**', '.github/workflows/am-report-tests.yml']
+  push:
+    branches: [main]
+    paths: ['tools/am-cloud/**', '.github/workflows/am-report-tests.yml']
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: Debug output requires a matching debug A:M host
+        type: choice
+        options: [Both, Release, Debug]
+        default: Both
+
+permissions:
+  contents: read
+
+concurrency:
+  group: am-reports-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reports:
+    name: ${{ matrix.plugin }} / ${{ matrix.configuration }}
+    runs-on: windows-2022
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: [AMModelReport, AMSelectionReport]
+        configuration: ${{ fromJSON(inputs.configuration == 'Release' && '["Release"]' || inputs.configuration == 'Debug' && '["Debug"]' || '["Release","Debug"]') }}
+    env:
+      AM_PROJECT: tools/am-cloud/plugins/${{ matrix.plugin }}/${{ matrix.plugin }}.vcxproj
+      AM_CONFIGURATION: ${{ matrix.configuration }}
+      AM_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      AM_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      PYTHONUTF8: '1'
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Select Python 3.11
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+          architecture: x64
+      - name: Run helper and report-project checks
+        run: |
+          New-Item -ItemType Directory -Force tools/am-cloud/test-results | Out-Null
+          python -m unittest discover -s tools/am-cloud/tests -v 2>&1 | Tee-Object tools/am-cloud/test-results/tests.log
+          exit $LASTEXITCODE
+      - name: Compile and run report math tests
+        run: python tools/am-cloud/tests/run_report_math_tests.py
+      - name: Build and audit the selected report
+        run: python tools/am-cloud/build.py --configuration "$env:AM_CONFIGURATION" --project "$env:AM_PROJECT"
+      - name: Verify intact package and reject modified copy
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $false
+          $packages = @(Get-ChildItem tools/am-cloud/artifacts/packages/*.zip)
+          if ($packages.Count -ne 1) { throw 'Expected one package ZIP.' }
+          $dest = Join-Path $PWD 'tools/am-cloud/.work/report-package-verification'
+          Expand-Archive -LiteralPath $packages[0].FullName -DestinationPath $dest
+          pwsh -NoProfile -File "$dest/Verify-Package.ps1" 2>&1 | Tee-Object tools/am-cloud/artifacts/diagnostics/package-verification.log
+          if ($LASTEXITCODE -ne 0) { throw 'Verifier rejected the intact report package.' }
+          $hxt = @(Get-ChildItem $dest -File | Where-Object { $_.Extension -in '.hxt', '.hxtd' })
+          if ($hxt.Count -ne 1) { throw 'Expected one plugin.' }
+          [IO.File]::AppendAllText($hxt[0].FullName, 'tamper-test')
+          pwsh -NoProfile -File "$dest/Verify-Package.ps1" 2>&1 | Tee-Object tools/am-cloud/artifacts/diagnostics/tamper-rejection.log
+          if ($LASTEXITCODE -eq 0) { throw 'Verifier accepted modified report output.' }
+          exit 0
+      - name: Publish report test package
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: AMReport-Package-${{ matrix.plugin }}-${{ matrix.configuration }}-x64-r${{ github.run_number }}-a${{ github.run_attempt }}
+          path: tools/am-cloud/artifacts/packages/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Preserve report diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: AMReport-Diagnostics-${{ matrix.plugin }}-${{ matrix.configuration }}-r${{ github.run_number }}-a${{ github.run_attempt }}
+          path: |
+            tools/am-cloud/artifacts/diagnostics/
+            tools/am-cloud/test-results/
+          if-no-files-found: warn
+          retention-days: 14
