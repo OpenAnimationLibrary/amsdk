@@ -58,7 +58,7 @@ int wmain(int argc, wchar_t** argv) {
             }
             Check(GetProcessHandleCount(GetCurrentProcess(), &after) != 0, "Cannot count final handles");
             std::cout << "Batch " << pass << ": handles before=" << before << "; after=" << after << std::endl;
-            if (pass) Check(after <= before, "Repeated worker batch leaked handles");
+            if (pass) Check(after <= before, "Worker handles grew across the repeated scenario batch");
         }
         fs::remove(source); fs::remove(folder);
         std::cout << "PASS: Unicode/space paths, exit failure, stdout/stderr flood, timeout, memory/child-process limits, cancellation and repeated-batch handle cleanup\n";
