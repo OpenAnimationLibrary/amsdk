@@ -32,7 +32,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+      - name: Select CPython 3.11 x64
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.11'
           architecture: x64
@@ -41,11 +42,20 @@ jobs:
           New-Item -ItemType Directory -Force tools/am-cloud/test-results | Out-Null
           python -m unittest discover -s tools/am-cloud/tests -v 2>&1 | Tee-Object tools/am-cloud/test-results/tests.log
           exit $LASTEXITCODE
-      - name: Python plan and runner tests
+      - name: Python 3.11 plan, runner and topology tests
         run: |
-          python -m unittest discover -s tools/am-cloud/plugins/AMScriptBuilder/tests -p test_python.py -v 2>&1 | Tee-Object tools/am-cloud/test-results/script-python.log
+          python -m unittest discover -s tools/am-cloud/plugins/AMScriptBuilder/tests -p 'test_*.py' -v 2>&1 | Tee-Object tools/am-cloud/test-results/script-python311.log
           exit $LASTEXITCODE
-      - name: Native parser and supervised Python integration tests
+      - name: Select CPython 3.12 x64
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - name: Python 3.12 plan, runner and topology tests
+        run: |
+          python -m unittest discover -s tools/am-cloud/plugins/AMScriptBuilder/tests -p 'test_*.py' -v 2>&1 | Tee-Object tools/am-cloud/test-results/script-python312.log
+          exit $LASTEXITCODE
+      - name: Native parser and supervised Python 3.12 integration tests
         run: python tools/am-cloud/tests/run_script_builder_tests.py
       - name: Build and audit Script Builder
         run: python tools/am-cloud/build.py --configuration "$env:AM_CONFIGURATION" --project tools/am-cloud/plugins/AMScriptBuilder/AMScriptBuilder.vcxproj
