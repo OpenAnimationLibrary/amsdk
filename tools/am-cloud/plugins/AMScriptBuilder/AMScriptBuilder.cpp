@@ -6,6 +6,7 @@
 #include "SDK/HPatch.h"
 #include "SDK/HProject.h"
 #include "Plan.h"
+#include "FivePoint.h"
 #include "Worker.h"
 #include <commdlg.h>
 #include <cwctype>
@@ -137,7 +138,7 @@ BEGIN_MESSAGE_MAP(Progress, CDialog)
 END_MESSAGE_MAP()
 
 Vector Position(const std::array<float, 3>& point) { return Vector(point[0], point[1], point[2]); }
-void CreateModel(const amscript::Plan& plan) {
+void CreateModel(const amscript::Plan& plan, const std::vector<amscript::FiveCycle>& fiveCandidates) {
     // Only this function mutates A:M. No source/context objects are edited.
     // The SDK does NOT establish a transactional rollback contract here.
     HModelCache* model = nullptr;
@@ -166,13 +167,25 @@ void CreateModel(const amscript::Plan& plan) {
                 cp->SetPeaked(); occurrences.emplace_back(indices[i], cp);
             }
         }
+        std::size_t deletedByAttachment = 0;
         for (const auto& occurrence : occurrences) {
             HCP*& head = heads[occurrence.first];
-            if (!head) head = occurrence.second;
-            else if (!model->AttachCPs(head, occurrence.second))
-                throw std::runtime_error("SDK rejected an explicit point attachment");
+            if (!head) {
+                head = occurrence.second;
+            } else {
+                // SDK semantics: TRUE means A:M deleted the second CP as part of
+                // attachment/loopback handling. FALSE is also a normal attachment
+                // outcome; it is NOT a failure return. The SDK Grid sample treats
+                // this result as cp2deleted for exactly that reason.
+                if (model->AttachCPs(head, occurrence.second)) ++deletedByAttachment;
+            }
         }
-        model->Update(); model->FindPatches(); model->SetChanged();
+        model->Update();
+        model->FindPatches();
+        std::size_t actualFivePatches = 0;
+        for (HPatch5* patch = model->GetHeadPatch5(); patch; patch = patch->GetNextPatch5())
+            ++actualFivePatches;
+        model->SetChanged();
         model->RefreshInProjectBar(TRUE);
         finished = true;
         model->OpenView(); model->ZoomFit();
@@ -182,8 +195,14 @@ void CreateModel(const amscript::Plan& plan) {
         message << "Built a NEW, unsaved model.\n\nName: " << plan.name
                 << "\nLogical points: " << plan.points.size() << "\nSpline CP records: " << plan.occurrences
                 << "\nSplines: " << plan.splines.size() << "\nRequested attachments: " << plan.attachments
-                << "\nSDK patch count: " << model->GetPatchCount() << "\nA:M: " << version.Get()
-                << "\n\nExisting model geometry was not targeted. Save/test this new model manually."
+                << "\nAttachCPs deleted-second-CP results: " << deletedByAttachment
+                << "\nPlan five-point candidates: " << fiveCandidates.size()
+                << "\nA:M standard patch count: " << model->GetPatchCount()
+                << "\nA:M HPatch5 count: " << actualFivePatches << "\nA:M: " << version.Get();
+        if (actualFivePatches != fiveCandidates.size())
+            message << "\n\nDiagnostic: plan candidate count differs from A:M HPatch5 count."
+                    << " This is reported for study and is not treated as a build failure.";
+        message << "\n\nExisting model geometry was not targeted. Save/test this new model manually."
                 << "\nDo not rely on whole-build Undo: remove the generated model through A:M to discard it.";
         Message(Wide(message.str()));
     } catch (...) {
@@ -203,13 +222,14 @@ void Build() {
     std::string data;
     if (extension == L".json") data = input;
     else if (extension == L".py") {
-        const auto executable = Choose(L"Choose CPython 3.11 python.exe (not py.exe or pythonw.exe)", L"Python executable (python.exe)\0python.exe\0\0", g_python);
+        const auto executable = Choose(L"Choose 64-bit CPython 3.11 or 3.12 python.exe (not py.exe or pythonw.exe)", L"Python executable (python.exe)\0python.exe\0\0", g_python);
         if (executable.empty()) return;
         if (_wcsicmp(fs::path(executable).filename().c_str(), L"python.exe") != 0)
-            throw std::runtime_error("Select CPython 3.11 python.exe, not a launcher");
+            throw std::runtime_error("Select 64-bit CPython 3.11 or 3.12 python.exe, not a launcher");
         g_python = executable;
         if (Message(L"Run this local Python script?\n\n" + chosen + L"\n\nInterpreter:\n" + executable +
-            L"\n\nONLY run code you trust. Python runs with your account permissions; this is NOT a security sandbox."
+            L"\n\nSupported: 64-bit CPython 3.11 or 3.12; the worker verifies this before executing the script."
+            L"\nONLY run code you trust. Python runs with your account permissions; this is NOT a security sandbox."
             L"\nThe plugin has no network/API feature, but arbitrary scripts can access files/network."
             L"\n15-second, 512 MiB and output limits apply. No A:M geometry will change until a separate confirmation.",
             MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2) != IDYES) return;
@@ -223,15 +243,32 @@ void Build() {
         data = std::move(progress.output);
     } else throw std::runtime_error("Select a .py script or .json plan");
     const auto plan = amscript::Parse(data); // independent C++ validation before ANY creation
+    const auto fiveCandidates = amscript::FivePointCandidates(plan);
     std::ostringstream summary;
     summary << "Validated plan v1: " << plan.name << "\n\nLogical points: " << plan.points.size()
             << "\nOpen, peaked splines: " << plan.splines.size() << "\nSpline CP records: " << plan.occurrences
             << "\nExplicit attachments: " << plan.attachments
-            << "\n\nCreate a NEW model now? Existing geometry will not be replaced."
-            << "\nA:M will discover patches; plan validation is not surface validation."
+            << "\nFive-point topology candidates: " << fiveCandidates.size();
+    if (!fiveCandidates.empty()) {
+        summary << "\nCandidate boundaries:";
+        const std::size_t shown = fiveCandidates.size() < 8 ? fiveCandidates.size() : 8;
+        for (std::size_t i = 0; i < shown; ++i) {
+            summary << "\n  [";
+            for (std::size_t j = 0; j < 5; ++j) {
+                if (j) summary << ',';
+                summary << fiveCandidates[i][j];
+            }
+            summary << ']';
+        }
+        if (fiveCandidates.size() > shown) summary << "\n  ...";
+    }
+    summary << "\n\nCreate a NEW model now? Existing geometry will not be replaced."
+            << "\nA:M will discover patches; plan candidates are topology hints, not HPatch5 proof."
+            << "\nThe result dialog compares candidates with A:M's actual HPatch5 count."
             << "\nNo automatic save or whole-build Undo. To discard, delete the generated model."
             << "\nNative failure can leave a partial NEW model; test only in a disposable project.";
-    if (Message(Wide(summary.str()), MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) == IDYES) CreateModel(plan);
+    if (Message(Wide(summary.str()), MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) == IDYES)
+        CreateModel(plan, fiveCandidates);
 }
 } // namespace
 
