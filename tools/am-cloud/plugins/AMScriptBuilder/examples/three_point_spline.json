@@ -1,0 +1,28 @@
+{
+  "am_plan": 1,
+  "name": "Scripted Three Point Spline",
+  "points": [
+    [
+      -10.0,
+      0,
+      0
+    ],
+    [
+      0,
+      10.0,
+      0
+    ],
+    [
+      10.0,
+      0,
+      0
+    ]
+  ],
+  "splines": [
+    [
+      0,
+      1,
+      2
+    ]
+  ]
+}
