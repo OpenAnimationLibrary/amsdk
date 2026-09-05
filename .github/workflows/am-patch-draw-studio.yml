@@ -1,0 +1,33 @@
+name: Patch Draw Studio
+on:
+  pull_request:
+    paths: ['tools/am-cloud/plugins/AMPatchDraw/**', '.github/workflows/am-patch-draw-studio.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: am-patch-draw-studio-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  source:
+    name: Patch Draw source snapshot
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Archive tracked development inputs
+        run: |
+          git archive --format=zip --output="$RUNNER_TEMP/patchdraw-source.zip" HEAD AGENTS.md docs tools/am-cloud .github/workflows Plugin/HXT
+          git rev-parse HEAD > "$RUNNER_TEMP/source-commit.txt"
+          sha256sum "$RUNNER_TEMP/patchdraw-source.zip" > "$RUNNER_TEMP/source-sha256.txt"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: AMPatchDraw-Source-r${{ github.run_number }}-a${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/patchdraw-source.zip
+            ${{ runner.temp }}/source-commit.txt
+            ${{ runner.temp }}/source-sha256.txt
+          if-no-files-found: error
+          retention-days: 14
