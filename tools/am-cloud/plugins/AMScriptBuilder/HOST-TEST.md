@@ -10,8 +10,8 @@ Verify the package using Verify-Package.ps1 (respect local script policy), or
 compare the plugin hash with build-receipt.json and the manifest. Close A:M,
 back up any previous AMScriptBuilder HXT outside scanned folders and install
 ONLY AMScriptBuilder_64.hxt. Keep examples/runtime/PDB/docs in a separate folder.
-Restart A:M. No SDK or C++ compiler is required. Script execution needs CPython
-3.11; importing supplied JSON does not.
+Restart A:M. No SDK or C++ compiler is required. Script execution supports
+64-bit CPython 3.11 or 3.12; importing supplied JSON does not require Python.
 
 Menu: model/Objects entry in Project Workspace > Plugins > Wizards >
 **A:M Script Builder v1 - New Model**. A Group selection also exposes this
@@ -29,20 +29,27 @@ Close A:M before replacing/removing this HXT to roll back a plugin version.
 1. Import examples/three_point_spline.json. Confirm three logical/three spline
    CPs, one open peaked spline, no attachments/patches, bounds (-10,0,0) to
    (10,10,0). Save the model manually, close/reopen and verify geometry persists.
-2. Import examples/grid.json. Confirm six splines, 18 CP records, nine shared
-   logical points and intended four quad patches, bounds (0,0,0) to (20,20,0).
-   Use AMModelReport as an additional check, not a substitute for inspection.
-3. Run the matching .py examples with CPython 3.11. They should describe the same
-   geometry as their JSON fixtures. Record both native and script route results.
-4. Edit a COPY of grid.py: SPACING=5.0; rerun without rebuilding/replacing HXT.
+2. Import examples/grid.json. Confirm six splines, 18 CP records and nine shared
+   logical points. The corrected build treats AttachCPs()'s Boolean as
+   `second CP deleted during attachment`, not success/failure. The intended native
+   result is four quad patches, bounds (0,0,0) to (20,20,0). Use AMModelReport as
+   an additional check, not a substitute for inspection.
+3. Import examples/five_point_candidate.json. Before creation the dialog should
+   report exactly one five-point topology candidate with boundary [0,1,2,3,4].
+   After A:M FindPatches(), record the actual HPatch5 count shown. A candidate is
+   only a topology prediction; a count mismatch is diagnostic, not a plugin error.
+4. Run the matching .py examples with either supported 64-bit CPython 3.11 or
+   3.12. They should describe the same geometry as their JSON fixtures. Record the
+   exact interpreter version and both native/script route results.
+5. Edit a COPY of grid.py: SPACING=5.0; rerun without rebuilding/replacing HXT.
    New grid bounds should be (0,0,0) to (10,10,0); previous models stay unchanged.
-5. Decline trust confirmation; cancel a file chooser; decline Build after
+6. Decline trust confirmation; cancel a file chooser; decline Build after
    validation. No new model should appear. Cancel the Python progress dialog
    with a trusted test script containing `while True: pass`; no model is created.
-6. Let that loop reach its timeout. Confirm error and responsive A:M afterward.
+7. Let that loop reach its timeout. Confirm error and responsive A:M afterward.
    Test syntax error/missing build() and a JSON copy with an invalid point index.
    None should enter native creation. Do not raise limits to make failures pass.
-7. Rerun twice. Confirm separate results rather than replacement; remove each
+8. Rerun twice. Confirm separate results rather than replacement; remove each
    generated model through A:M to discard. Confirm the application remains usable.
 
 Undo/Redo for the multi-step build, automatic deletion after partial native
@@ -57,7 +64,8 @@ A:M About version / Windows version:
 JSON fixture / script and any changed constants:
 Python version/path (script route):
 Menu context:
-Validated counts / resulting spline, point, attachment and patch counts:
+Validated counts / five-point candidate count:
+Resulting spline, point, attachment, standard-patch and HPatch5 counts:
 Visible bounds / peaked shape:
 Save/reopen:
 No changes to previous models:
