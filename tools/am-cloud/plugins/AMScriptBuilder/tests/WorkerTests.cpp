@@ -37,8 +37,8 @@ int wmain(int argc, wchar_t** argv) {
         DWORD warmed = 0;
         Check(GetProcessHandleCount(GetCurrentProcess(), &warmed) != 0, "Cannot count warm handles");
         std::cout << "Handles at entry=" << before << "; after first process=" << warmed << std::endl;
-        // Windows process creation can initialize process-wide cached handles.
-        // Warm all paths, then require a repeated batch not to retain handles.
+        // Run #3 observed 46 handles at entry, 59 after first process, then 59/59
+        // across both batches. Measure repeat growth, not the cold-start delta.
         for (unsigned pass = 0; pass < 2; ++pass) {
             Check(GetProcessHandleCount(GetCurrentProcess(), &before) != 0, "Cannot count batch handles");
             Check(run("Unicode arguments", "import sys;print(sys.argv[0])", true).find("input") != std::string::npos, "Missing Unicode script path");
