@@ -76,24 +76,31 @@ def main():
             source = ROOT/'runtime'/name
             if resource_bytes(plugin, identifier)!=source.read_bytes(): raise ValueError('Embedded Python resource differs from reviewed source')
             resources[name]=sha256(source)
-        for sub, files in {'runtime':['runner.py','ambridge.py'], 'examples':['three_point_spline.py','three_point_spline.json','grid.py','grid.json']}.items():
+        files = {
+            'runtime':['runner.py','ambridge.py'],
+            'examples':['three_point_spline.py','three_point_spline.json','grid.py','grid.json',
+                        'find_5point_candidates.py','five_point_candidate.json'],
+        }
+        for sub, names in files.items():
             (folder/sub).mkdir()
-            for name in files: shutil.copy2(ROOT/sub/name, folder/sub/name)
+            for name in names: shutil.copy2(ROOT/sub/name, folder/sub/name)
         shutil.copy2(ROOT/'HOST-TEST.md', folder/'HOST-TEST.md')
         shutil.copy2(ROOT/'README.md', folder/'SCRIPT-BUILDER.md')
         (folder/'READ-ME-FIRST.txt').write_text(
             'AMScriptBuilder v1 - NEW MODEL ONLY\n\n'
             f"Configuration: {receipt['configuration']} x64\nPlugin: {plugin.name}\nSHA-256: {receipt['plugin']['sha256']}\n\n"
-            'Native build and data/resource checks passed. A:M creation has NOT been host-tested by CI.\n'
+            'Native build and data/resource checks passed. A:M creation must still be host-tested manually.\n'
             'Run Verify-Package.ps1 and read HOST-TEST.md before installation.\n'
             'With A:M closed, install ONLY the HXT. Keep examples/runtime/docs elsewhere.\n'
-            'No Python is needed to import example JSON. Running scripts needs CPython 3.11 python.exe.\n'
+            'No Python is needed to import example JSON. Running scripts supports 64-bit CPython 3.11 or 3.12.\n'
             'Only execute reviewed scripts; process limits are NOT a security sandbox.\n'
+            'Five-point candidates are topology diagnostics; A:M FindPatches()/HPatch5 remains authoritative.\n'
             'Do not rely on whole-build Undo or automatic rollback. Test in a disposable project.\n'
             + ('\nDEBUG HOST ONLY. Do not install this Debug output into ordinary A:M.\n' if receipt['configuration']=='Debug' else ''), encoding='utf8')
         write_json(folder/'distribution-receipt.json', {'native_package':original.name,
             'native_package_sha256':sha256(original), 'embedded_resources_verified':resources,
-            'source':receipt['source'], 'runtime_tested':False})
+            'source':receipt['source'], 'runtime_tested':False,
+            'supported_python':['CPython 3.11 x64','CPython 3.12 x64']})
         manifest.unlink()
         destination = HERE/'artifacts/script-packages'/original.name
         digest = seal_package(folder, destination)
