@@ -1,0 +1,90 @@
+name: Patch Draw Canvas
+on:
+  pull_request:
+    paths: ['tools/am-cloud/plugins/AMPatchDraw/**', 'tools/am-cloud/build*.py', 'tools/am-cloud/*.json', 'tools/am-cloud/vendor/**', 'tools/am-cloud/Verify-Package.ps1', 'tools/am-cloud/tests/**', 'tools/am-cloud/plugins/AMScriptBuilder/**', '.github/workflows/am-patch-draw.yml', 'docs/*patch-draw*']
+  push:
+    branches: [main]
+    paths: ['tools/am-cloud/plugins/AMPatchDraw/**', 'tools/am-cloud/build*.py', 'tools/am-cloud/*.json', 'tools/am-cloud/vendor/**', 'tools/am-cloud/Verify-Package.ps1', 'tools/am-cloud/tests/**', 'tools/am-cloud/plugins/AMScriptBuilder/**', '.github/workflows/am-patch-draw.yml', 'docs/*patch-draw*']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: am-patch-draw-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  canvas:
+    name: Patch Draw / ${{ matrix.configuration }}
+    runs-on: windows-2022
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Release, Debug]
+    env:
+      PYTHONUTF8: '1'
+      AM_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      AM_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      AM_CONFIGURATION: ${{ matrix.configuration }}
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - name: Existing helper tests
+        run: |
+          New-Item -ItemType Directory -Force tools/am-cloud/test-results | Out-Null
+          python -m unittest discover -s tools/am-cloud/tests -v 2>&1 | Tee-Object tools/am-cloud/test-results/tests.log
+          exit $LASTEXITCODE
+      - name: Patch Draw contract tests
+        run: |
+          python -m unittest discover -s tools/am-cloud/plugins/AMPatchDraw/tests -p 'test_*.py' -v 2>&1 | Tee-Object tools/am-cloud/test-results/patch-draw-contract.log
+          exit $LASTEXITCODE
+      - name: Core, JSON compatibility and real MFC canvas tests
+        run: python tools/am-cloud/plugins/AMPatchDraw/tests/run_tests.py
+      - name: Compile and audit Patch Draw
+        run: python tools/am-cloud/build.py --configuration "$env:AM_CONFIGURATION" --project tools/am-cloud/plugins/AMPatchDraw/AMPatchDraw.vcxproj
+      - name: Package canvas instructions
+        run: python tools/am-cloud/plugins/AMPatchDraw/package.py
+      - name: Verify intact and tampered packages
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $false
+          $packages = @(Get-ChildItem tools/am-cloud/artifacts/patch-draw-packages/*.zip)
+          if ($packages.Count -ne 1) { throw 'Expected one Patch Draw package.' }
+          $dest = Join-Path $PWD 'tools/am-cloud/.work/patch-package-verification'
+          Expand-Archive -LiteralPath $packages[0].FullName -DestinationPath $dest
+          pwsh -NoProfile -File "$dest/Verify-Package.ps1" 2>&1 | Tee-Object tools/am-cloud/artifacts/diagnostics/patch-intact.log
+          if ($LASTEXITCODE -ne 0) { throw 'Intact package rejected.' }
+          $hxt = @(Get-ChildItem $dest -File | Where-Object { $_.Extension -in '.hxt', '.hxtd' })
+          if ($hxt.Count -ne 1) { throw 'Expected one HXT.' }
+          $original = [IO.File]::ReadAllBytes($hxt[0].FullName)
+          [IO.File]::AppendAllText($hxt[0].FullName, 'tamper-test')
+          pwsh -NoProfile -File "$dest/Verify-Package.ps1" 2>&1 | Tee-Object tools/am-cloud/artifacts/diagnostics/patch-hxt-rejected.log
+          if ($LASTEXITCODE -eq 0) { throw 'Modified HXT accepted.' }
+          [IO.File]::WriteAllBytes($hxt[0].FullName, $original)
+          [IO.File]::AppendAllText((Join-Path $dest 'PATCH-DRAW.md'), 'tamper-test')
+          pwsh -NoProfile -File "$dest/Verify-Package.ps1" 2>&1 | Tee-Object tools/am-cloud/artifacts/diagnostics/patch-doc-rejected.log
+          if ($LASTEXITCODE -eq 0) { throw 'Modified documentation accepted.' }
+          exit 0
+      - name: Publish Patch Draw candidate
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: AMPatchDraw-Package-${{ matrix.configuration }}-x64-r${{ github.run_number }}-a${{ github.run_attempt }}
+          path: tools/am-cloud/artifacts/patch-draw-packages/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Preserve diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: AMPatchDraw-Diagnostics-${{ matrix.configuration }}-r${{ github.run_number }}-a${{ github.run_attempt }}
+          path: |
+            tools/am-cloud/artifacts/diagnostics/
+            tools/am-cloud/test-results/
+          if-no-files-found: warn
+          retention-days: 14
