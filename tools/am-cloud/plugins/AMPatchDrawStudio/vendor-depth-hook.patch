@@ -1,0 +1,22 @@
+--- QuickDecalPainter-v1.1/quickdecal_painter.py
++++ bundled/quickdecal_painter.py
+@@ -400,6 +400,10 @@
+             return (-z, x)
+         return (-z, y)
+ 
++    def _depth_key(self, patch: Patch) -> float:
++        """Studio extension hook; default retains original v1.1 ordering."""
++        return patch.centroid[0]
++
+     def _patch_visible(self, patch: Patch) -> bool:
+         side_filter = self.app.side_filter.get()
+         if side_filter == "All":
+@@ -495,7 +499,7 @@
+         off_y = (height + span_y * scale) / 2 + min_y * scale
+ 
+         # Back-to-front order provides a stable hit-testing preference.
+-        visible.sort(key=lambda patch: patch.centroid[0])
++        visible.sort(key=self._depth_key)
+         polygons: list[tuple[Patch, list[tuple[float, float]]]] = []
+         for patch in visible:
+             polygon: list[tuple[float, float]] = []

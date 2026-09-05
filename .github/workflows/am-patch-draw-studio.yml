@@ -1,7 +1,7 @@
 name: Patch Draw Studio
 on:
   pull_request:
-    paths: ['tools/am-cloud/plugins/AMPatchDrawStudio/**', '.github/workflows/am-patch-draw-studio.yml']
+    paths: ['tools/am-cloud/plugins/AMPatchDrawStudio/**', 'tools/am-cloud/build*.py', 'tools/am-cloud/*.json', 'tools/am-cloud/vendor/**', 'tools/am-cloud/Verify-Package.ps1', '.github/workflows/am-patch-draw-studio.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   native:
-    name: Studio native / ${{ matrix.configuration }}
+    name: Studio / ${{ matrix.configuration }}
     runs-on: windows-2022
     timeout-minutes: 20
     strategy:
@@ -33,37 +33,41 @@ jobs:
         with:
           python-version: '3.12'
           architecture: x64
+      - name: Install explicit pinned painting dependency
+        run: python -m pip install -r tools/am-cloud/plugins/AMPatchDrawStudio/requirements.txt
       - name: Existing helper tests
-        run: python -m unittest discover -s tools/am-cloud/tests -v
+        run: |
+          New-Item -ItemType Directory -Force tools/am-cloud/test-results/studio | Out-Null
+          python -m unittest discover -s tools/am-cloud/tests -v 2>&1 | Tee-Object tools/am-cloud/test-results/studio/helpers.log
+          exit $LASTEXITCODE
+      - name: Topology, recipes and real Tk painting workflow
+        run: |
+          python -m unittest discover -s tools/am-cloud/plugins/AMPatchDrawStudio/tests -p 'test_*.py' -v 2>&1 | Tee-Object tools/am-cloud/test-results/studio/python.log
+          exit $LASTEXITCODE
+      - name: Production native protocol parser with locked compiler
+        run: |
+          python tools/am-cloud/plugins/AMPatchDrawStudio/tests/run_native.py 2>&1 | Tee-Object tools/am-cloud/test-results/studio/native-parser.log
+          exit $LASTEXITCODE
       - name: Compile and audit actual Studio receiver
         run: python tools/am-cloud/build.py --configuration "$env:AM_CONFIGURATION" --project tools/am-cloud/plugins/AMPatchDrawStudio/AMPatchDrawStudio.vcxproj
-      - name: Preserve native diagnostics
+      - name: Seal Studio distribution with runtime and source
+        run: python tools/am-cloud/plugins/AMPatchDrawStudio/package.py
+      - name: Verify intact and altered distributions
+        run: python tools/am-cloud/plugins/AMPatchDrawStudio/tests/verify_distribution.py
+      - name: Publish Studio host-test candidate
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: AMPatchDrawStudio-Package-${{ matrix.configuration }}-x64-r${{ github.run_number }}-a${{ github.run_attempt }}
+          path: tools/am-cloud/artifacts/studio-packages/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Preserve diagnostics
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: Studio-Native-Diagnostics-${{ matrix.configuration }}-r${{ github.run_number }}-a${{ github.run_attempt }}
-          path: tools/am-cloud/artifacts/diagnostics/
-          if-no-files-found: warn
-          retention-days: 14
-  source:
-    name: Patch Draw source snapshot
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
-      - name: Archive tracked development inputs
-        run: |
-          git archive --format=zip --output="$RUNNER_TEMP/patchdraw-source.zip" HEAD AGENTS.md docs tools/am-cloud .github/workflows Plugin/HXT
-          git rev-parse HEAD > "$RUNNER_TEMP/source-commit.txt"
-          sha256sum "$RUNNER_TEMP/patchdraw-source.zip" > "$RUNNER_TEMP/source-sha256.txt"
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: AMPatchDraw-Source-r${{ github.run_number }}-a${{ github.run_attempt }}
+          name: AMPatchDrawStudio-Diagnostics-${{ matrix.configuration }}-r${{ github.run_number }}-a${{ github.run_attempt }}
           path: |
-            ${{ runner.temp }}/patchdraw-source.zip
-            ${{ runner.temp }}/source-commit.txt
-            ${{ runner.temp }}/source-sha256.txt
-          if-no-files-found: error
+            tools/am-cloud/artifacts/diagnostics/
+            tools/am-cloud/test-results/
+          if-no-files-found: warn
           retention-days: 14
