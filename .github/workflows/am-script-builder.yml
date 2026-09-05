@@ -1,0 +1,90 @@
+name: Offline A:M Script Builder
+on:
+  pull_request:
+    paths: ['tools/am-cloud/**', '.github/workflows/am-script-builder.yml', 'docs/plugin-script-builder.md']
+  push:
+    branches: [main]
+    paths: ['tools/am-cloud/**', '.github/workflows/am-script-builder.yml', 'docs/plugin-script-builder.md']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: am-script-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  script-builder:
+    name: Script Builder / ${{ matrix.configuration }}
+    runs-on: windows-2022
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Release, Debug]
+    env:
+      PYTHONUTF8: '1'
+      AM_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      AM_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      AM_CONFIGURATION: ${{ matrix.configuration }}
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+          architecture: x64
+      - name: Existing helper tests
+        run: |
+          New-Item -ItemType Directory -Force tools/am-cloud/test-results | Out-Null
+          python -m unittest discover -s tools/am-cloud/tests -v 2>&1 | Tee-Object tools/am-cloud/test-results/tests.log
+          exit $LASTEXITCODE
+      - name: Python plan and runner tests
+        run: |
+          python -m unittest discover -s tools/am-cloud/plugins/AMScriptBuilder/tests -p test_python.py -v 2>&1 | Tee-Object tools/am-cloud/test-results/script-python.log
+          exit $LASTEXITCODE
+      - name: Native parser and supervised Python integration tests
+        run: python tools/am-cloud/tests/run_script_builder_tests.py
+      - name: Build and audit Script Builder
+        run: python tools/am-cloud/build.py --configuration "$env:AM_CONFIGURATION" --project tools/am-cloud/plugins/AMScriptBuilder/AMScriptBuilder.vcxproj
+      - name: Verify embedded Python and package examples
+        run: python tools/am-cloud/plugins/AMScriptBuilder/package.py
+      - name: Verify package and reject tampered plugin and script
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $false
+          $packages = @(Get-ChildItem tools/am-cloud/artifacts/script-packages/*.zip)
+          if ($packages.Count -ne 1) { throw 'Expected one Script Builder package.' }
+          $dest = Join-Path $PWD 'tools/am-cloud/.work/script-verification'
+          Expand-Archive -LiteralPath $packages[0].FullName -DestinationPath $dest
+          pwsh -NoProfile -File "$dest/Verify-Package.ps1" 2>&1 | Tee-Object tools/am-cloud/artifacts/diagnostics/script-package-verification.log
+          if ($LASTEXITCODE -ne 0) { throw 'Intact package rejected.' }
+          $hxt = @(Get-ChildItem $dest -File | Where-Object { $_.Extension -in '.hxt', '.hxtd' })
+          if ($hxt.Count -ne 1) { throw 'Expected one HXT.' }
+          $original = [IO.File]::ReadAllBytes($hxt[0].FullName)
+          [IO.File]::AppendAllText($hxt[0].FullName, 'tamper-test')
+          pwsh -NoProfile -File "$dest/Verify-Package.ps1" 2>&1 | Tee-Object tools/am-cloud/artifacts/diagnostics/script-hxt-rejection.log
+          if ($LASTEXITCODE -eq 0) { throw 'Modified HXT accepted.' }
+          [IO.File]::WriteAllBytes($hxt[0].FullName, $original)
+          [IO.File]::AppendAllText((Join-Path $dest 'examples/grid.py'), '# tamper-test')
+          pwsh -NoProfile -File "$dest/Verify-Package.ps1" 2>&1 | Tee-Object tools/am-cloud/artifacts/diagnostics/script-example-rejection.log
+          if ($LASTEXITCODE -eq 0) { throw 'Modified example accepted.' }
+          exit 0
+      - name: Publish Script Builder candidate
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: AMScriptBuilder-Package-${{ matrix.configuration }}-x64-r${{ github.run_number }}-a${{ github.run_attempt }}
+          path: tools/am-cloud/artifacts/script-packages/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Preserve diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: AMScriptBuilder-Diagnostics-${{ matrix.configuration }}-r${{ github.run_number }}-a${{ github.run_attempt }}
+          path: |
+            tools/am-cloud/artifacts/diagnostics/
+            tools/am-cloud/test-results/
+          if-no-files-found: warn
+          retention-days: 14

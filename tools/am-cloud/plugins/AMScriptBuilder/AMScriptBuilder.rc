@@ -1,0 +1,16 @@
+#include <winres.h>
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+STRINGTABLE
+BEGIN
+    101 "A:M Script Builder v1 - New Model"
+END
+201 RCDATA "runtime\\runner.py"
+202 RCDATA "runtime\\ambridge.py"
+301 DIALOGEX 0, 0, 265, 68
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "A:M Script Builder - validating script"
+FONT 9, "Segoe UI"
+BEGIN
+    LTEXT "Running trusted local Python; A:M geometry is not being changed.\n15-second limit. Cancel stops the worker.", -1, 10, 10, 245, 25
+    PUSHBUTTON "Cancel", IDCANCEL, 202, 45, 52, 14
+END
