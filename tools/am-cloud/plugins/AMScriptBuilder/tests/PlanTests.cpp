@@ -1,4 +1,5 @@
 #include "../Plan.h"
+#include "../FivePoint.h"
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -21,11 +22,13 @@ int main(int argc, char** argv) {
             if (!file) throw std::runtime_error("Cannot open plan fixture");
             const std::string data((std::istreambuf_iterator<char>(file)), {});
             const auto plan = amscript::Parse(data);
-            std::cout << plan.points.size() << ' ' << plan.splines.size() << ' ' << plan.occurrences << ' ' << plan.attachments << '\n';
+            std::cout << plan.points.size() << ' ' << plan.splines.size() << ' ' << plan.occurrences << ' ' << plan.attachments
+                      << ' ' << amscript::FivePointCandidates(plan).size() << '\n';
             return 0;
         }
         const auto plan = amscript::Parse(valid);
         Check(plan.points.size() == 3 && plan.splines.size() == 1 && plan.occurrences == 3 && plan.attachments == 0);
+        Check(amscript::FivePointCandidates(plan).empty());
         for (const auto& text : {"", "{}", "[]", "null", "true", "{{", "\xEF\xBB\xBF{}"}) Reject(text);
         Reject(std::string(amscript::MaxBytes + 1, ' '));
         Reject(valid + "x"); Reject(valid + valid);
@@ -50,9 +53,14 @@ int main(int argc, char** argv) {
         Check(shared.attachments == 1 && shared.occurrences == 4);
         const auto reordered = amscript::Parse(R"({"splines":[[0,1]],"points":[[0,0,0],[1e1,-2.5,0]],"name":"Order","am_plan":1})");
         Check(reordered.points[1][0] == 10);
+        const auto five = amscript::Parse(R"({"am_plan":1,"name":"Five","points":[[0,1,0],[1,1,0],[2,0,0],[1,-1,0],[0,-1,0]],"splines":[[0,1],[1,2],[2,3],[3,4],[4,0]]})");
+        const auto candidates = amscript::FivePointCandidates(five);
+        Check(candidates.size() == 1 && candidates[0] == amscript::FiveCycle{0,1,2,3,4});
+        const auto chorded = amscript::Parse(R"({"am_plan":1,"name":"Chord","points":[[0,1,0],[1,1,0],[2,0,0],[1,-1,0],[0,-1,0]],"splines":[[0,1],[1,2],[2,3],[3,4],[4,0],[0,2]]})");
+        Check(amscript::FivePointCandidates(chorded).empty());
         // Fixed-depth parser must reject truncations instead of reading out of bounds.
         for (std::size_t i = 0; i < valid.size(); ++i) Reject(valid.substr(0, i));
-        std::cout << "PASS: strict plan parser, topology limits and truncated-input cases\n";
+        std::cout << "PASS: strict plan parser, topology limits, five-point candidates and truncated-input cases\n";
         return 0;
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
 }
