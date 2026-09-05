@@ -8,9 +8,14 @@
 #include <string>
 
 CWinApp application;
+unsigned unrelatedMouseMessages = 0;
 void Check(bool good,const char* reason){if(!good)throw std::runtime_error(reason);}
 void Pump(){MSG m{};int count=0;while(PeekMessage(&m,nullptr,0,0,PM_REMOVE)){
     if(++count>5000)throw std::runtime_error("Unbounded UI notification loop");
+    // Input scenarios below use synchronous SendMessage, not a physical held
+    // button. Capture changes can enqueue OS mouse movement with the actual
+    // button state; do not interleave that unrelated input with the scenario.
+    if(m.message>=WM_MOUSEFIRST && m.message<=WM_MOUSELAST) { ++unrelatedMouseMessages; continue; }
     TranslateMessage(&m);DispatchMessage(&m);
 }}
 CPoint Point(CWnd* c,double x,double y,int side=8){
@@ -69,7 +74,16 @@ int main(int argc,char** argv){
         Send(canvas,WM_LBUTTONDOWN,Point(canvas,.5,1.5),MK_LBUTTON);Send(canvas,WM_MOUSEMOVE,Point(canvas,1.5,1.5));Count(dialog,8);
         Click(dialog,IDC_CLEAR_DRAWING);Count(dialog,0);
         static_cast<CComboBox*>(dialog.GetDlgItem(IDC_GRID))->SetCurSel(0);Click(dialog,IDC_NEW_DRAWING);
-        for(int y=0;y<3;++y)for(int x=0;x<3;++x)if(x!=1||y!=1){Send(canvas,WM_LBUTTONDOWN,Point(canvas,x+.5,y+.5,3),MK_LBUTTON);Send(canvas,WM_LBUTTONUP,Point(canvas,x+.5,y+.5,3));}
+        int painted=0;
+        for(int y=0;y<3;++y)for(int x=0;x<3;++x)if(x!=1||y!=1){
+            std::cout<<"Ring stroke "<<x<<","<<y<<"\n";
+            Send(canvas,WM_LBUTTONDOWN,Point(canvas,x+.5,y+.5,3),MK_LBUTTON);
+            Send(canvas,WM_LBUTTONUP,Point(canvas,x+.5,y+.5,3));Count(dialog,++painted);
+        }
+        dialog.GetDlgItem(IDC_ERASE)->SendMessage(BM_CLICK);Pump();
+        Send(canvas,WM_LBUTTONDOWN,Point(canvas,.5,.5,3),MK_LBUTTON);Send(canvas,WM_LBUTTONUP,Point(canvas,.5,.5,3));Count(dialog,7);
+        Click(dialog,IDC_UNDO_DRAWING);Count(dialog,8);
+        dialog.GetDlgItem(IDC_DRAW)->SendMessage(BM_CLICK);Pump();
         Count(dialog,8);CString text;dialog.GetDlgItemText(IDC_SUMMARY,text);
         Check(std::string(text.GetString()).find("Proposed quads: 32")!=std::string::npos,"Real canvas ring preview");
         Check(std::string(text.GetString()).find("holes: 1")!=std::string::npos,"Real canvas ring hole count");
@@ -82,6 +96,7 @@ int main(int argc,char** argv){
         SaveBitmap(dialog.GetSafeHwnd(),work/"canvas-preview.bmp");
         dialog.DestroyWindow();Pump();
         std::cout<<"PASS: real MFC dialog/resource creation; capture/release outside, Escape, stolen capture, resize, cancel mode, missing button-up, stroke undo/redo and ring preview\n";
+        std::cout<<"Unrelated queued mouse messages excluded from synthetic scenarios: "<<unrelatedMouseMessages<<'\n';
         std::cout<<"GDI objects before/after 64 paints: "<<before<<" / "<<after<<'\n';
         const auto path=work/L"Unicode-\u65e5\u672c plan.json";
         const std::string value="{\"test\":1}";patchdraw::SaveNewPlan(path,value);
