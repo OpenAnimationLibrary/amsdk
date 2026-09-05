@@ -4,18 +4,19 @@
 #include <iostream>
 
 namespace fs = std::filesystem;
-void Check(bool condition) { if (!condition) throw std::runtime_error("Worker test assertion failed"); }
+void Check(bool condition, const char* description) { if (!condition) throw std::runtime_error(description); }
 int wmain(int argc, wchar_t** argv) {
     try {
-        Check(argc == 3);
+        Check(argc == 3, "Expected Python and scratch path arguments");
         const std::wstring python = argv[1];
         const auto root = fs::absolute(argv[2]);
         const auto folder = root / L"worker path space \u65e5 & test";
         fs::create_directories(folder);
         const auto source = folder / L"input \u00e9.py";
         DWORD before = 0, after = 0;
-        Check(GetProcessHandleCount(GetCurrentProcess(), &before) != 0);
-        auto run = [&](const std::string& code, bool success, DWORD deadline = 5000) {
+        Check(GetProcessHandleCount(GetCurrentProcess(), &before) != 0, "Cannot count initial handles");
+        auto run = [&](const char* name, const std::string& code, bool success, DWORD deadline = 5000) {
+            std::cout << "CASE: " << name << std::endl;
             std::ofstream(source, std::ios::binary) << code;
             amscript::Worker worker;
             bool good = false;
@@ -23,26 +24,33 @@ int wmain(int argc, wchar_t** argv) {
                 worker.start(python, {L"-I", L"-S", L"-B", L"-X", L"utf8", source.wstring()}, folder.wstring(), deadline);
                 while (!worker.poll()) Sleep(10);
                 good = true;
-            } catch (const std::exception&) { worker.stop(); }
-            Check(good == success);
+            } catch (const std::exception& error) {
+                std::cout << "Worker result: " << error.what() << "\n"
+                          << worker.errors.substr(0, 2000) << std::endl;
+                worker.stop();
+            }
+            Check(good == success, name);
+            std::cout << "CASE PASS: " << name << "; stdout bytes=" << worker.output.size() << std::endl;
             return worker.output;
         };
-        Check(run("print('hello')", true).find("hello") != std::string::npos);
-        Check(run("import sys;print(sys.argv[0])", true).find("input") != std::string::npos);
-        run("raise RuntimeError('expected failure')", false);
-        run("import sys;sys.stdout.write('x'*300000)", false);
-        run("import sys;sys.stderr.write('x'*20000)", false);
-        run("while True: pass", false, 300);
-        run("import subprocess,sys;subprocess.run([sys.executable,'-c','pass'],check=True)", false);
-        run("print('still healthy')", true);
+        Check(run("stdout", "print('hello')", true).find("hello") != std::string::npos, "Missing hello output");
+        Check(run("Unicode arguments", "import sys;print(sys.argv[0])", true).find("input") != std::string::npos, "Missing Unicode script path");
+        run("script exception", "raise RuntimeError('expected failure')", false);
+        run("stdout limit", "import sys;sys.stdout.write('x'*300000)", false);
+        run("stderr limit", "import sys;sys.stderr.write('x'*20000)", false);
+        run("wall timeout", "while True: pass", false, 300);
+        run("child process limit", "import subprocess,sys;subprocess.run([sys.executable,'-c','pass'],check=True)", false);
+        run("recovery", "print('still healthy')", true);
         {
+            std::cout << "CASE: immediate cancellation" << std::endl;
             amscript::Worker worker;
             std::ofstream(source) << "while True: pass";
             worker.start(python, {L"-I", L"-S", source.wstring()}, folder.wstring());
             worker.stop(); // cancellation must not wait for the script to finish itself
         }
-        Check(GetProcessHandleCount(GetCurrentProcess(), &after) != 0);
-        Check(after <= before + 1);
+        Check(GetProcessHandleCount(GetCurrentProcess(), &after) != 0, "Cannot count final handles");
+        std::cout << "Handles before=" << before << "; after=" << after << std::endl;
+        Check(after <= before + 1, "Unexpected retained handles");
         fs::remove(source); fs::remove(folder);
         std::cout << "PASS: Unicode/space paths, exit failure, stdout/stderr flood, timeout, child-process limit, cancellation and handle cleanup\n";
         return 0;
