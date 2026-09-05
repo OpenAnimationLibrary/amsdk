@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'runtime'))
 from ambridge import ModelPlan, validate
 
+SUPPORTED = {(3, 11), (3, 12)}
 BASE = {'am_plan': 1, 'name': 'Test', 'points': [[0, 0, 0], [10, 0, 0], [20, 10, 0]], 'splines': [[0, 1, 2]]}
 
 class PlanTests(unittest.TestCase):
@@ -67,7 +68,8 @@ class PlanTests(unittest.TestCase):
             fixture = json.loads((ROOT/'examples'/(name+'.json')).read_text())
             self.assertEqual(plan, fixture)
 
-@unittest.skipUnless(sys.version_info[:2] == (3, 11), 'Execution requires CPython 3.11; exercised in Windows CI')
+@unittest.skipUnless(sys.version_info[:2] in SUPPORTED and sys.implementation.name == 'cpython',
+                     'Execution requires supported CPython; exercised in Windows CI')
 class RunnerTests(unittest.TestCase):
     def run_source(self, source):
         with tempfile.TemporaryDirectory() as temp:
@@ -91,11 +93,12 @@ class RunnerTests(unittest.TestCase):
             self.assertEqual(result.returncode,0)
 
 class VersionTests(unittest.TestCase):
-    @unittest.skipIf(sys.version_info[:2] == (3, 11), 'This interpreter is supported')
+    @unittest.skipIf(sys.version_info[:2] in SUPPORTED and sys.implementation.name == 'cpython',
+                     'This interpreter is supported')
     def test_other_runtime_is_rejected(self):
         result = subprocess.run([sys.executable, '-I', '-S', '-B', str(ROOT/'runtime/runner.py'), str(ROOT/'examples/grid.py')], capture_output=True, timeout=5)
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn(b'requires CPython 3.11', result.stderr)
+        self.assertIn(b'CPython 3.11 or 3.12', result.stderr)
         self.assertFalse(result.stdout)
 
 if __name__ == '__main__': unittest.main()
