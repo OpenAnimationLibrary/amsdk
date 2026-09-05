@@ -21,7 +21,10 @@ CPoint Point(CWnd* c,double x,double y,int side=8){
 void Send(CWnd* c,UINT msg,CPoint p,WPARAM flags=0){ c->SendMessage(msg,flags,MAKELPARAM(p.x,p.y));Pump(); }
 void Count(PatchDrawDialog& d,int expected){CString text;d.GetDlgItemText(IDC_SUMMARY,text);
     const std::string match="Painted cells: "+std::to_string(expected)+"\n";
-    Check(std::string(text.GetString()).find(match)!=std::string::npos,"Unexpected UI painted count");
+    if(std::string(text.GetString()).find(match)==std::string::npos) {
+        std::cerr << "Expected painted cells: " << expected << "\nActual summary: [" << text.GetString() << "]\n";
+        throw std::runtime_error("Unexpected UI painted count");
+    }
 }
 void Click(PatchDrawDialog& d,int id){d.SendMessage(WM_COMMAND,MAKEWPARAM(id,BN_CLICKED),reinterpret_cast<LPARAM>(d.GetDlgItem(id)->GetSafeHwnd()));Pump();}
 void SaveBitmap(HWND wnd,const std::filesystem::path& target){
