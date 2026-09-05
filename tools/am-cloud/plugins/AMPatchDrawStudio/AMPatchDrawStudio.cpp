@@ -79,11 +79,16 @@ std::string Utf8(const std::string& text) {
 }
 std::string SDKPath(const fs::path& path) {
     const auto& wide=path.native(); BOOL substituted=FALSE;
-    int n=WideCharToMultiByte(CP_ACP,WC_NO_BEST_FIT_CHARS,wide.c_str(),-1,nullptr,0,nullptr,&substituted);
+    // Windows can use UTF-8 as its active ANSI code page. That mode forbids
+    // the best-fit flags/default-character output used by legacy code pages.
+    const UINT codepage=GetACP();
+    const DWORD flags=codepage==CP_UTF8?0:WC_NO_BEST_FIT_CHARS;
+    BOOL* usedDefault=codepage==CP_UTF8?nullptr:&substituted;
+    int n=WideCharToMultiByte(codepage,flags,wide.c_str(),-1,nullptr,0,nullptr,usedDefault);
     if(n<=0 || substituted) throw std::runtime_error("This paint-folder path cannot be represented by the legacy SDK. Choose a path in the Windows code page or send without paint.");
     std::string value(static_cast<std::size_t>(n),'\0');
-    WideCharToMultiByte(CP_ACP,WC_NO_BEST_FIT_CHARS,wide.c_str(),-1,value.data(),n,nullptr,&substituted);
-    if(substituted) throw std::runtime_error("Lossy SDK paint path rejected");
+    const int converted=WideCharToMultiByte(codepage,flags,wide.c_str(),-1,value.data(),n,nullptr,usedDefault);
+    if(converted!=n || substituted) throw std::runtime_error("Lossy SDK paint path rejected");
     value.resize(value.size()-1); return value;
 }
 void Heartbeat(const Receiver& r,const char* status) {
@@ -97,15 +102,20 @@ void Result(const Receiver& r,std::size_t serial,const char* status,const std::s
 }
 HModelCache* Context(HTreeObject* object) {
     if(!object) return nullptr;
-    if(object->GetObjectType()==HOT_GROUP) object=object->GetParentOfType(HOT_MODEL);
+    if(object->GetObjectType()==HOT_GROUP) object=static_cast<HGroup*>(object)->GetParentOfType(HOT_MODEL);
     if(!object || object->GetObjectType()!=HOT_MODEL || !static_cast<HAnimObject*>(object)->IsCache()) return nullptr;
     return static_cast<HModelCache*>(object);
+}
+std::string ProjectName(HProject* project) {
+    const String name=project->GetFileName();
+    const char* value=name.Get();
+    return value?value:""; // An unsaved SDK String can contain a null buffer.
 }
 HModelCache* Resolve(const Receiver& r) {
     // No SDK handles/pointers are retained between messages. Resolve the explicitly
     // named destination from the live project's model cache list on every send.
     HProject* project=GetHProject();
-    if(!project || project->IsLoadingProject() || project->GetFileName().Get()!=r.project)
+    if(!project || project->IsLoadingProject() || ProjectName(project)!=r.project)
         throw std::runtime_error("The project changed or is loading. Disconnect, then reconnect from the intended model.");
     auto* container=project->GetChildObjectCacheContainer(); HModelCache* found=nullptr;
     std::set<HHashObject*> seen;
@@ -257,6 +267,9 @@ void Append(HModelCache* model,const patchstudio::Plan& plan,const std::string& 
     group->HilightInProjectBar();
 }
 void Receive(HWND window,Receiver& r) {
+    // A disabled host owner generally indicates an existing modal operation.
+    // Leave the snapshot queued rather than nesting model mutation into it.
+    if(!IsWindowEnabled(GetMainApplicationWnd())) return;
     const auto request=r.folder/L"request.json",processing=r.folder/L"processing.json";
     if(r.blocked) { Heartbeat(r,"blocked"); return; }
     if(fs::exists(processing)) { r.blocked=true; SetDlgItemTextA(window,IDC_STATUS,"Unacknowledged prior send. Inspect A:M; reconnect using a new session."); Heartbeat(r,"blocked"); return; }
@@ -274,7 +287,7 @@ void Receive(HWND window,Receiver& r) {
         const auto texture=CheckTexture(r,plan);
         auto* model=Resolve(r); groupName=GroupName(model,plan.name);
         const auto text="Append "+std::to_string(plan.faces.size())+" native patches to model:\n"+r.target+
-            "\n\nNew group: "+groupName+"\nSplines: "+(plan.smooth?"Smooth":"Peaked")+
+            "\nProject: "+(r.project.empty()?"<unsaved project>":r.project)+"\n\nNew group: "+groupName+"\nSplines: "+(plan.smooth?"Smooth":"Peaked")+
             (texture.empty()?"\nNo paint texture.":"\nPaint snapshot will be linked from the persistent Studio folder.")+
             "\n\nExisting shapes are not replaced. Test undo and save/reopen on a disposable model. Continue?";
         if(MessageBoxW(window,Wide(text).c_str(),L"Confirm current destination model",MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON2)!=IDYES)
@@ -282,6 +295,9 @@ void Receive(HWND window,Receiver& r) {
         // Reacquire after the modal confirmation. No stale pointer from before
         // its message loop is dereferenced; the name is confirmed for this send.
         model=Resolve(r); groupName=GroupName(model,plan.name);
+        const int existing=model->GetPatchCount();
+        if(existing<0 || static_cast<std::size_t>(existing)+plan.faces.size()>1000000)
+            throw std::runtime_error("The target exceeds Studio's patch readback budget; nothing added.");
         SetDlgItemTextA(window,IDC_STATUS,"Adding native geometry; please wait...");
         CWaitCursor cursor; mutationStarted=true; Append(model,plan,groupName,texture);
         status="ok"; message="Added "+groupName+" to "+r.target+" ("+std::to_string(plan.faces.size())+" patches). The draft remains open.";
@@ -337,7 +353,9 @@ void Connect(HTreeObject* context) {
         MessageBoxA(receiverWindow,"A receiver is already connected. Disconnect it first to choose another model or Studio session.","Patch Draw Studio",MB_OK); return;
     }
     // Snapshot names only; command-context handles never outlive this callback.
-    const std::string target=model->GetName(), projectName=project->GetFileName().Get();
+    const char* modelName=model->GetName();
+    if(!modelName || !*modelName) throw std::runtime_error("Name the destination model before connecting Studio.");
+    const std::string target=modelName, projectName=ProjectName(project);
     std::vector<wchar_t> path(32768,L'\0'); OPENFILENAMEW open{}; open.lStructSize=sizeof(open);
     open.hwndOwner=GetMainApplicationWnd(); open.lpstrFile=path.data(); open.nMaxFile=static_cast<DWORD>(path.size());
     open.lpstrTitle=L"Select connection.pdstudio from the open Python Studio (copy its connection path)";
