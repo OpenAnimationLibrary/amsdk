@@ -4,6 +4,7 @@
 #include "SDK/Misc.h"
 #include "CanvasDialog.h"
 
+class HTreeObject; // Opaque command context; this stage never dereferences it.
 CPluginApp theApp;
 namespace {
 LONG busy = 0;
