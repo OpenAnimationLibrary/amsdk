@@ -33,26 +33,35 @@ int wmain(int argc, wchar_t** argv) {
             std::cout << "CASE PASS: " << name << "; stdout bytes=" << worker.output.size() << std::endl;
             return worker.output;
         };
-        Check(run("stdout", "print('hello')", true).find("hello") != std::string::npos, "Missing hello output");
-        Check(run("Unicode arguments", "import sys;print(sys.argv[0])", true).find("input") != std::string::npos, "Missing Unicode script path");
-        run("script exception", "raise RuntimeError('expected failure')", false);
-        run("stdout limit", "import sys;sys.stdout.write('x'*300000)", false);
-        run("stderr limit", "import sys;sys.stderr.write('x'*20000)", false);
-        run("wall timeout", "while True: pass", false, 300);
-        run("child process limit", "import subprocess,sys;subprocess.run([sys.executable,'-c','pass'],check=True)", false);
-        run("recovery", "print('still healthy')", true);
-        {
-            std::cout << "CASE: immediate cancellation" << std::endl;
-            amscript::Worker worker;
-            std::ofstream(source) << "while True: pass";
-            worker.start(python, {L"-I", L"-S", source.wstring()}, folder.wstring());
-            worker.stop(); // cancellation must not wait for the script to finish itself
+        Check(run("initial stdout", "print('hello')", true).find("hello") != std::string::npos, "Missing hello output");
+        DWORD warmed = 0;
+        Check(GetProcessHandleCount(GetCurrentProcess(), &warmed) != 0, "Cannot count warm handles");
+        std::cout << "Handles at entry=" << before << "; after first process=" << warmed << std::endl;
+        // Windows process creation can initialize process-wide cached handles.
+        // Warm all paths, then require a repeated batch not to retain handles.
+        for (unsigned pass = 0; pass < 2; ++pass) {
+            Check(GetProcessHandleCount(GetCurrentProcess(), &before) != 0, "Cannot count batch handles");
+            Check(run("Unicode arguments", "import sys;print(sys.argv[0])", true).find("input") != std::string::npos, "Missing Unicode script path");
+            run("script exception", "raise RuntimeError('expected failure')", false);
+            run("stdout limit", "import sys;sys.stdout.write('x'*300000)", false);
+            run("stderr limit", "import sys;sys.stderr.write('x'*20000)", false);
+            run("wall timeout", "while True: pass", false, 300);
+            run("memory limit", "value=bytearray(1024*1024*1024)", false);
+            run("child process limit", "import subprocess,sys;subprocess.run([sys.executable,'-c','pass'],check=True)", false);
+            run("recovery", "print('still healthy')", true);
+            {
+                std::cout << "CASE: immediate cancellation" << std::endl;
+                amscript::Worker worker;
+                std::ofstream(source) << "while True: pass";
+                worker.start(python, {L"-I", L"-S", source.wstring()}, folder.wstring());
+                worker.stop();
+            }
+            Check(GetProcessHandleCount(GetCurrentProcess(), &after) != 0, "Cannot count final handles");
+            std::cout << "Batch " << pass << ": handles before=" << before << "; after=" << after << std::endl;
+            if (pass) Check(after <= before, "Repeated worker batch leaked handles");
         }
-        Check(GetProcessHandleCount(GetCurrentProcess(), &after) != 0, "Cannot count final handles");
-        std::cout << "Handles before=" << before << "; after=" << after << std::endl;
-        Check(after <= before + 1, "Unexpected retained handles");
         fs::remove(source); fs::remove(folder);
-        std::cout << "PASS: Unicode/space paths, exit failure, stdout/stderr flood, timeout, child-process limit, cancellation and handle cleanup\n";
+        std::cout << "PASS: Unicode/space paths, exit failure, stdout/stderr flood, timeout, memory/child-process limits, cancellation and repeated-batch handle cleanup\n";
         return 0;
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
 }
