@@ -1,6 +1,6 @@
 """Run one explicitly trusted local script; emit one bounded model plan.
 
-Called with CPython 3.11: python.exe -I -S -B -X utf8 runner.py script.py
+Supported interpreters: CPython 3.11 or 3.12 x64, launched as a separate process.
 Isolation flags prevent accidental module-path injection, NOT malicious scripts.
 The HXT supervises time/memory/output and validates all returned data again.
 """
@@ -8,13 +8,18 @@ from __future__ import annotations
 import contextlib
 import json
 from pathlib import Path
+import struct
 import sys
 import traceback
 
+SUPPORTED = {(3, 11), (3, 12)}
+
 
 def main() -> int:
-    if sys.version_info[:2] != (3, 11) or sys.implementation.name != 'cpython':
-        raise RuntimeError('This prototype requires CPython 3.11. Select its python.exe.')
+    version = sys.version_info[:2]
+    if (version not in SUPPORTED or sys.implementation.name != 'cpython'
+            or struct.calcsize('P') * 8 != 64):
+        raise RuntimeError('Requires 64-bit CPython 3.11 or 3.12. Select its python.exe.')
     if len(sys.argv) != 2:
         raise RuntimeError('Expected exactly one script path.')
     # Only the packaged bridge is added. User script sibling directories and
