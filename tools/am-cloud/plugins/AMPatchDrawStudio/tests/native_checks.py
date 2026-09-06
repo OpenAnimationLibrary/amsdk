@@ -15,6 +15,7 @@ def packet(d):
 
 
 def check(executable,work):
+    subprocess.run([str(executable),'--self-test'],check=True,timeout=15)
     folder=work/'valid';folder.mkdir()
     count=0
     def save(d):

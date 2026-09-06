@@ -7,6 +7,7 @@
 #include "SDK/HProject.h"
 #include "SDK/HDecal.h"
 #include "StudioPlan.h"
+#include "ReceiverSafety.h"
 #include "resource.h"
 #include <commdlg.h>
 #include <chrono>
@@ -21,11 +22,10 @@
 CPluginApp theApp;
 namespace {
 namespace fs=std::filesystem;
-struct Receiver {
+struct Receiver : patchstudio::ReceiverLifetime {
     fs::path folder;
     std::string session,target,project;
     HANDLE lock=INVALID_HANDLE_VALUE;
-    bool windowOwns=false;
     ~Receiver() { if(lock!=INVALID_HANDLE_VALUE) CloseHandle(lock); }
     bool busy=false;
     bool blocked=false;
@@ -182,6 +182,8 @@ std::vector<std::pair<HPatch*,Face>> MatchFaces(HModelCache* model,const patchst
         auto key=order; std::sort(key.begin(),key.end());
         if(!expected.count(key) || !found.insert(key).second) throw std::runtime_error("Native faces differ from the intended painted surface; inspect partial group");
         const auto intended=winding.at(key);
+        if(!patchstudio::SameFaceCycle(order,intended))
+            throw std::runtime_error("Native patch corner cycle differs from the intended surface");
         auto position=[&](std::size_t id) { const auto point=plan.points[id]; return Vector(point[0],point[1],point[2]); };
         const Vector desired=(position(intended[1])-position(intended[0]))^(position(intended[3])-position(intended[0]));
         Vector normal; p->GetPointNormalOnPatch(.5F,.5F,normal);
@@ -276,7 +278,7 @@ void Receive(HWND window,Receiver& r) {
     Heartbeat(r,"connected");
     if(!fs::exists(request)) return;
     r.busy=true; KillTimer(window,1);
-    struct Reset { HWND w; Receiver& r; ~Reset(){ r.busy=false; if(IsWindow(w)) SetTimer(w,1,500,nullptr); } } reset{window,r};
+    struct Reset { HWND w; Receiver& r; ~Reset(){ r.busy=false; if(!r.detached && IsWindow(w)) SetTimer(w,1,500,nullptr); } } reset{window,r};
     if(!MoveFileExW(request.c_str(),processing.c_str(),MOVEFILE_WRITE_THROUGH)) throw std::runtime_error("Cannot claim request; nothing sent");
     std::size_t serial=0; bool mutationStarted=false; std::string groupName; std::string message; const char* status="failed";
     try {
@@ -294,6 +296,8 @@ void Receive(HWND window,Receiver& r) {
             throw std::runtime_error("Send cancelled. Draft is unchanged; no A:M geometry was added.");
         // Reacquire after the modal confirmation. No stale pointer from before
         // its message loop is dereferenced; the name is confirmed for this send.
+        if(r.detached || !IsWindow(window) || !IsWindow(GetMainApplicationWnd()))
+            throw std::runtime_error("Receiver or A:M closed during confirmation; nothing added.");
         model=Resolve(r); groupName=GroupName(model,plan.name);
         const int existing=model->GetPatchCount();
         if(existing<0 || static_cast<std::size_t>(existing)+plan.faces.size()>1000000)
@@ -311,26 +315,31 @@ void Receive(HWND window,Receiver& r) {
     Result(r,serial,status,message); // If this fails, leave processing.json as an explicit ambiguity marker.
     const auto archive=r.folder/("processed-"+std::to_string(serial)+".json");
     if(!MoveFileExW(processing.c_str(),archive.c_str(),MOVEFILE_WRITE_THROUGH)) { r.blocked=true; throw std::runtime_error("Send acknowledged but journal archive failed; inspect the session folder"); }
-    SetDlgItemTextA(window,IDC_STATUS,std::string(status)=="ok"?"Sent. Ready for another named shape.":"Send stopped. Read the Studio message.");
-    Heartbeat(r,r.blocked?"blocked":"connected");
+    if(!r.detached) SetDlgItemTextA(window,IDC_STATUS,std::string(status)=="ok"?"Sent. Ready for another named shape.":"Send stopped. Read the Studio message.");
+    Heartbeat(r,r.detached?"disconnected":r.blocked?"blocked":"connected");
 }
 INT_PTR CALLBACK ReceiverProc(HWND window,UINT message,WPARAM w,LPARAM l) {
     AFX_MANAGE_STATE(AfxGetStaticModuleState());
     auto* r=reinterpret_cast<Receiver*>(GetWindowLongPtrW(window,DWLP_USER));
     if(message==WM_INITDIALOG) {
         r=reinterpret_cast<Receiver*>(l); SetWindowLongPtrW(window,DWLP_USER,l);
+    }
+    if(!r) return FALSE;
+    // WM_NCDESTROY may reenter this callback from a confirmation dialog or
+    // from host shutdown. Keep state alive until ALL callbacks have returned.
+    patchstudio::ReceiverCallbackLease<Receiver> lease(r);
+    if(message==WM_INITDIALOG) {
         try { SetDlgItemTextW(window,IDC_TARGET,Wide("Destination model: "+r->target).c_str()); }
         catch(...) { DestroyWindow(window); return TRUE; }
         SetDlgItemTextW(window,IDC_FOLDER,r->folder.c_str());
         if(!SetTimer(window,1,500,nullptr)) { DestroyWindow(window); return TRUE; }
         return TRUE;
     }
-    if(!r) return FALSE;
-    if(message==WM_TIMER && w==1 && !r->busy) {
+    if(message==WM_TIMER && w==1 && !r->busy && !r->detached) {
         try { Receive(window,*r); }
-        catch(CException* error) { error->Delete(); r->blocked=true; SetDlgItemTextA(window,IDC_STATUS,"Receiver blocked after an MFC failure; inspect A:M."); }
-        catch(const std::exception& error) { r->blocked=true; SetDlgItemTextA(window,IDC_STATUS,error.what()); }
-        catch(...) { r->blocked=true; SetDlgItemTextA(window,IDC_STATUS,"Receiver blocked; inspect A:M before retrying."); }
+        catch(CException* error) { error->Delete(); r->blocked=true; if(!r->detached) SetDlgItemTextA(window,IDC_STATUS,"Receiver blocked after an MFC failure; inspect A:M."); }
+        catch(const std::exception& error) { r->blocked=true; if(!r->detached) SetDlgItemTextA(window,IDC_STATUS,error.what()); }
+        catch(...) { r->blocked=true; if(!r->detached) SetDlgItemTextA(window,IDC_STATUS,"Receiver blocked; inspect A:M before retrying."); }
         return TRUE;
     }
     if(message==WM_CLOSE || (message==WM_COMMAND && LOWORD(w)==IDCANCEL)) {
@@ -342,7 +351,12 @@ INT_PTR CALLBACK ReceiverProc(HWND window,UINT message,WPARAM w,LPARAM l) {
         try { Heartbeat(*r,"disconnected"); } catch(...) {}
         return TRUE;
     }
-    if(message==WM_NCDESTROY) { SetWindowLongPtrW(window,DWLP_USER,0); if(r->windowOwns) delete r; receiverWindow=nullptr; return FALSE; }
+    if(message==WM_NCDESTROY) {
+        SetWindowLongPtrW(window,DWLP_USER,0);
+        r->detached=true; // The last callback lease, not this message, deletes r.
+        if(receiverWindow==window) receiverWindow=nullptr;
+        return FALSE;
+    }
     return FALSE;
 }
 void Connect(HTreeObject* context) {
@@ -382,7 +396,10 @@ void Connect(HTreeObject* context) {
         reinterpret_cast<LPCWSTR>(&moduleAnchor),&module)) throw std::runtime_error("Cannot retain the modeless receiver module");
     Receiver* raw=r.get();
     receiverWindow=CreateDialogParamW(module,MAKEINTRESOURCEW(IDD_RECEIVER),GetMainApplicationWnd(),ReceiverProc,reinterpret_cast<LPARAM>(raw));
-    if(!receiverWindow || !IsWindow(receiverWindow)) throw std::runtime_error("Cannot create the modeless receiver");
+    if(!receiverWindow || !IsWindow(receiverWindow)) {
+        receiverWindow=nullptr;
+        throw std::runtime_error("Cannot create the modeless receiver");
+    }
     r->windowOwns=true; r.release();
     ShowWindow(receiverWindow,SW_SHOW);
 }

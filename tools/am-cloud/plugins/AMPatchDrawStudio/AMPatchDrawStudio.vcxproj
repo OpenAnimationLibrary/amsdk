@@ -45,7 +45,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AMPatchDrawStudio.cpp" />
-    <ClInclude Include="StdAfx.h" /><ClInclude Include="StudioPlan.h" /><ClInclude Include="resource.h" />
+    <ClInclude Include="StdAfx.h" /><ClInclude Include="StudioPlan.h" /><ClInclude Include="ReceiverSafety.h" /><ClInclude Include="resource.h" />
     <ResourceCompile Include="AMPatchDrawStudio.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
