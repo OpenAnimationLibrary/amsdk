@@ -1,0 +1,17 @@
+{
+  "original_archive": "QuickDecalPainter_v1.1.zip",
+  "original_archive_sha256": "2c3cf02716d98ba99f16d7d26b41ca2ed6ce49a4c4c7b0ab4ef08f2db4738c6d",
+  "source": "Earlier user-requested Python QuickDecal Painter v1.1; user requested integration.",
+  "changes": "One ModelCanvas depth-sort extension hook, default preserves original ordering. See vendor-depth-hook.patch. No sample meshes or textures copied.",
+  "source_zip_sha256": "0c6050462a9a64cbda0b52f35354bcd8ba4285ac797005e3663d3ff99f8d4051",
+  "files": {
+    "am_bake.py": {
+      "original_sha256": "ed3da15fd32cdfaa42d29898eaa900237a070b0da1ea294c370cb633a990531f",
+      "bundled_sha256": "ed3da15fd32cdfaa42d29898eaa900237a070b0da1ea294c370cb633a990531f"
+    },
+    "quickdecal_painter.py": {
+      "original_sha256": "c97f51d36a83e734e975c5e0cad1e5e38026db0cc5ec419beca519d23d1e0090",
+      "bundled_sha256": "50e74f7a31a3b1fc284f97106cdc2bcba74df437c2f06e214adf575d7ff7ba29"
+    }
+  }
+}

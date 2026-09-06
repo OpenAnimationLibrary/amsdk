@@ -1,0 +1,14 @@
+#include <winres.h>
+#include "resource.h"
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+IDD_RECEIVER DIALOGEX 0,0,310,148
+STYLE DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "A:M Patch Draw Studio - receiver"
+FONT 9,"Segoe UI"
+BEGIN
+ LTEXT "",IDC_TARGET,10,10,290,22
+ LTEXT "",IDC_FOLDER,10,36,290,28
+ LTEXT "The Python drawing/painting window stays open. Each Send adds a NEW named group; the destination is confirmed in A:M.",IDC_STATIC,10,68,290,32
+ LTEXT "Connected",IDC_STATUS,10,104,290,17
+ PUSHBUTTON "Disconnect",IDCANCEL,220,125,80,17
+END

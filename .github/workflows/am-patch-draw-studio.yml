@@ -1,0 +1,73 @@
+name: Patch Draw Studio
+on:
+  pull_request:
+    paths: ['tools/am-cloud/plugins/AMPatchDrawStudio/**', 'tools/am-cloud/build*.py', 'tools/am-cloud/*.json', 'tools/am-cloud/vendor/**', 'tools/am-cloud/Verify-Package.ps1', '.github/workflows/am-patch-draw-studio.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: am-patch-draw-studio-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  native:
+    name: Studio / ${{ matrix.configuration }}
+    runs-on: windows-2022
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Release, Debug]
+    env:
+      PYTHONUTF8: '1'
+      AM_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      AM_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      AM_CONFIGURATION: ${{ matrix.configuration }}
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - name: Install explicit pinned painting dependency
+        run: python -m pip install -r tools/am-cloud/plugins/AMPatchDrawStudio/requirements.txt
+      - name: Existing helper tests
+        run: |
+          New-Item -ItemType Directory -Force tools/am-cloud/test-results/studio | Out-Null
+          python -m unittest discover -s tools/am-cloud/tests -v 2>&1 | Tee-Object tools/am-cloud/test-results/studio/helpers.log
+          exit $LASTEXITCODE
+      - name: Topology, recipes and real Tk painting workflow
+        run: |
+          python -m unittest discover -s tools/am-cloud/plugins/AMPatchDrawStudio/tests -p 'test_*.py' -v 2>&1 | Tee-Object tools/am-cloud/test-results/studio/python.log
+          exit $LASTEXITCODE
+      - name: Production native protocol parser with locked compiler
+        run: |
+          python tools/am-cloud/plugins/AMPatchDrawStudio/tests/run_native.py 2>&1 | Tee-Object tools/am-cloud/test-results/studio/native-parser.log
+          exit $LASTEXITCODE
+      - name: Compile and audit actual Studio receiver
+        run: python tools/am-cloud/build.py --configuration "$env:AM_CONFIGURATION" --project tools/am-cloud/plugins/AMPatchDrawStudio/AMPatchDrawStudio.vcxproj
+      - name: Seal Studio distribution with runtime and source
+        run: python tools/am-cloud/plugins/AMPatchDrawStudio/package.py
+      - name: Verify intact and altered distributions
+        run: python tools/am-cloud/plugins/AMPatchDrawStudio/tests/verify_distribution.py
+      - name: Publish Studio host-test candidate
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: AMPatchDrawStudio-Package-${{ matrix.configuration }}-x64-r${{ github.run_number }}-a${{ github.run_attempt }}
+          path: tools/am-cloud/artifacts/studio-packages/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Preserve diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: AMPatchDrawStudio-Diagnostics-${{ matrix.configuration }}-r${{ github.run_number }}-a${{ github.run_attempt }}
+          path: |
+            tools/am-cloud/artifacts/diagnostics/
+            tools/am-cloud/test-results/
+          if-no-files-found: warn
+          retention-days: 14
