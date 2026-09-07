@@ -89,7 +89,7 @@ BOOL CreateBone(HModelCache *model, const float (&values)[6]) {
     const Vector direction = end - origin;
     const float length = direction.Norm();
     // A:M's unrotated bone points along +Z (see SDK E_Rebuild example).
-    const Quaternion rotation = Rotate2VQ(Vector(0.0f, 0.0f, 1.0f), direction.Normalized());
+    const Quaternion rotation = Rotate2VQ_inline(Vector(0.0f, 0.0f, 1.0f), direction.Normalized());
     String name = NewBoneName(model);
     const ColorBuf color = GetColor(model->CountBones());
     model->SaveAllToUndo();
