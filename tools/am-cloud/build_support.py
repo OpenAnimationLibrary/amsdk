@@ -173,18 +173,25 @@ def audit_dependencies(text: str, configuration: str) -> list[str]:
 
 
 def audit_warnings(text: str, sdk: Path) -> list[str]:
-    """Retain the four known warnings in the locked SDK; reject new warnings."""
+    """Retain exact reviewed locked-SDK diagnostics; reject unreviewed warnings."""
     warnings = sorted(set(re.sub(r'^\d+>', '', line.strip()) for line in text.splitlines()
                           if re.search(r'\bwarning\s+[A-Z]+\d+\s*:', line, re.I)))
-    expected = str((sdk / 'Include/FileCons.h').resolve()).replace('\\', '/').casefold()
+    # RGBByte inline bodies arrive via SDK scene headers; the reports do not call
+    # their float-to-byte color scaling. See validation/sdk-warning-review.md.
+    locations = {
+        'Include/FileCons.h': {(83, 21), (84, 21), (85, 20), (86, 20)},
+        'Include/RGBByte.h': {(138, 18), (139, 20), (140, 19), (299, 20), (473, 24), (474, 20)},
+    }
+    expected = {str((sdk / name).resolve()).replace('\\', '/').casefold(): positions
+                for name, positions in locations.items()}
     for line in warnings:
         match = re.match(r'^(.+?)\((\d+),(\d+)\): warning ([A-Z]+\d+):', line, re.I)
         accepted = False
         if match:
             filename = str(Path(match[1]).resolve()).replace('\\', '/').casefold()
             row, column = int(match[2]), int(match[3])
-            accepted = (filename == expected and match[4].upper() == 'C4244' and
-                        (row, column) in ((83, 21), (84, 21), (85, 20), (86, 20)))
+            accepted = (match[4].upper() == 'C4244' and
+                        (row, column) in expected.get(filename, set()))
         if not accepted:
             raise ValueError('Unreviewed build warning (see msbuild.log): ' + line)
     return warnings
