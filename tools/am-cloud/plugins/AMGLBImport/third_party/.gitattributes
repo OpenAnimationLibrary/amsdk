@@ -1,0 +1,3 @@
+# Preserve the pinned upstream bytes for provenance checks on Windows.
+cgltf.h -text
+LICENSE -text
