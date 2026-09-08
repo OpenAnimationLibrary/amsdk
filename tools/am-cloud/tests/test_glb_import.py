@@ -2,6 +2,7 @@
 import copy
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import random
@@ -49,7 +50,7 @@ class GLBImportTests(unittest.TestCase):
         cls.temporary = tempfile.TemporaryDirectory(dir=HERE / '.work')
         cls.work = Path(cls.temporary.name)
         cls.env = None
-        sources = [str(SOURCE / name) for name in ('CoreTests.cpp', 'GLBReader.cpp', 'QuadConversion.cpp')]
+        sources = [str(SOURCE / name) for name in ('CoreTests.cpp', 'GLBReader.cpp', 'QuadConversion.cpp', 'SplineRouting.cpp')]
         if os.name == 'nt':
             cls.env, _ = visual_studio_environment(cls.work, json.loads((HERE / 'toolchain.lock.json').read_text()))
             compiler = shutil.which('cl.exe', path=cls.env['PATH'])
@@ -91,6 +92,7 @@ class GLBImportTests(unittest.TestCase):
         p = self.run_file(*fixture(indices=[0, 1, 2]))
         self.assertEqual((p['quads'], p['vertices'], p['boundary']), (3, 7, 6))
         self.assertAlmostEqual(p['area'], .5)
+        self.assertEqual((p['three_way'], p['high_valence']), (4, 0))
 
     def test_mixed_region_has_shared_midpoints(self):
         data, binary = fixture(points=[(0,0,0),(1,0,0),(1,1,0),(0,1,0),(2,1,0)], indices=[0,1,2,0,2,3,1,4,2])
@@ -112,6 +114,7 @@ class GLBImportTests(unittest.TestCase):
         p = self.run_file(data,binary)
         self.assertEqual((p['paired'],p['quads'],p['boundary']), (0,6,8))
         self.assertAlmostEqual(p['area'],1)
+        self.assertEqual(p['materials'], [{'faces':3,'rgba':[1,0,0,1]}, {'faces':3,'rgba':[.8,.8,.8,1]}])
 
     def test_nonindexed_strip_fan_and_instancing(self):
         data,binary = fixture(points=[(0,0,0),(1,0,0),(1,1,0)],indices=[0,1,2])
@@ -200,6 +203,40 @@ class GLBImportTests(unittest.TestCase):
         p=self.run_file(raw=(SOURCE/'examples/simple_sword.glb').read_bytes())
         self.assertEqual((p['triangles'],p['parts'],p['quads'],p['paired'],p['vertices'],p['boundary']),(2324,13,5202,684,5236,20))
         self.assertAlmostEqual(p['area'],.30014627789,places=8)
+        self.assertEqual((p['three_way'],p['high_valence']),(1068,906))
+
+    def test_named_parts_keep_explicit_colors_without_unused_default(self):
+        data,binary=fixture()
+        data['materials']=[{'pbrMetallicRoughness':{'baseColorFactor':color}} for color in ([1,0,0,1],[0,0,1,.5])]
+        data['materials'][1]['alphaMode']='BLEND'
+        data['meshes'][0]['primitives'][0]['material']=0
+        data['meshes'].append(copy.deepcopy(data['meshes'][0]))
+        data['meshes'][1]['primitives'][0]['material']=1
+        data['nodes']=[{'mesh':0,'name':'Red'},{'mesh':1,'name':'Blue','translation':[2,0,0]}]
+        data['scenes'][0]['nodes']=[0,1]
+        p=self.run_file(data,binary)
+        self.assertEqual(p['parts'],2)
+        self.assertEqual(p['materials'],[{'faces':1,'rgba':[1,0,0,1]},{'faces':1,'rgba':[0,0,1,.5]}])
+
+    def test_spline_routing_on_regular_grid_and_poles(self):
+        points=[(x,y,0) for y in range(5) for x in range(5)]
+        indices=[]
+        for y in range(4):
+            for x in range(4):
+                a=y*5+x
+                indices.extend([a,a+1,a+6,a,a+6,a+5])
+        p=self.run_file(*fixture(points,indices))
+        self.assertEqual((p['quads'],p['high_valence']),(16,0))
+        self.assertAlmostEqual(p['area'],16)
+        # Nonplanar fans retain source poles. The production driver independently
+        # checks every routed edge and the two-CP rule at all degree 3/4 vertices.
+        for n in (5,6,7,8,9):
+            points=[(0,0,1)]+[(math.cos(i*2*math.pi/n),math.sin(i*2*math.pi/n),0) for i in range(n)]
+            indices=[v for i in range(n) for v in (0,i+1,(i+1)%n+1)]
+            with self.subTest(valence=n):
+                p=self.run_file(*fixture(points,indices))
+                self.assertEqual((p['high_valence'],p['quads']),(1,3*n))
+                self.assertEqual(p['min'][2],0);self.assertEqual(p['max'][2],1)
 
     def test_vendor_identity(self):
         manifest=json.loads((SOURCE/'third_party/provenance.json').read_text())

@@ -43,6 +43,15 @@ struct Part {
     std::vector<Vec3> vertices;
     std::vector<Face> faces;
 };
+struct SplinePath {
+    std::vector<uint32_t> vertex;
+    bool closed = false;
+};
+struct SplinePlan {
+    std::vector<SplinePath> paths;
+    std::vector<size_t> occurrences;
+    size_t edges = 0, highValenceVertices = 0;
+};
 struct Plan {
     std::vector<Part> parts;
     std::vector<Material> materials;
@@ -55,5 +64,8 @@ struct Plan {
 Plan ReadGLB(const std::vector<uint8_t>& bytes);
 void ConvertToQuads(Plan& plan);
 void ValidatePlan(Plan& plan);
+// Each mesh edge occurs exactly once. Three-way junctions have two CP records:
+// one through-spline and one ending spline, never three overlapping splines.
+SplinePlan RouteSplines(const Part& part);
 std::string SafeName(const char* utf8, const std::string& fallback);
 }

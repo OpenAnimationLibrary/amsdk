@@ -1,16 +1,18 @@
-// AMGLBImport 0.1.0. Developed for Rodney Baker with OpenAI Codex assistance.
+// AMGLBImport 0.1.1. Developed for Rodney Baker with OpenAI Codex assistance.
 #include "StdAfx.h"
 #include "ImportCore.h"
 #include "resource.h"
 #include "SDK/Entry.h"
 #include "SDK/HModel.h"
-#include "IEModel.h"
+#include "SDK/HPropert.h"
+#include "RGBFloat.h"
+#include "HashTime.h"
 #include "SDK/HPatch.h"
 #include "SDK/HCP.h"
 #include "SDK/Misc.h"
 #include <algorithm>
 #include <locale>
-#include <memory>
+#include <map>
 #include <set>
 #include <sstream>
 
@@ -30,7 +32,8 @@ class ImportDialog final:public CDialog {
 public:
     double scale=100;
     bool mirror=false;
-    explicit ImportDialog(const amglb::Plan& p):CDialog(IDD_IMPORT,CWnd::FromHandle(GetMainApplicationWnd())),plan(p){}
+    size_t highValence=0;
+    explicit ImportDialog(const amglb::Plan& p,size_t poles):CDialog(IDD_IMPORT,CWnd::FromHandle(GetMainApplicationWnd())),plan(p),highValence(poles){}
 protected:
     BOOL OnInitDialog() override {
         CDialog::OnInitDialog();
@@ -41,6 +44,8 @@ protected:
          <<"Creates a new editable model with peaked control points and basic colors.\r\n"
          <<"Dimensions at 100 cm/unit: "<<(plan.maximum.x-plan.minimum.x)*100<<" x "
          <<(plan.maximum.y-plan.minimum.y)*100<<" x "<<(plan.maximum.z-plan.minimum.z)*100<<" cm.\r\n";
+        if(highValence)s<<"\r\n"<<highValence<<" source poles still require more than two splines. Inspect these for manual retopology.\r\n";
+        s<<"\r\nThree-way centers use two splines. Named groups have no surface overrides.\r\n";
         for(const auto& note:plan.notes)s<<"\r\n"<<note;
         SetDlgItemText(IDC_SUMMARY,s.str().c_str());SetDlgItemText(IDC_SCALE,"100");
         static_cast<CEdit*>(GetDlgItem(IDC_SCALE))->SetLimitText(32);
@@ -57,66 +62,137 @@ protected:
     }
 };
 using Point=std::array<float,3>;
-using Quad=std::array<Point,4>;
+using Quad=std::array<uint32_t,4>;
 Point Position(const Vector& p){return {p.x,p.y,p.z};}
-std::unique_ptr<IEPolyModel> Prepare(const amglb::Part& part,const amglb::Plan& plan,double scale,bool mirror,std::multiset<Quad>& expected){
-    auto model=std::make_unique<IEPolyModel>();
-    model->SetNumVerts(static_cast<int>(part.vertices.size()));
+struct PreparedPart {
+    std::vector<Vector> vertices;
+    amglb::SplinePlan routing;
+};
+PreparedPart Prepare(const amglb::Part& part,double scale,bool mirror){
+    PreparedPart out;out.routing=amglb::RouteSplines(part);out.vertices.reserve(part.vertices.size());
     std::set<Point> unique;
-    for(size_t i=0;i<part.vertices.size();++i){auto v=part.vertices[i]*scale;if(mirror)v.z=-v.z;
+    for(auto v:part.vertices){v=v*scale;if(mirror)v.z=-v.z;
         if(std::max({std::abs(v.x),std::abs(v.y),std::abs(v.z)})>1000000)throw amglb::Error("Scaled coordinates exceed 1,000,000 cm.");
-        Vector out(static_cast<float>(v.x),static_cast<float>(v.y),static_cast<float>(v.z));
-        if(!unique.insert(Position(out)).second)throw amglb::Error("Scale and coordinate precision collapse distinct vertices. Recenter or simplify the mesh.");
-        model->m_vertexlist[static_cast<int>(i)]=out;
+        Vector p(static_cast<float>(v.x),static_cast<float>(v.y),static_cast<float>(v.z));
+        if(!unique.insert(Position(p)).second)throw amglb::Error("Scale and coordinate precision collapse distinct vertices. Recenter or simplify the mesh.");
+        out.vertices.push_back(p);
     }
-    model->m_attrlist.SetSize(static_cast<int>(plan.materials.size()));
-    for(size_t i=0;i<plan.materials.size();++i){const auto& m=plan.materials[i];auto& a=model->m_attrlist.ElementAt(static_cast<int>(i));
-        strcpy_s(a.m_name,_countof(a.m_name),m.name.c_str());
-        a.m_diffusecolor.m_red=static_cast<float>(m.color[0]);a.m_diffusecolor.m_green=static_cast<float>(m.color[1]);a.m_diffusecolor.m_blue=static_cast<float>(m.color[2]);
-        a.m_specularcolor.m_red=a.m_specularcolor.m_green=a.m_specularcolor.m_blue=1.F;
-        a.m_diffusefalloff=1.F;a.m_ambiance=0.F;a.m_roughness=0.F;a.m_roughnessscale=0.F;
-        a.m_specularsize=static_cast<float>(5+75*m.roughness);a.m_specularintensity=static_cast<float>(20+60*m.metallic);
-        a.m_reflectivity=static_cast<float>(35*m.metallic);a.m_transparency=static_cast<float>(100*(1-m.color[3]));a.m_refraction=1.F;
-    }
-    model->SetNumFaces(static_cast<int>(part.faces.size()));model->SetNumNormals(static_cast<int>(part.faces.size()));
-    for(size_t i=0;i<part.faces.size();++i){auto ids=part.faces[i].vertex;if(mirror)std::swap(ids[1],ids[3]);
-        auto* face=model->m_polyarray[static_cast<int>(i)];
-        face->SetVerts(static_cast<int>(ids[0]),static_cast<int>(ids[1]),static_cast<int>(ids[2]),static_cast<int>(ids[3]));
-        face->m_attrid=static_cast<int>(part.faces[i].material);
-        Quad key;std::array<amglb::Vec3,4> p;
-        for(size_t k=0;k<4;++k){const auto& v=model->m_vertexlist[static_cast<int>(ids[k])];key[k]=Position(v);p[k]={v.x,v.y,v.z};face->m_normalid[k]=static_cast<int>(i);}
+    for(const auto& f:part.faces){std::array<amglb::Vec3,4> p;
+        for(size_t k=0;k<4;++k){const auto& v=out.vertices[f.vertex[k]];p[k]={v.x,v.y,v.z};}
         const auto n=amglb::Cross(p[1]-p[0],p[2]-p[0]),n2=amglb::Cross(p[2]-p[0],p[3]-p[0]);
         if(amglb::Length(n)<1e-12||amglb::Length(n2)<1e-12||amglb::Dot(n,n2)<=0)throw amglb::Error("Scaled quad is degenerate at A:M precision.");
-        const auto unit=amglb::Unit(n);model->m_normallist[static_cast<int>(i)]=Vector(static_cast<float>(unit.x),static_cast<float>(unit.y),static_cast<float>(unit.z));
-        std::sort(key.begin(),key.end());expected.insert(key);
     }
-    return model;
+    return out;
 }
-void PeakAndVerify(HModelCache* model,const std::multiset<Quad>& expected){
-    std::set<HSpline*> splines;size_t total=0;
+void SetFloat(HFloatProperty* property,double value){
+    if(!property)throw amglb::Error("A:M returned a missing surface property.");
+    property->SetNull(FALSE);property->StoreValue(Time(0),static_cast<float>(value),FALSE);
+}
+void SetColor(HColorProperty* property,const RGBFloat& value){
+    if(!property)throw amglb::Error("A:M returned a missing surface color.");
+    property->SetNull(FALSE);property->StoreValue(Time(0),value,FALSE);
+}
+void ApplyMaterial(HPatch* patch,const amglb::Material& m){
+    auto* attr=patch->GetAttr();if(!attr)throw amglb::Error("A:M returned a missing patch surface.");
+    attr->SetNull(FALSE);
+    SetColor(attr->GetDiffuseColor(),RGBFloat(static_cast<float>(m.color[0]),static_cast<float>(m.color[1]),static_cast<float>(m.color[2])));
+    SetColor(attr->GetSpecularColor(),RGBFloat(1.F));
+    SetFloat(attr->GetDiffuseFallOff(),1);SetFloat(attr->GetAmbiance(),0);
+    SetFloat(attr->GetRoughness(),0);SetFloat(attr->GetRoughnessScale(),0);
+    SetFloat(attr->GetSpecularSize(),5+75*m.roughness);SetFloat(attr->GetSpecularIntensity(),20+60*m.metallic);
+    SetFloat(attr->GetReflectivity(),35*m.metallic);SetFloat(attr->GetTransparency(),100*(1-m.color[3]));SetFloat(attr->GetRefraction(),1);
+}
+struct ExpectedPatch { uint32_t material;amglb::Vec3 normal; };
+struct NativePlan {
+    std::map<Quad,ExpectedPatch> patches;
+    std::map<uint32_t,std::pair<Point,size_t>> vertices;
+    std::set<std::pair<uint32_t,uint32_t>> edges;
+    std::vector<HGroup*> groups;
+    std::set<HSpline*> closed;
+};
+void CreatePart(HModelCache* model,const amglb::Part& part,const PreparedPart& prepared,bool mirror,NativePlan& expected){
+    std::vector<HCP*> heads(part.vertices.size(),nullptr);
+    std::vector<std::pair<uint32_t,HCP*>> occurrences;
+    for(const auto& path:prepared.routing.paths){
+        Vector first=prepared.vertices[path.vertex[0]],second=prepared.vertices[path.vertex[1]];
+        auto* spline=model->StartSpline(&first,&second);if(!spline)throw amglb::Error("A:M could not create a spline.");
+        auto* one=spline->GetHeadCP();auto* two=one?one->GetNext():nullptr;
+        if(!one||!two)throw amglb::Error("A:M returned an incomplete spline.");
+        one->SetPeaked();two->SetPeaked();occurrences.emplace_back(path.vertex[0],one);occurrences.emplace_back(path.vertex[1],two);
+        for(size_t k=2;k<path.vertex.size();++k){auto* cp=spline->CreateCPAtTail(prepared.vertices[path.vertex[k]]);
+            if(!cp)throw amglb::Error("A:M could not create a control point.");
+            cp->SetPeaked();occurrences.emplace_back(path.vertex[k],cp);
+        }
+        if(path.closed){spline->MakeLooped(TRUE);expected.closed.insert(spline);}
+    }
+    for(const auto& occurrence:occurrences){auto*& head=heads[occurrence.first];
+        if(!head)head=occurrence.second;
+        // AttachCPs TRUE means the second CP was deleted (SDK Grid contract),
+        // not success. Closed paths are already looped, so no deletion is planned.
+        else if(model->AttachCPs(head,occurrence.second))throw amglb::Error("A:M unexpectedly merged spline control points.");
+    }
+    for(size_t v=0;v<heads.size();++v){
+        if(!heads[v])throw amglb::Error("A:M omitted a planned vertex.");
+        heads[v]=heads[v]->GetHead();
+        if(!expected.vertices.emplace(heads[v]->GetID(),std::make_pair(Position(prepared.vertices[v]),prepared.routing.occurrences[v])).second)
+            throw amglb::Error("A:M unexpectedly welded separate vertices.");
+    }
+    for(const auto& f:part.faces){Quad key;std::array<amglb::Vec3,4> p;
+        for(size_t k=0;k<4;++k){key[k]=heads[f.vertex[k]]->GetID();const auto& v=prepared.vertices[f.vertex[k]];p[k]={v.x,v.y,v.z};}
+        for(size_t k=0;k<4;++k)expected.edges.insert(std::minmax(key[k],key[(k+1)%4]));
+        auto normal=amglb::Unit(amglb::Cross(p[1]-p[0],p[2]-p[0])+amglb::Cross(p[2]-p[0],p[3]-p[0]));
+        if(mirror)normal=normal*-1;
+        std::sort(key.begin(),key.end());
+        if(!expected.patches.emplace(key,ExpectedPatch{f.material,normal}).second)throw amglb::Error("Duplicate native patch identity.");
+    }
+    // Selection groups deliberately have no surface override. Materials belong
+    // to individual patches, including where adjacent faces have different colors.
+    auto* group=model->CreateGroup(part.name.c_str());if(!group)throw amglb::Error("A:M could not create a named selection group.");
+    for(auto* cp:heads){group->AddCP(cp);if(!group->IsCPInGroup(cp))throw amglb::Error("A:M could not populate a selection group.");}
+    auto* attr=group->GetAttr();if(!attr)throw amglb::Error("A:M returned a missing group surface.");
+    attr->SetNullable(TRUE);attr->SetNull(TRUE);expected.groups.push_back(group);
+}
+void VerifyAndColor(HModelCache* model,const NativePlan& expected,const amglb::Plan& plan){
+    std::set<HSpline*> splines;std::map<uint32_t,size_t> actualVertices;
+    std::multiset<std::pair<uint32_t,uint32_t>> actualEdges;
+    size_t total=0;
     for(auto* spline=model->GetHeadSpline();spline;spline=spline->GetNextSpline()){
         if(!splines.insert(spline).second||splines.size()>amglb::MaxOutputQuads*4)throw amglb::Error("Unexpected native spline structure.");
-        auto* head=spline->GetHeadCP();std::set<HCP*> visited;
-        for(auto* cp=head;cp;cp=cp->GetNext()){
-            if(!visited.insert(cp).second){if(cp==head)break;throw amglb::Error("Unexpected native CP loop.");}
+        auto* first=spline->GetHeadCP();std::set<HCP*> visited;
+        for(auto* cp=first;cp;cp=cp->GetNext()){
+            if(!visited.insert(cp).second){if(cp==first)break;throw amglb::Error("Unexpected native CP loop.");}
             if(++total>amglb::MaxOutputQuads*8)throw amglb::Error("Unexpected native control point count.");
-            cp->SetPeaked();
+            auto* head=cp->GetHead();if(!head||!cp->GetModelPosition())throw amglb::Error("Missing native point.");
+            const auto id=head->GetID();const auto found=expected.vertices.find(id);
+            if(found==expected.vertices.end()||found->second.first!=Position(*cp->GetModelPosition()))throw amglb::Error("Native vertex differs from the spline plan.");
+            ++actualVertices[id];
+            if(auto* next=cp->GetNext())actualEdges.insert(std::minmax(id,next->GetHead()->GetID()));
+            else if(expected.closed.count(spline)){
+                if(!cp->IsLoop()&&!first->IsLoop()&&first->GetPrev()!=cp)throw amglb::Error("A:M did not close a planned spline.");
+                actualEdges.insert(std::minmax(id,first->GetHead()->GetID()));
+            }
         }
     }
+    for(const auto& v:expected.vertices)if(actualVertices[v.first]!=v.second.second)
+        throw amglb::Error("A:M junction has an unexpected number of spline CPs.");
+    if(actualEdges!=std::multiset<std::pair<uint32_t,uint32_t>>(expected.edges.begin(),expected.edges.end()))
+        throw amglb::Error("A:M spline edges differ from the plan, or an edge is duplicated.");
     model->Update();model->FindPatches();
     const int count=model->GetPatchCount();
-    if(count<0||static_cast<size_t>(count)!=expected.size()||model->GetHeadPatch5())throw amglb::Error("A:M patch count differs from the quad plan. Inspect or remove the incomplete model.");
-    auto remaining=expected;
+    if(count<0||static_cast<size_t>(count)!=expected.patches.size()||model->GetHeadPatch5())throw amglb::Error("A:M patch count differs from the quad plan. Inspect or remove the incomplete model.");
+    auto remaining=expected.patches;
     for(int i=0;i<count;++i){auto* patch=model->GetPatch(i);if(!patch)throw amglb::Error("A:M returned a missing patch.");
-        HCP* corners[]={patch->GetCP1(),patch->GetCP2(),patch->GetCP3(),patch->GetCP4()};Quad key;std::set<HCP*> heads;
-        for(size_t k=0;k<4;++k){if(!corners[k]||!corners[k]->GetModelPosition())throw amglb::Error("Missing native patch corner.");
-            heads.insert(corners[k]->GetHead());key[k]=Position(*corners[k]->GetModelPosition());}
-        if(heads.size()!=4)throw amglb::Error("A:M created a triangular or collapsed patch.");
+        HCP* corners[]={patch->GetCP1(),patch->GetCP2(),patch->GetCP3(),patch->GetCP4()};Quad key;
+        for(size_t k=0;k<4;++k){if(!corners[k])throw amglb::Error("Missing native patch corner.");key[k]=corners[k]->GetHead()->GetID();}
         std::sort(key.begin(),key.end());const auto found=remaining.find(key);
-        if(found==remaining.end())throw amglb::Error("A:M patch corners differ from the quad plan. Inspect the incomplete model.");
-        remaining.erase(found);
+        if(found==remaining.end())throw amglb::Error("A:M patch corners differ from the quad plan.");
+        Vector normal;patch->GetPointNormalOnPatch(.5F,.5F,normal);
+        if(amglb::Dot(found->second.normal,{normal.x,normal.y,normal.z})<0)patch->ReverseNormal();
+        ApplyMaterial(patch,plan.materials[found->second.material]);remaining.erase(found);
     }
+    for(auto* group:expected.groups)if(!group->GetAttr()->IsNull())throw amglb::Error("A named selection group has an unexpected surface override.");
 }
+
 }
 extern "C" __declspec(dllexport) BOOL HxtLoadCommandEntry(uint32_t index,ObjectType& type){
     if(index>=_countof(Contexts))return FALSE;type=Contexts[index];return TRUE;
@@ -139,14 +215,15 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject* object,uint32_t 
             bytes.resize(static_cast<size_t>(size));
             if(input.Read(bytes.data(),static_cast<UINT>(bytes.size()))!=bytes.size())throw amglb::Error("Cannot read the complete GLB.");}
         amglb::Plan plan;{CWaitCursor busy;plan=amglb::ReadGLB(bytes);amglb::ConvertToQuads(plan);}
-        ImportDialog dialog(plan);const auto result=dialog.DoModal();if(result==IDCANCEL)return TRUE;if(result!=IDOK)throw amglb::Error("Cannot open the import preview.");
-        CWaitCursor busy;std::multiset<Quad> expected;std::vector<std::unique_ptr<IEPolyModel>> prepared;
-        for(const auto& part:plan.parts)prepared.push_back(Prepare(part,plan,dialog.scale,dialog.mirror,expected));
+        size_t highValence=0;for(const auto& part:plan.parts)highValence+=amglb::RouteSplines(part).highValenceVertices;
+        ImportDialog dialog(plan,highValence);const auto result=dialog.DoModal();if(result==IDCANCEL)return TRUE;if(result!=IDOK)throw amglb::Error("Cannot open the import preview.");
+        CWaitCursor busy;NativePlan expected;std::vector<PreparedPart> prepared;
+        for(const auto& part:plan.parts)prepared.push_back(Prepare(part,dialog.scale,dialog.mirror));
         const auto name=amglb::SafeName(file.GetFileTitle().GetString(),"GLB Model");
         created=HModelCache::New(("GLB INCOMPLETE - "+name).c_str());if(!created)throw amglb::Error("A:M could not create a new model.");
         for(size_t i=0;i<prepared.size();++i)
-            if(!created->MergeIEModel(prepared[i].get(),plan.parts[i].name.c_str(),0.F,TRUE,FALSE))throw amglb::Error("A:M could not convert part "+plan.parts[i].name+" to native splines.");
-        PeakAndVerify(created,expected);created->SetName(name.c_str());created->SetChanged();created->Update();created->OpenView();created->ZoomFit();RefreshAllTrees();
+            CreatePart(created,plan.parts[i],prepared[i],dialog.mirror,expected);
+        VerifyAndColor(created,expected,plan);created->SetName(name.c_str());created->SetChanged();created->Update();created->OpenView();created->ZoomFit();RefreshAllTrees();
         CString message;message.Format("Imported %zu named parts as %zu four-sided patches.\n\nCheck the model in shaded and wireframe views, then save it as an A:M model.",plan.parts.size(),plan.outputQuads);
         AfxMessageBox(message,MB_OK|MB_ICONINFORMATION);return TRUE;
     }catch(CException* e){char message[512]{};e->GetErrorMessage(message,_countof(message));failure=message;e->Delete();}

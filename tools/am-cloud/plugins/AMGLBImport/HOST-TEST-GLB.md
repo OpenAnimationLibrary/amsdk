@@ -1,4 +1,4 @@
-# AMGLBImport native host acceptance — not yet performed
+# AMGLBImport 0.1.1 native host acceptance — pending
 
 Record the exact HXT SHA-256 from the original receipt, A:M version, Release/Debug
 host type, OS, menu context and results. Keep `runtime_tested: false` in the
@@ -16,22 +16,30 @@ build-generated receipt; append independent host evidence in a reviewed update.
    `mixed_region.glb`: seven quads, no cracks. `cube.glb`: six patches, correct
    inside/outside normals and no internal accidental patches. Inspect both shaded
    and wireframe views. CPs should be peaked; move a shared CP to verify connectivity.
-5. `simple_sword.glb`: 13 named parts; 5,202 quads. At default 100 cm/unit, bounds
+5. Color regression: `two_color_parts.glb` must show one red square and one blue
+   square. Both named groups, including the last group, must show Surface as Not Set.
+   Selecting, renaming or reordering groups must not turn either patch white. Verify
+   these colors after saving/reloading. No unused Default/catch-all color group
+   should appear. Repeat with adjacent differently colored faces and the sword.
+6. `simple_sword.glb`: 13 named parts; 5,202 quads. At default 100 cm/unit, bounds
    are approximately X -19..19 cm, Y 1.082623..132.700002 cm, Z -2.5..2.5 cm.
    Verify blade/guard/grip orientation, sharp silhouette, materials and open accents.
-   Repeat with Mirror Z and a changed scale. Verify per-part and per-material groups.
-6. Confirm four distinct native corner CP heads per patch; no three/five-point
+   Repeat with Mirror Z and a changed scale. Verify per-part selection groups and per-patch colors. The preview should report
+   906 source poles still needing retopology; these are not claimed fixed.
+7. Confirm four distinct native corner CP heads per patch; no three/five-point
    patches, orphan geometry, unintended patches, missing surfaces or merged parts.
-   The plugin verifies corner positions/count, but this cannot certify tangent
-   behavior, patch interiors, winding, material assignment or interactive editing.
-7. Save the new model, close/reopen it and the project; counts, groups, appearance
+   At each generated three-way center, check one through-spline plus one ending
+   spline, with only two attached CP records. Check continuous grid lines and
+   closed paths. The plugin verifies native positions, edges and CP counts, but
+   this cannot certify shading, patch interiors or interactive editing.
+8. Save the new model, close/reopen it and the project; counts, groups, appearance
    and dimensions should survive. Render a frame. Repeated import should create
    separate models without changing earlier models or corrupting lifetime/ownership.
-8. Test Undo/Redo and deletion of the new model. Record actual behavior: this
+9. Test Undo/Redo and deletion of the new model. Record actual behavior: this
    version creates a new model and does not promise a single atomic Undo entry.
    Existing models must remain unchanged. If conversion fails, a named incomplete
    model may remain; it must remain inspectable/removable without a crash.
-9. Close A:M, restore the prior binary (or remove this new HXT), restart and verify
+10. Close A:M, restore the prior binary (or remove this new HXT), restart and verify
    the rollback. Do not install the Debug artifact in ordinary A:M.
 
 Release and Debug CI results alone leave all these runtime checks pending.

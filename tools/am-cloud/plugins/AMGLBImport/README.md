@@ -1,8 +1,17 @@
-# AMGLBImport 0.1.0 — Animation:Master GLB importer
+# AMGLBImport 0.1.1 — Animation:Master GLB importer
 
 Developed for Rodney Baker / OpenAnimationLibrary with OpenAI Codex assistance.
-Windows x64, A:M 19.5 SDK, native C++ command HXT. This is a first host-test
+Windows x64, A:M 19.5 SDK, native C++ command HXT. This is an updated host-test
 candidate: successful CI builds do not certify behavior inside A:M.
+
+## Changes in 0.1.1
+
+The owner reported white imports associated with the last named group and
+problematic three-spline junctions in 0.1.0. This update removes the SDK polygon
+importer's generated groups/routing: it assigns patch materials directly, creates
+selection-only named groups, and builds/verifies explicit spline paths. Native
+runtime acceptance of this new binary is pending; the earlier informal feedback
+is not an exact-binary host-test record.
 
 ## Install and import
 
@@ -34,11 +43,18 @@ that new model. Automatic rollback and one-step Undo are not promised.
 - If any triangles remain in a connected region, subdivide that entire region:
   a triangle becomes three quads, a reconstructed quad becomes four. Shared edge
   midpoints prevent T-junctions. Vertices are not smoothed or projected.
-- Send only four-distinct-corner quads to A:M's SDK `MergeIEModel(IEPolyModel*)`.
-  Peak native CPs to retain the faceted shape. Verify native patch count and the
-  complete multiset of four-corner positions against the planned faces; reject
-  collapsed/triangular and five-point patches. A mismatch remains an incomplete
-  import for inspection, not a silently successful model.
+- Route each undirected mesh edge once, then create native splines explicitly.
+  Three-way centers use one through-spline and one ending spline (two CP records).
+  Regular four-way vertices use two through-splines; two-edge boundary corners
+  retain two ending splines. CPs remain peaked; positions and quad faces are unchanged.
+- Verify native CP positions, CP records per junction, unique edges and every
+  patch's four CP-head identities against the plan. Reject missing, duplicated,
+  collapsed, triangular, five-point or unintended patches. Align native normals
+  with the source winding and Mirror Z choice. A mismatch remains an incomplete import.
+- Source vertices with more than four edges still require more than two splines.
+  The preview counts these poles explicitly; they need manual retopology for ideal
+  spline flow. A pole above 64 edges is rejected before model creation. This release
+  fixes generated three-way centers; it does not claim to eliminate source poles.
 
 All-quads does not imply production retopology, good deformation flow or ideal
 A:M spline flow. This conservative mode targets static props such as the sword.
@@ -53,7 +69,9 @@ node transforms and repeated ordinary mesh nodes. The default scene is used,
 or the first scene if none is marked default. Node hierarchy is flattened into
 named groups in one model. Positions are converted to native float precision.
 
-Basic material base colors and alpha are transferred. Metallic/roughness factors
+Basic material base colors and alpha are assigned directly to native patches.
+Named part groups are selection-only, with their Surface override set to Not Set;
+no catch-all material group is generated. Adjacent faces retain their own materials. Metallic/roughness factors
 receive an approximate legacy specular/reflection mapping; this is not PBR parity.
 Texture images/UV decals, vertex colors, animations, cameras and lights are omitted
 with preview notices. UV0/normals are read to protect pairing seams but are not
@@ -76,8 +94,11 @@ the model. A:M SDK internal allocation/exception behavior remains host-dependent
 `source/examples/simple_sword.glb` is the original generated sword. Standalone
 conversion produces 13 parts, 2,324 source triangles, 684 paired quads,
 8 subdivided regions, 5,202 output quads and 5,236 mesh vertices. Its 20 boundary
-edges belong to open accent surfaces. This result is a core test, not an A:M render.
-Other included fixtures isolate a single triangle, square, mixed region and cube.
+edges belong to open accent surfaces. Its 1,068 three-way vertices each route to
+two spline CP records; 906 higher-valence source poles remain and appear in the
+preview. These counts describe the portable plan, not host acceptance.
+Other included fixtures isolate a single triangle, square, mixed region, cube and
+two independently colored named parts (`two_color_parts.glb`).
 
 ## Build in Visual Studio
 
