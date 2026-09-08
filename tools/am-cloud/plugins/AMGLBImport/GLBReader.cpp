@@ -9,6 +9,9 @@
 #include <tuple>
 #ifdef _MSC_VER
 #pragma warning(push, 0)
+// cgltf is pinned portable C99; its bounded libc calls are reviewed in
+// third_party/README.md. Keep this compatibility exception inside the vendor.
+#pragma warning(disable: 4996)
 #endif
 #define CGLTF_IMPLEMENTATION
 #define CGLTF_VALIDATE_ENABLE_ASSERTS 0

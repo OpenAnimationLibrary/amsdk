@@ -54,7 +54,7 @@ class GLBImportTests(unittest.TestCase):
             cls.env, _ = visual_studio_environment(cls.work, json.loads((HERE / 'toolchain.lock.json').read_text()))
             compiler = shutil.which('cl.exe', path=cls.env['PATH'])
             cls.executable = cls.work / 'core-tests.exe'
-            command = [compiler, '/nologo', '/EHsc', '/std:c++20', '/W4', '/WX', *sources, '/Fe:' + str(cls.executable)]
+            command = [compiler, '/nologo', '/EHsc', '/std:c++20', '/W4', '/WX', '/sdl', *sources, '/Fe:' + str(cls.executable)]
         else:
             compiler = shutil.which('g++') or shutil.which('clang++')
             if not compiler:
