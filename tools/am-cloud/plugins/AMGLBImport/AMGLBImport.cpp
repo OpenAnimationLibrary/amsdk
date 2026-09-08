@@ -1,6 +1,7 @@
-// AMGLBImport 0.1.2. Developed for Rodney Baker with OpenAI Codex assistance.
+// AMGLBImport 0.1.3. Developed for Rodney Baker with OpenAI Codex assistance.
 #include "StdAfx.h"
 #include "ImportCore.h"
+#include "MaterialSurface.h"
 #include "resource.h"
 #include "SDK/Entry.h"
 #include "SDK/HModel.h"
@@ -89,6 +90,14 @@ void SetFloat(HFloatProperty* property,double value){
     if(!property)throw amglb::Error("A:M returned a missing surface property.");
     property->SetNull(FALSE);property->StoreValue(Time(0),static_cast<float>(value),FALSE);
 }
+void SetPercentage(HFloatProperty* property,double fraction){
+    if(!std::isfinite(fraction)||fraction<0||fraction>1)
+        throw amglb::Error("Material percentage is outside the supported range.");
+    SetFloat(property,fraction);
+    const auto stored=property->GetValue(Time(0));
+    if(!std::isfinite(stored)||std::abs(stored-fraction)>1e-5)
+        throw amglb::Error("A:M did not retain a material percentage.");
+}
 void SetColor(HColorProperty* property,const RGBFloat& value){
     if(!property)throw amglb::Error("A:M returned a missing surface color.");
     property->SetNull(FALSE);property->StoreValue(Time(0),value,FALSE);
@@ -102,8 +111,10 @@ void ApplyMaterial(HGroup* group,const amglb::Material& m){
     SetColor(attr->GetSpecularColor(),RGBFloat(1.F));
     SetFloat(attr->GetDiffuseFallOff(),1);SetFloat(attr->GetAmbiance(),0);
     SetFloat(attr->GetRoughness(),0);SetFloat(attr->GetRoughnessScale(),0);
-    SetFloat(attr->GetSpecularSize(),5+75*m.roughness);SetFloat(attr->GetSpecularIntensity(),20+60*m.metallic);
-    SetFloat(attr->GetReflectivity(),35*m.metallic);SetFloat(attr->GetTransparency(),100*(1-m.color[3]));SetFloat(attr->GetRefraction(),1);
+    const auto surface=amglb::SurfaceForMaterial(m);
+    SetPercentage(attr->GetSpecularSize(),surface.specularSize);SetPercentage(attr->GetSpecularIntensity(),surface.specularIntensity);
+    SetPercentage(attr->GetReflectivity(),surface.reflectivity);SetPercentage(attr->GetTransparency(),surface.transparency);
+    SetFloat(attr->GetRefraction(),1);
     group->OnModified();
 }
 struct ExpectedPatch { uint32_t material;amglb::Vec3 normal; };
@@ -285,6 +296,6 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject* object,uint32_t 
     catch(const std::exception& e){failure=e.what();}catch(...){failure="Unexpected import error.";}
     if(created){failure+="\n\nA model named GLB INCOMPLETE may remain. Inspect or remove that new model. Existing models were not edited.";
         try{created->SetChanged();created->Update();created->OpenView();RefreshAllTrees();}catch(CException* e){e->Delete();}catch(...){} }
-    failure="GLB Import 0.1.2\n\n"+failure;
+    failure="GLB Import 0.1.3\n\n"+failure;
     AfxMessageBox(failure.c_str(),MB_OK|MB_ICONERROR);return FALSE;
 }

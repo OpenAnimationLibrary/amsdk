@@ -1,5 +1,6 @@
 // Portable test driver; stdout is machine-readable summary, no A:M dependency.
 #include "ImportCore.h"
+#include "MaterialSurface.h"
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -68,6 +69,12 @@ int main(int argc,char** argv){
         bool first=true;
         for(const auto& item:materials){if(!first)std::cout<<',';first=false;const auto& m=plan.materials[item.first];
             std::cout<<"{\"faces\":"<<item.second<<",\"rgba\":["<<m.color[0]<<','<<m.color[1]<<','<<m.color[2]<<','<<m.color[3]<<"]}";
+        }
+        std::cout<<"],\"surface_fractions\":[";first=true;
+        for(const auto& item:materials){if(!first)std::cout<<',';first=false;
+            const auto surface=amglb::SurfaceForMaterial(plan.materials[item.first]);
+            std::cout<<"{\"specular_size\":"<<surface.specularSize<<",\"specular_intensity\":"<<surface.specularIntensity
+                <<",\"reflectivity\":"<<surface.reflectivity<<",\"transparency\":"<<surface.transparency<<'}';
         }
         std::cout<<"]}\n";
         return 0;

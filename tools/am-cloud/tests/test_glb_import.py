@@ -291,4 +291,37 @@ class GLBImportTests(unittest.TestCase):
         for name,digest in manifest['sha256'].items():
             self.assertEqual(hashlib.sha256((SOURCE/'third_party'/name).read_bytes()).hexdigest(),digest)
 
+    def test_color_fixture_surface_percentages(self):
+        p=self.run_file(raw=(SOURCE/'examples/two_color_parts.glb').read_bytes())
+        # The owner's saved MDL had correct red/blue diffuse colors but white
+        # highlights at size 8000%, intensity 2000%. StoreValue expects fractions.
+        expected={'specular_size':80,'specular_intensity':20,'reflectivity':0,'transparency':0}
+        self.assertEqual(len(p['surface_fractions']),2)
+        for surface in p['surface_fractions']:
+            self.assertEqual({key:100*value for key,value in surface.items()},expected)
+
+    def test_material_percentages_at_limits_and_midpoint(self):
+        for roughness,metallic,alpha,expected in (
+                (0,0,0,(5,20,0,100)),
+                (1,1,1,(80,80,35,0)),
+                (.5,.5,.25,(42.5,50,17.5,75))):
+            with self.subTest(roughness=roughness,metallic=metallic,alpha=alpha):
+                data,binary=fixture()
+                data['materials']=[{'alphaMode':'BLEND','pbrMetallicRoughness':{
+                    'roughnessFactor':roughness,'metallicFactor':metallic,'baseColorFactor':[1,0,0,alpha]}}]
+                data['meshes'][0]['primitives'][0]['material']=0
+                p=self.run_file(data,binary)
+                surface=p['surface_fractions'][0]
+                for key,percentage in zip(('specular_size','specular_intensity','reflectivity','transparency'),expected):
+                    self.assertAlmostEqual(100*surface[key],percentage)
+                    self.assertGreaterEqual(surface[key],0)
+                    self.assertLessEqual(surface[key],1)
+
+    def test_opaque_material_does_not_become_transparent(self):
+        data,binary=fixture()
+        data['materials']=[{'alphaMode':'OPAQUE','pbrMetallicRoughness':{'baseColorFactor':[0,0,1,.25]}}]
+        data['meshes'][0]['primitives'][0]['material']=0
+        p=self.run_file(data,binary)
+        self.assertEqual(p['surface_fractions'][0]['transparency'],0)
+
 if __name__=='__main__':unittest.main()

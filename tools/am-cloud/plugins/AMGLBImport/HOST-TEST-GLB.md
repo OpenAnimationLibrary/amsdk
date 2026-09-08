@@ -1,4 +1,4 @@
-# AMGLBImport 0.1.2 native host acceptance — pending
+# AMGLBImport 0.1.3 native host acceptance — pending
 
 Record the exact HXT SHA-256 from the original receipt, A:M version, Release/Debug
 host type, OS, menu context and results. Keep `runtime_tested: false` in the
@@ -18,7 +18,12 @@ build-generated receipt; append independent host evidence in a reviewed update.
    and wireframe views. CPs should be peaked; move a shared CP to verify connectivity.
 5. Color regression: `two_color_parts.glb` must show one red square and one blue
    square. Both part selection groups must show Surface as Not Set. The separate material
-   groups must show their red/blue surface colors.
+   groups must show their red/blue surface colors. Check specular size **80%**,
+   intensity **20%**, reflectivity **0%** and transparency **0%**. In the saved
+   MDL, the first two must be `SpecularSize=80` and `SpecularIntensity=20`, not
+   the 0.1.2 values 8000 and 2000. Inspect both shaded appearance and a render.
+   For an alpha-blended source at alpha 0.25, verify transparency **75%**;
+   an opaque source must remain at **0%**, regardless of its alpha factor.
    Selecting, renaming or reordering groups must not turn either patch white. Verify
    these colors after saving/reloading. No unused Default/catch-all color group
    should appear. `color_boundary.glb` must show eight red squares around a blue
@@ -46,3 +51,12 @@ build-generated receipt; append independent host evidence in a reviewed update.
    the rollback. Do not install the Debug artifact in ordinary A:M.
 
 Release and Debug CI results alone leave all these runtime checks pending.
+
+## Earlier owner evidence
+
+The owner supplied two saved A:M 19.5 PC models after reporting white imports.
+Both have empty `<MATERIALS>` lists and correct red/blue group diffuse values
+and CP lists. Both also retain specular size 8000 and intensity 2000; a newly
+added working group sets only green diffuse color. This establishes a percentage
+unit error in the imported groups, not a missing color assignment. The exact
+installed HXT hash is unknown; this is not acceptance of the 0.1.3 binary.

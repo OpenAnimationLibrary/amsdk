@@ -1,24 +1,31 @@
-# AMGLBImport 0.1.2 — Animation:Master GLB importer
+# AMGLBImport 0.1.3 — Animation:Master GLB importer
 
 Developed for Rodney Baker / OpenAnimationLibrary with OpenAI Codex assistance.
 Windows x64, A:M 19.5 SDK, native C++ command HXT. This is an updated host-test
 candidate: successful CI builds do not certify behavior inside A:M.
 
-## Changes in 0.1.2
+## Changes in 0.1.3
 
-The owner reported that 0.1.1 still imported without colors and stopped with
-“A:M returned a missing patch surface.” The adapter incorrectly treated the
-nullable `HPatch::GetAttr()` read as an editable surface allocation. This release
-writes to persistent `HGroup` surface properties instead. It verifies group patch
-coverage and reads back the stored diffuse colors. All CPs in each attachment
-stack are included, following the SDK TexturedGrid grouping pattern.
+The owner's saved two-color MDL files contain the correct diffuse RGB values and
+CP membership, with empty material lists. The imported groups instead store
+white specular size 8000% and intensity 2000%, explaining the washed-out colors.
+The added working group sets only diffuse green. Renaming did not change the
+imported surface values; there is no hidden material in these files.
 
-Material groups are split when their combined CPs would also enclose a face
-with a different source material. Part selection groups remain neutral, including
-when their surface is absent. No unused default or whole-model white group is
-created. The 0.1.1 spline-routing changes are retained. A:M acceptance of this new
-binary remains pending; the reported failure does not identify the installed HXT
-hash or exact A:M version.
+The adapter had passed displayed percentages to `HFloatProperty::StoreValue`,
+which expects normalized fractions. This release corrects specular size,
+intensity, reflectivity and transparency, checks their ranges, and reads back
+stored values. For `two_color_parts.glb`, specular size must now save as 80 and
+intensity as 20. Diffuse colors, group membership, spline routing and geometry
+are unchanged. The legacy material mapping is still an approximation to glTF PBR.
+
+The earlier 0.1.1 nullable patch-surface failure was addressed in 0.1.2 by using
+persistent `HGroup` properties. That path successfully saved the supplied RGB
+colors, but still had the percentage bug. Groups retain complete CP attachment
+stacks and split if combining them would enclose another material's face. Part
+selection groups remain neutral; no unused default or whole-model color group
+is created. The supplied models identify A:M 19.5 PC but do not identify the
+installed HXT hash. Acceptance of this new binary remains pending.
 
 ## Install and import
 
@@ -81,8 +88,11 @@ Part selection groups retain Surface = Not Set. Separate groups named
 `Part / Material [number]` carry the actual surface settings. A group may cover
 only faces with its source material, so overlapping CP sets cannot override
 another color. A single-material part needs only one material group; the sword
-uses 13. Native checks verify group coverage and stored diffuse RGB values. Metallic/roughness factors
-receive an approximate legacy specular/reflection mapping; this is not PBR parity.
+uses 13. Native checks verify group coverage, stored diffuse RGB and material percentages.
+Metallic/roughness factors receive an approximate legacy mapping: specular size
+5–80%, intensity 20–80%, reflectivity 0–35%, and transparency from base-color
+alpha (0–100%). These properties use 0–1 fractions at the SDK boundary; this is
+not PBR parity.
 Texture images/UV decals, vertex colors, animations, cameras and lights are omitted
 with preview notices. UV0/normals are read to protect pairing seams but are not
 transferred as texture coordinates or custom native shading normals.
