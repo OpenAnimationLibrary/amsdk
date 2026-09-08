@@ -1,4 +1,4 @@
-# AMGLBImport 0.1.1 native host acceptance — pending
+# AMGLBImport 0.1.2 native host acceptance — pending
 
 Record the exact HXT SHA-256 from the original receipt, A:M version, Release/Debug
 host type, OS, menu context and results. Keep `runtime_tested: false` in the
@@ -17,14 +17,17 @@ build-generated receipt; append independent host evidence in a reviewed update.
    inside/outside normals and no internal accidental patches. Inspect both shaded
    and wireframe views. CPs should be peaked; move a shared CP to verify connectivity.
 5. Color regression: `two_color_parts.glb` must show one red square and one blue
-   square. Both named groups, including the last group, must show Surface as Not Set.
+   square. Both part selection groups must show Surface as Not Set. The separate material
+   groups must show their red/blue surface colors.
    Selecting, renaming or reordering groups must not turn either patch white. Verify
    these colors after saving/reloading. No unused Default/catch-all color group
-   should appear. Repeat with adjacent differently colored faces and the sword.
+   should appear. `color_boundary.glb` must show eight red squares around a blue
+   center; the blue center must stay blue after group reordering and save/reload.
+   Import must finish without the 0.1.1 “missing patch surface” error.
 6. `simple_sword.glb`: 13 named parts; 5,202 quads. At default 100 cm/unit, bounds
    are approximately X -19..19 cm, Y 1.082623..132.700002 cm, Z -2.5..2.5 cm.
    Verify blade/guard/grip orientation, sharp silhouette, materials and open accents.
-   Repeat with Mirror Z and a changed scale. Verify per-part selection groups and per-patch colors. The preview should report
+   Repeat with Mirror Z and a changed scale. Verify per-part selection groups and their separate material groups/colors. The preview should report
    906 source poles still needing retopology; these are not claimed fixed.
 7. Confirm four distinct native corner CP heads per patch; no three/five-point
    patches, orphan geometry, unintended patches, missing surfaces or merged parts.

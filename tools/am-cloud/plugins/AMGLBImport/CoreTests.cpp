@@ -14,7 +14,7 @@ int main(int argc,char** argv){
         if(!input)throw amglb::Error("Cannot read fixture.");
         std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(input)),{});
         auto plan=amglb::ReadGLB(bytes);amglb::ConvertToQuads(plan);
-        size_t boundary=0,threeWay=0,highValence=0,splineCount=0,closed=0;double area=0;
+        size_t boundary=0,threeWay=0,highValence=0,splineCount=0,closed=0,materialGroups=0;double area=0;
         std::map<uint32_t,size_t> materials;
         for(const auto& part:plan.parts){
             std::map<std::pair<uint32_t,uint32_t>,int> edges;
@@ -27,6 +27,20 @@ int main(int argc,char** argv){
                 area+=(amglb::Length(amglb::Cross(b-a,c-a))+amglb::Length(amglb::Cross(c-a,d-a)))*.5;
             }
             for(const auto& e:edges)if(e.second==1)++boundary;
+            const auto colorGroups=amglb::GroupMaterials(part);materialGroups+=colorGroups.size();
+            std::vector<bool> colored(part.faces.size(),false);
+            for(const auto& group:colorGroups){
+                const std::set<uint32_t> selected(group.vertices.begin(),group.vertices.end());
+                std::set<size_t> actualFaces;
+                for(size_t i=0;i<part.faces.size();++i){const auto& face=part.faces[i];
+                    if(std::all_of(face.vertex.begin(),face.vertex.end(),[&](uint32_t v){return selected.count(v)!=0;})){
+                        if(face.material!=group.material)throw amglb::Error("Color group leaks onto another material.");
+                        actualFaces.insert(i);colored[i]=true;
+                    }
+                }
+                if(actualFaces.empty()||actualFaces!=std::set<size_t>(group.faces.begin(),group.faces.end()))throw amglb::Error("Color group coverage is incorrect.");
+            }
+            if(std::find(colored.begin(),colored.end(),false)!=colored.end())throw amglb::Error("A face is missing its color group.");
             const auto routing=amglb::RouteSplines(part);splineCount+=routing.paths.size();
             std::map<std::pair<uint32_t,uint32_t>,size_t> routed;
             std::vector<size_t> occurrences(part.vertices.size());
@@ -48,7 +62,7 @@ int main(int argc,char** argv){
         std::cout<<std::setprecision(12)<<"{\"triangles\":"<<plan.inputTriangles<<",\"quads\":"<<plan.outputQuads
             <<",\"paired\":"<<plan.pairedQuads<<",\"subdivided\":"<<plan.subdividedComponents
             <<",\"parts\":"<<plan.parts.size()<<",\"vertices\":"<<plan.vertices<<",\"boundary\":"<<boundary
-            <<",\"three_way\":"<<threeWay<<",\"high_valence\":"<<highValence<<",\"splines\":"<<splineCount<<",\"closed_splines\":"<<closed
+            <<",\"material_groups\":"<<materialGroups<<",\"three_way\":"<<threeWay<<",\"high_valence\":"<<highValence<<",\"splines\":"<<splineCount<<",\"closed_splines\":"<<closed
             <<",\"area\":"<<area<<",\"min\":["<<plan.minimum.x<<","<<plan.minimum.y<<","<<plan.minimum.z
             <<"],\"max\":["<<plan.maximum.x<<","<<plan.maximum.y<<","<<plan.maximum.z<<"],\"materials\":[";
         bool first=true;

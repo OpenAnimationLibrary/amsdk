@@ -52,6 +52,11 @@ struct SplinePlan {
     std::vector<size_t> occurrences;
     size_t edges = 0, highValenceVertices = 0;
 };
+struct MaterialGroup {
+    uint32_t material = 0;
+    std::vector<uint32_t> vertices;
+    std::vector<size_t> faces;
+};
 struct Plan {
     std::vector<Part> parts;
     std::vector<Material> materials;
@@ -67,5 +72,8 @@ void ValidatePlan(Plan& plan);
 // Each mesh edge occurs exactly once. Three-way junctions have two CP records:
 // one through-spline and one ending spline, never three overlapping splines.
 SplinePlan RouteSplines(const Part& part);
+// A:M colors groups of CPs. Every quad enclosed by a group's CPs must have
+// that group's material, including quads incidentally enclosed by shared CPs.
+std::vector<MaterialGroup> GroupMaterials(const Part& part);
 std::string SafeName(const char* utf8, const std::string& fallback);
 }

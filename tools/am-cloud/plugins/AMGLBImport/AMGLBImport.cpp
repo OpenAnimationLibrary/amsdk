@@ -1,4 +1,4 @@
-// AMGLBImport 0.1.1. Developed for Rodney Baker with OpenAI Codex assistance.
+// AMGLBImport 0.1.2. Developed for Rodney Baker with OpenAI Codex assistance.
 #include "StdAfx.h"
 #include "ImportCore.h"
 #include "resource.h"
@@ -45,7 +45,7 @@ protected:
          <<"Dimensions at 100 cm/unit: "<<(plan.maximum.x-plan.minimum.x)*100<<" x "
          <<(plan.maximum.y-plan.minimum.y)*100<<" x "<<(plan.maximum.z-plan.minimum.z)*100<<" cm.\r\n";
         if(highValence)s<<"\r\n"<<highValence<<" source poles still require more than two splines. Inspect these for manual retopology.\r\n";
-        s<<"\r\nThree-way centers use two splines. Named groups have no surface overrides.\r\n";
+        s<<"\r\nThree-way centers use two splines. Part selection groups have no surface overrides.\r\n";
         for(const auto& note:plan.notes)s<<"\r\n"<<note;
         SetDlgItemText(IDC_SUMMARY,s.str().c_str());SetDlgItemText(IDC_SCALE,"100");
         static_cast<CEdit*>(GetDlgItem(IDC_SCALE))->SetLimitText(32);
@@ -67,9 +67,10 @@ Point Position(const Vector& p){return {p.x,p.y,p.z};}
 struct PreparedPart {
     std::vector<Vector> vertices;
     amglb::SplinePlan routing;
+    std::vector<amglb::MaterialGroup> materials;
 };
 PreparedPart Prepare(const amglb::Part& part,double scale,bool mirror){
-    PreparedPart out;out.routing=amglb::RouteSplines(part);out.vertices.reserve(part.vertices.size());
+    PreparedPart out;out.routing=amglb::RouteSplines(part);out.materials=amglb::GroupMaterials(part);out.vertices.reserve(part.vertices.size());
     std::set<Point> unique;
     for(auto v:part.vertices){v=v*scale;if(mirror)v.z=-v.z;
         if(std::max({std::abs(v.x),std::abs(v.y),std::abs(v.z)})>1000000)throw amglb::Error("Scaled coordinates exceed 1,000,000 cm.");
@@ -92,8 +93,10 @@ void SetColor(HColorProperty* property,const RGBFloat& value){
     if(!property)throw amglb::Error("A:M returned a missing surface color.");
     property->SetNull(FALSE);property->StoreValue(Time(0),value,FALSE);
 }
-void ApplyMaterial(HPatch* patch,const amglb::Material& m){
-    auto* attr=patch->GetAttr();if(!attr)throw amglb::Error("A:M returned a missing patch surface.");
+void ApplyMaterial(HGroup* group,const amglb::Material& m){
+    // HPatch::GetAttr() is a nullable read of existing attributes, not a surface
+    // allocator. A:M applies the persistent HGroup surface to its member patches.
+    auto* attr=group->GetAttr();if(!attr)throw amglb::Error("A:M returned a missing material-group surface.");
     attr->SetNull(FALSE);
     SetColor(attr->GetDiffuseColor(),RGBFloat(static_cast<float>(m.color[0]),static_cast<float>(m.color[1]),static_cast<float>(m.color[2])));
     SetColor(attr->GetSpecularColor(),RGBFloat(1.F));
@@ -101,13 +104,24 @@ void ApplyMaterial(HPatch* patch,const amglb::Material& m){
     SetFloat(attr->GetRoughness(),0);SetFloat(attr->GetRoughnessScale(),0);
     SetFloat(attr->GetSpecularSize(),5+75*m.roughness);SetFloat(attr->GetSpecularIntensity(),20+60*m.metallic);
     SetFloat(attr->GetReflectivity(),35*m.metallic);SetFloat(attr->GetTransparency(),100*(1-m.color[3]));SetFloat(attr->GetRefraction(),1);
+    group->OnModified();
 }
 struct ExpectedPatch { uint32_t material;amglb::Vec3 normal; };
+struct NativeMaterialGroup {
+    std::string partName;
+    uint32_t material;
+    std::vector<HCP*> points;
+    std::vector<Quad> faces;
+};
+void AddGroupPoints(HGroup* group,const std::vector<HCP*>& points){
+    for(auto* cp:points){group->AddCP(cp);if(!group->IsCPInGroup(cp))throw amglb::Error("A:M could not populate a group.");}
+}
 struct NativePlan {
     std::map<Quad,ExpectedPatch> patches;
     std::map<uint32_t,std::pair<Point,size_t>> vertices;
     std::set<std::pair<uint32_t,uint32_t>> edges;
     std::vector<HGroup*> groups;
+    std::vector<NativeMaterialGroup> materialGroups;
     std::set<HSpline*> closed;
 };
 void CreatePart(HModelCache* model,const amglb::Part& part,const PreparedPart& prepared,bool mirror,NativePlan& expected){
@@ -145,12 +159,31 @@ void CreatePart(HModelCache* model,const amglb::Part& part,const PreparedPart& p
         std::sort(key.begin(),key.end());
         if(!expected.patches.emplace(key,ExpectedPatch{f.material,normal}).second)throw amglb::Error("Duplicate native patch identity.");
     }
-    // Selection groups deliberately have no surface override. Materials belong
-    // to individual patches, including where adjacent faces have different colors.
+    std::vector<std::vector<HCP*>> stacks(heads.size());std::vector<HCP*> allPoints;
+    for(const auto& occurrence:occurrences){stacks[occurrence.first].push_back(occurrence.second);allPoints.push_back(occurrence.second);}
+    for(const auto& source:prepared.materials){
+        NativeMaterialGroup material;material.partName=part.name;material.material=source.material;
+        // Include the complete attachment stack, as the SDK TexturedGrid sample
+        // does. A patch may reference either spline's CP at a shared vertex.
+        for(auto v:source.vertices)material.points.insert(material.points.end(),stacks[v].begin(),stacks[v].end());
+        for(auto i:source.faces){Quad corners;
+            for(size_t k=0;k<4;++k)corners[k]=heads[part.faces[i].vertex[k]]->GetID();
+            std::sort(corners.begin(),corners.end());material.faces.push_back(corners);
+        }
+        expected.materialGroups.push_back(std::move(material));
+    }
+    // Part selection groups have no surface override. Separate material groups
+    // will cover only patches with the matching source material.
     auto* group=model->CreateGroup(part.name.c_str());if(!group)throw amglb::Error("A:M could not create a named selection group.");
-    for(auto* cp:heads){group->AddCP(cp);if(!group->IsCPInGroup(cp))throw amglb::Error("A:M could not populate a selection group.");}
-    auto* attr=group->GetAttr();if(!attr)throw amglb::Error("A:M returned a missing group surface.");
-    attr->SetNullable(TRUE);attr->SetNull(TRUE);expected.groups.push_back(group);
+    AddGroupPoints(group,allPoints);
+    if(auto* attr=group->GetAttr()){attr->SetNullable(TRUE);attr->SetNull(TRUE);}
+    expected.groups.push_back(group);
+}
+Quad PatchKey(HPatch* patch){
+    if(!patch)throw amglb::Error("A:M returned a missing patch.");
+    HCP* corners[]={patch->GetCP1(),patch->GetCP2(),patch->GetCP3(),patch->GetCP4()};Quad key;
+    for(size_t k=0;k<4;++k){if(!corners[k]||!corners[k]->GetHead())throw amglb::Error("Missing native patch corner.");key[k]=corners[k]->GetHead()->GetID();}
+    std::sort(key.begin(),key.end());return key;
 }
 void VerifyAndColor(HModelCache* model,const NativePlan& expected,const amglb::Plan& plan){
     std::set<HSpline*> splines;std::map<uint32_t,size_t> actualVertices;
@@ -181,16 +214,38 @@ void VerifyAndColor(HModelCache* model,const NativePlan& expected,const amglb::P
     const int count=model->GetPatchCount();
     if(count<0||static_cast<size_t>(count)!=expected.patches.size()||model->GetHeadPatch5())throw amglb::Error("A:M patch count differs from the quad plan. Inspect or remove the incomplete model.");
     auto remaining=expected.patches;
-    for(int i=0;i<count;++i){auto* patch=model->GetPatch(i);if(!patch)throw amglb::Error("A:M returned a missing patch.");
-        HCP* corners[]={patch->GetCP1(),patch->GetCP2(),patch->GetCP3(),patch->GetCP4()};Quad key;
-        for(size_t k=0;k<4;++k){if(!corners[k])throw amglb::Error("Missing native patch corner.");key[k]=corners[k]->GetHead()->GetID();}
-        std::sort(key.begin(),key.end());const auto found=remaining.find(key);
+    for(int i=0;i<count;++i){auto* patch=model->GetPatch(i);const auto found=remaining.find(PatchKey(patch));
         if(found==remaining.end())throw amglb::Error("A:M patch corners differ from the quad plan.");
         Vector normal;patch->GetPointNormalOnPatch(.5F,.5F,normal);
         if(amglb::Dot(found->second.normal,{normal.x,normal.y,normal.z})<0)patch->ReverseNormal();
-        ApplyMaterial(patch,plan.materials[found->second.material]);remaining.erase(found);
+        remaining.erase(found);
     }
-    for(auto* group:expected.groups)if(!group->GetAttr()->IsNull())throw amglb::Error("A named selection group has an unexpected surface override.");
+    std::vector<HGroup*> materialGroups;materialGroups.reserve(expected.materialGroups.size());
+    for(const auto& source:expected.materialGroups){
+        const auto& material=plan.materials[source.material];
+        const auto name=source.partName.substr(0,35)+" / "+material.name.substr(0,35)+" ["+std::to_string(materialGroups.size()+1)+"]";
+        auto* group=model->CreateGroup(name.c_str());if(!group)throw amglb::Error("A:M could not create a material group.");
+        AddGroupPoints(group,source.points);ApplyMaterial(group,material);materialGroups.push_back(group);
+    }
+    model->OnModified();model->Update();
+    // Reacquire patch handles after the host processes the group changes.
+    std::map<Quad,HPatch*> coloredPatches;
+    if(model->GetPatchCount()!=count||model->GetHeadPatch5())throw amglb::Error("A:M changed patch topology while assigning materials.");
+    for(int i=0;i<count;++i){auto* patch=model->GetPatch(i);const auto key=PatchKey(patch);
+        if(!expected.patches.count(key)||!coloredPatches.emplace(key,patch).second)throw amglb::Error("A:M changed patch identity while assigning materials.");
+    }
+    for(size_t i=0;i<materialGroups.size();++i){
+        auto* group=materialGroups[i];const auto& source=expected.materialGroups[i];
+        const int patches=group->GetPatchCount();
+        if(patches<0||static_cast<size_t>(patches)!=source.faces.size())throw amglb::Error("A:M material-group patch coverage differs from the color plan.");
+        for(const auto& key:source.faces)if(!group->IsPatchInGroup(coloredPatches.at(key)))throw amglb::Error("A:M omitted a patch from its material group.");
+        auto* attr=group->GetAttr();auto* diffuse=attr?attr->GetDiffuseColor():nullptr;
+        if(!diffuse||attr->IsNull()||diffuse->IsNull())throw amglb::Error("A:M did not retain a material-group surface.");
+        const auto color=diffuse->GetNormalizedRGBFloat();const auto& wanted=plan.materials[source.material].color;
+        if(std::abs(color.m_red-wanted[0])>1e-5||std::abs(color.m_green-wanted[1])>1e-5||std::abs(color.m_blue-wanted[2])>1e-5)
+            throw amglb::Error("A:M material-group color differs from the imported color.");
+    }
+    for(auto* group:expected.groups)if(auto* attr=group->GetAttr();attr&&!attr->IsNull())throw amglb::Error("A named selection group has an unexpected surface override.");
 }
 
 }
@@ -230,5 +285,6 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject* object,uint32_t 
     catch(const std::exception& e){failure=e.what();}catch(...){failure="Unexpected import error.";}
     if(created){failure+="\n\nA model named GLB INCOMPLETE may remain. Inspect or remove that new model. Existing models were not edited.";
         try{created->SetChanged();created->Update();created->OpenView();RefreshAllTrees();}catch(CException* e){e->Delete();}catch(...){} }
+    failure="GLB Import 0.1.2\n\n"+failure;
     AfxMessageBox(failure.c_str(),MB_OK|MB_ICONERROR);return FALSE;
 }

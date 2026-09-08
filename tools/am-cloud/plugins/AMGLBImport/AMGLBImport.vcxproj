@@ -61,7 +61,7 @@
     <ClCompile><RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary><PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions><Optimization>Disabled</Optimization></ClCompile>
     <Link><AdditionalDependencies>FileIO_64d.lib;Matrix_64d.lib;Plugin_64d.lib;SDK_64d.lib;%(AdditionalDependencies)</AdditionalDependencies></Link>
   </ItemDefinitionGroup>
-  <ItemGroup><ClCompile Include="AMGLBImport.cpp" /><ClInclude Include="StdAfx.h" /><ClInclude Include="ImportCore.h" /><ClCompile Include="GLBReader.cpp" /><ClCompile Include="QuadConversion.cpp" /><ClCompile Include="SplineRouting.cpp" /><ClInclude Include="resource.h" /><ResourceCompile Include="AMGLBImport.rc" /></ItemGroup>
+  <ItemGroup><ClCompile Include="AMGLBImport.cpp" /><ClInclude Include="StdAfx.h" /><ClInclude Include="ImportCore.h" /><ClCompile Include="GLBReader.cpp" /><ClCompile Include="QuadConversion.cpp" /><ClCompile Include="SplineRouting.cpp" /><ClCompile Include="MaterialGroups.cpp" /><ClInclude Include="resource.h" /><ResourceCompile Include="AMGLBImport.rc" /></ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Target Name="ValidateAMBuild" BeforeTargets="PrepareForBuild">
     <Error Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug'" Text="Only Release or Debug configurations are supported." />

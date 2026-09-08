@@ -1,17 +1,24 @@
-# AMGLBImport 0.1.1 — Animation:Master GLB importer
+# AMGLBImport 0.1.2 — Animation:Master GLB importer
 
 Developed for Rodney Baker / OpenAnimationLibrary with OpenAI Codex assistance.
 Windows x64, A:M 19.5 SDK, native C++ command HXT. This is an updated host-test
 candidate: successful CI builds do not certify behavior inside A:M.
 
-## Changes in 0.1.1
+## Changes in 0.1.2
 
-The owner reported white imports associated with the last named group and
-problematic three-spline junctions in 0.1.0. This update removes the SDK polygon
-importer's generated groups/routing: it assigns patch materials directly, creates
-selection-only named groups, and builds/verifies explicit spline paths. Native
-runtime acceptance of this new binary is pending; the earlier informal feedback
-is not an exact-binary host-test record.
+The owner reported that 0.1.1 still imported without colors and stopped with
+“A:M returned a missing patch surface.” The adapter incorrectly treated the
+nullable `HPatch::GetAttr()` read as an editable surface allocation. This release
+writes to persistent `HGroup` surface properties instead. It verifies group patch
+coverage and reads back the stored diffuse colors. All CPs in each attachment
+stack are included, following the SDK TexturedGrid grouping pattern.
+
+Material groups are split when their combined CPs would also enclose a face
+with a different source material. Part selection groups remain neutral, including
+when their surface is absent. No unused default or whole-model white group is
+created. The 0.1.1 spline-routing changes are retained. A:M acceptance of this new
+binary remains pending; the reported failure does not identify the installed HXT
+hash or exact A:M version.
 
 ## Install and import
 
@@ -69,9 +76,12 @@ node transforms and repeated ordinary mesh nodes. The default scene is used,
 or the first scene if none is marked default. Node hierarchy is flattened into
 named groups in one model. Positions are converted to native float precision.
 
-Basic material base colors and alpha are assigned directly to native patches.
-Named part groups are selection-only, with their Surface override set to Not Set;
-no catch-all material group is generated. Adjacent faces retain their own materials. Metallic/roughness factors
+Basic material base colors and alpha are assigned through native material groups.
+Part selection groups retain Surface = Not Set. Separate groups named
+`Part / Material [number]` carry the actual surface settings. A group may cover
+only faces with its source material, so overlapping CP sets cannot override
+another color. A single-material part needs only one material group; the sword
+uses 13. Native checks verify group coverage and stored diffuse RGB values. Metallic/roughness factors
 receive an approximate legacy specular/reflection mapping; this is not PBR parity.
 Texture images/UV decals, vertex colors, animations, cameras and lights are omitted
 with preview notices. UV0/normals are read to protect pairing seams but are not
@@ -98,7 +108,9 @@ edges belong to open accent surfaces. Its 1,068 three-way vertices each route to
 two spline CP records; 906 higher-valence source poles remain and appear in the
 preview. These counts describe the portable plan, not host acceptance.
 Other included fixtures isolate a single triangle, square, mixed region, cube and
-two independently colored named parts (`two_color_parts.glb`).
+two independently colored named parts (`two_color_parts.glb`). The additional
+`color_boundary.glb` has a blue center surrounded by eight red squares and checks
+that shared CPs cannot spread the red material onto the blue patch.
 
 ## Build in Visual Studio
 

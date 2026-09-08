@@ -43,6 +43,30 @@ def encode(data, binary):
     return struct.pack('<III', 0x46546C67, 2, 28 + len(header) + len(binary)) + struct.pack('<II', len(header), 0x4E4F534A) + header + struct.pack('<II', len(binary), 0x004E4942) + binary
 
 
+def color_grid(size=3, colors=None):
+    points=[(x,y,0) for y in range(size+1) for x in range(size+1)]
+    data,binary=fixture(points,[])
+    data['bufferViews']=data['bufferViews'][:1]
+    data['accessors']=data['accessors'][:1]
+    data['meshes'][0]['primitives']=[]
+    colors=colors if colors is not None else [int(x==size//2 and y==size//2) for y in range(size) for x in range(size)]
+    for material in sorted(set(colors)):
+        indices=[]
+        for y in range(size):
+            for x in range(size):
+                if colors[y*size+x]!=material:continue
+                a=y*(size+1)+x
+                indices.extend([a,a+1,a+size+2,a,a+size+2,a+size+1])
+        offset=len(binary);binary+=struct.pack('<'+'I'*len(indices),*indices)
+        data['bufferViews'].append({'buffer':0,'byteOffset':offset,'byteLength':len(binary)-offset})
+        accessor=len(data['accessors'])
+        data['accessors'].append({'bufferView':len(data['bufferViews'])-1,'componentType':5125,'count':len(indices),'type':'SCALAR'})
+        data['meshes'][0]['primitives'].append({'attributes':{'POSITION':0},'indices':accessor,'material':material})
+    data['buffers'][0]['byteLength']=len(binary)
+    data['materials']=[{'name':name,'pbrMetallicRoughness':{'baseColorFactor':color,'metallicFactor':0,'roughnessFactor':1}} for name,color in [('Red',[1,0,0,1]),('Blue',[0,0,1,1]),('Green',[0,1,0,1])]]
+    return data,binary
+
+
 class GLBImportTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -50,7 +74,7 @@ class GLBImportTests(unittest.TestCase):
         cls.temporary = tempfile.TemporaryDirectory(dir=HERE / '.work')
         cls.work = Path(cls.temporary.name)
         cls.env = None
-        sources = [str(SOURCE / name) for name in ('CoreTests.cpp', 'GLBReader.cpp', 'QuadConversion.cpp', 'SplineRouting.cpp')]
+        sources = [str(SOURCE / name) for name in ('CoreTests.cpp', 'GLBReader.cpp', 'QuadConversion.cpp', 'SplineRouting.cpp', 'MaterialGroups.cpp')]
         if os.name == 'nt':
             cls.env, _ = visual_studio_environment(cls.work, json.loads((HERE / 'toolchain.lock.json').read_text()))
             compiler = shutil.which('cl.exe', path=cls.env['PATH'])
@@ -204,6 +228,7 @@ class GLBImportTests(unittest.TestCase):
         self.assertEqual((p['triangles'],p['parts'],p['quads'],p['paired'],p['vertices'],p['boundary']),(2324,13,5202,684,5236,20))
         self.assertAlmostEqual(p['area'],.30014627789,places=8)
         self.assertEqual((p['three_way'],p['high_valence']),(1068,906))
+        self.assertEqual(p['material_groups'],13)
 
     def test_named_parts_keep_explicit_colors_without_unused_default(self):
         data,binary=fixture()
@@ -237,6 +262,29 @@ class GLBImportTests(unittest.TestCase):
                 p=self.run_file(*fixture(points,indices))
                 self.assertEqual((p['high_valence'],p['quads']),(1,3*n))
                 self.assertEqual(p['min'][2],0);self.assertEqual(p['max'][2],1)
+
+    def test_material_groups_do_not_enclose_another_color(self):
+        p=self.run_file(*color_grid())
+        self.assertEqual(p['quads'],9)
+        self.assertEqual(p['materials'],[{'faces':8,'rgba':[1,0,0,1]},{'faces':1,'rgba':[0,0,1,1]}])
+        # One combined red CP group would also enclose the blue center. The
+        # production driver independently verifies each group's induced faces.
+        self.assertGreater(p['material_groups'],2)
+        rng=random.Random(20260908)
+        for i in range(12):
+            colors=[rng.randrange(3) for _ in range(25)]
+            with self.subTest(pattern=i):
+                p=self.run_file(*color_grid(5,colors))
+                self.assertEqual(p['quads'],25)
+                self.assertEqual(p['high_valence'],0)
+
+    def test_packaged_color_regressions(self):
+        p=self.run_file(raw=(SOURCE/'examples/two_color_parts.glb').read_bytes())
+        self.assertEqual((p['parts'],p['material_groups']),(2,2))
+        self.assertEqual(p['materials'],[{'faces':1,'rgba':[1,0,0,1]},{'faces':1,'rgba':[0,0,1,1]}])
+        p=self.run_file(raw=(SOURCE/'examples/color_boundary.glb').read_bytes())
+        self.assertEqual(p['quads'],9)
+        self.assertGreater(p['material_groups'],2)
 
     def test_vendor_identity(self):
         manifest=json.loads((SOURCE/'third_party/provenance.json').read_text())
