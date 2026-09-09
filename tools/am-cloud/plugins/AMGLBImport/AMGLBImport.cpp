@@ -1,4 +1,4 @@
-// AMGLBImport 0.1.6. Developed for Rodney Baker with OpenAI Codex assistance.
+// AMGLBImport 0.1.7. Developed for Rodney Baker with OpenAI Codex assistance.
 #include "StdAfx.h"
 #include "ImportCore.h"
 #include "MaterialSurface.h"
@@ -137,7 +137,7 @@ void ApplyMaterial(HGroup* group,const amglb::Material& m){
     SetFloat(attr->GetRefraction(),1);
     group->OnModified();
 }
-struct ExpectedPatch { uint32_t material;amglb::Vec3 normal; };
+struct ExpectedPatch { uint32_t material;amglb::Vec3 normal;std::string partName; };
 struct NativeMaterialGroup {
     std::string partName;
     uint32_t material;
@@ -188,7 +188,7 @@ void CreatePart(HModelCache* model,const amglb::Part& part,const PreparedPart& p
         auto normal=amglb::Unit(amglb::Cross(p[1]-p[0],p[2]-p[0])+amglb::Cross(p[2]-p[0],p[3]-p[0]));
         if(mirror)normal=normal*-1;
         std::sort(key.begin(),key.end());
-        if(!expected.patches.emplace(key,ExpectedPatch{f.material,normal}).second)throw amglb::Error("Duplicate native patch identity.");
+        if(!expected.patches.emplace(key,ExpectedPatch{f.material,normal,part.name}).second)throw amglb::Error("Duplicate native patch identity.");
     }
     std::vector<std::vector<HCP*>> stacks(heads.size());std::vector<HCP*> allPoints;
     for(const auto& occurrence:occurrences){stacks[occurrence.first].push_back(occurrence.second);allPoints.push_back(occurrence.second);}
@@ -255,13 +255,24 @@ void VerifyAndColor(HModelCache* model,const NativePlan& expected,const amglb::P
         throw amglb::Error("A:M spline edges differ from the plan, or an edge is duplicated.");
     model->Update();model->FindPatches();
     const int count=model->GetPatchCount();
-    if(count<0||static_cast<size_t>(count)!=expected.patches.size()||model->GetHeadPatch5())throw amglb::Error("A:M patch count differs from the quad plan. Inspect or remove the incomplete model.");
-    auto remaining=expected.patches;
+    if(count<0||static_cast<size_t>(count)>amglb::MaxOutputQuads*2)throw amglb::Error("A:M returned an invalid patch count.");
+    auto remaining=expected.patches;size_t unexpected=0;
     for(int i=0;i<count;++i){auto* patch=model->GetPatch(i);const auto found=remaining.find(PatchKey(patch));
-        if(found==remaining.end())throw amglb::Error("A:M patch corners differ from the quad plan.");
+        if(found==remaining.end())++unexpected;
+        else remaining.erase(found);
+    }
+    if(!remaining.empty()||unexpected||model->GetHeadPatch5()){
+        std::ostringstream message;
+        message<<"A:M found "<<count<<" patches; expected "<<expected.patches.size()<<".\n"
+               <<"Missing: "<<remaining.size()<<"; unexpected or duplicate: "<<unexpected<<".";
+        if(!remaining.empty())message<<"\nFirst missing patch belongs to '"<<remaining.begin()->second.partName<<"'.";
+        if(model->GetHeadPatch5())message<<"\nA:M also created an unexpected five-point patch.";
+        message<<"\n\nColors were not assigned because patch verification failed.";
+        throw amglb::Error(message.str());
+    }
+    for(int i=0;i<count;++i){auto* patch=model->GetPatch(i);const auto& wanted=expected.patches.at(PatchKey(patch));
         Vector normal;patch->GetPointNormalOnPatch(.5F,.5F,normal);
-        if(amglb::Dot(found->second.normal,{normal.x,normal.y,normal.z})<0)patch->ReverseNormal();
-        remaining.erase(found);
+        if(amglb::Dot(wanted.normal,{normal.x,normal.y,normal.z})<0)patch->ReverseNormal();
     }
     std::vector<HGroup*> materialGroups;materialGroups.reserve(expected.materialGroups.size());
     for(const auto& source:expected.materialGroups){
@@ -330,6 +341,6 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject* object,uint32_t 
     catch(const std::exception& e){failure=e.what();}catch(...){failure="Unexpected import error.";}
     if(created){failure+="\n\nA model named GLB INCOMPLETE may remain. Inspect or remove that new model. Existing models were not edited.";
         try{created->SetChanged();created->Update();created->OpenView();RefreshAllTrees();}catch(CException* e){e->Delete();}catch(...){} }
-    failure="GLB Import 0.1.6\n\n"+failure;
+    failure="GLB Import 0.1.7\n\n"+failure;
     AfxMessageBox(failure.c_str(),MB_OK|MB_ICONERROR);return FALSE;
 }

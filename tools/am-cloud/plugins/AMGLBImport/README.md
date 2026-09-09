@@ -1,8 +1,38 @@
-# AMGLBImport 0.1.6 — Animation:Master GLB importer
+# AMGLBImport 0.1.7 — Animation:Master GLB importer
 
 Developed for Rodney Baker / OpenAnimationLibrary with OpenAI Codex assistance.
 Windows x64, A:M 19.5 SDK, native C++ command HXT. This is an updated host-test
 candidate: successful CI builds do not certify behavior inside A:M.
+
+## Fix in 0.1.7: missing box faces prevented colors
+
+The owner supplied an A:M 19.5 saved sunglasses model and a **0.1.5** error
+popup. Comparing CP attachments and patch corners with the unchanged source GLB
+found 404 of 406 planned patches, no extra patches, and exactly two missing faces:
+the backs of the brass hinges. Each missing face was bounded by one closed spline.
+All 404 saved patches used two or more distinct boundary splines. The file had
+only the 11 neutral part groups, no material groups and no hidden material entries:
+native patch verification stopped the import before its color-assignment stage.
+The default 0.1.6 routing had the same issue; its density options did not fix it.
+
+The router now verifies that each planned quad spans at least two spline paths.
+For an offending face it tries alternative through-pairs at two existing
+three-edge junctions, retaining only a reduction in the number of offending faces.
+Each trial preserves positions, edges, face corners, materials and the maximum of
+two CP records per attachment. Regular four-edge continuation is unchanged.
+Disconnected surfaces are processed separately; repair is limited to 20 million
+candidate edge visits per connected surface. An unresolved routing fails before
+creating an A:M model. This is a focused correction, not a complete simulation
+of A:M's patch finder. The native patch/edge/color gates remain mandatory.
+
+The sunglasses retain 406 quads, 424 mesh vertices, 11 named parts, five colors
+and 25 planned material groups, with no subdivision or fallback seams. The
+regression driver independently checks boundary spline ownership for every quad,
+including the original sword, isolated boxes and rotated/shuffled box arrays.
+A native mismatch now states expected/actual counts, missing/unexpected counts,
+and the first part with a missing patch; it explicitly explains why colors were
+not assigned. Host acceptance of the new binary remains pending. Peaked control
+points remain the default; the owner's manual Smooth edit is separate feedback.
 
 ## Options added in 0.1.6
 

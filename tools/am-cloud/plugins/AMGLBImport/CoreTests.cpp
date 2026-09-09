@@ -86,15 +86,20 @@ int main(int argc,char** argv){
             if(std::find(colored.begin(),colored.end(),false)!=colored.end())throw amglb::Error("A face is missing its color group.");
             const auto routing=amglb::RouteSplines(part);splineCount+=routing.paths.size();
             std::map<std::pair<uint32_t,uint32_t>,size_t> routed;
+            std::map<std::pair<uint32_t,uint32_t>,size_t> edgeSpline;
             std::vector<size_t> occurrences(part.vertices.size());
-            for(const auto& path:routing.paths){
+            for(size_t pathIndex=0;pathIndex<routing.paths.size();++pathIndex){const auto& path=routing.paths[pathIndex];
                 if(path.closed)++closed;
                 for(auto v:path.vertex)++occurrences.at(v);
-                for(size_t k=0;k+1<path.vertex.size();++k)++routed[std::minmax(path.vertex[k],path.vertex[k+1])];
-                if(path.closed)++routed[std::minmax(path.vertex.back(),path.vertex.front())];
+                for(size_t k=0;k+1<path.vertex.size();++k){const auto edge=std::minmax(path.vertex[k],path.vertex[k+1]);++routed[edge];edgeSpline[edge]=pathIndex;}
+                if(path.closed){const auto edge=std::minmax(path.vertex.back(),path.vertex.front());++routed[edge];edgeSpline[edge]=pathIndex;}
             }
             if(routed.size()!=edges.size())throw amglb::Error("Routing added or omitted an edge.");
             for(const auto& e:edges)if(routed.at(e.first)!=1)throw amglb::Error("Routing duplicated an edge.");
+            for(const auto& face:part.faces){std::set<size_t> boundarySplines;
+                for(size_t k=0;k<4;++k)boundarySplines.insert(edgeSpline.at(std::minmax(face.vertex[k],face.vertex[(k+1)%4])));
+                if(boundarySplines.size()<2)throw amglb::Error("A quad is bounded by only one spline: "+part.name);
+            }
             for(size_t v=0;v<neighbors.size();++v){
                 const auto degree=neighbors[v].size();
                 if(degree==3){++threeWay;if(occurrences[v]!=2)throw amglb::Error("Three-way center has more than two spline CPs.");}

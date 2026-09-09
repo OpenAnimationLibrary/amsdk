@@ -1,12 +1,30 @@
-# AMGLBImport 0.1.6 native host acceptance — pending
+# AMGLBImport 0.1.7 native host acceptance — pending
 
 Record the exact HXT SHA-256 from the original receipt, A:M version, Release/Debug
 host type, OS, menu context and results. Keep `runtime_tested: false` in the
 build-generated receipt; append independent host evidence in a reviewed update.
 
+New routing regression:
+
+- Confirm the popup/dialog version is **0.1.7**, then reimport the unchanged
+  `Low_Poly_Quad_Sunglasses.glb` at target 0. Test omission both off and on.
+  Expected: 406 patches, 424 mesh vertices / 848 spline CP records, 11 part
+  selection groups and 25 colored material groups. Both brass hinge backs must
+  exist. Import must complete, remove the `GLB INCOMPLETE` prefix and assign
+  the five source colors. Part groups must remain Surface = Not Set.
+- Save/reload and run Find Patches: both hinge backs, counts and colors must
+  remain. Change Peaked to Smooth manually and record shape separately; it
+  must not be required to make the initial import finish.
+- Recheck the original sword and cube/color fixtures, including Mirror Z.
+  Every quad must span at least two distinct spline paths while every
+  attachment still contains at most two spline CP records.
+- If native verification fails, retain the popup's version, expected/actual
+  counts, missing/unexpected counts and first missing part, plus an untouched
+  saved model. No separate error-log file is promised by this plugin.
+
 New option checks, in addition to the default-behavior checks below:
 
-- Verify the dialog title is 0.1.6. Target `0` and omission off preserve 0.1.5
+- Verify the dialog title is 0.1.7. Target `0` and omission off preserve 0.1.5
   conversion counts. Changing either option disables Import until Update preview.
   Enter/Import must never use stale results. Reject invalid/out-of-range targets.
 - Set a lower patch budget on a dense curved mesh. Review target versus actual,
@@ -98,3 +116,12 @@ of the new binary, including its unwelded seams, remains pending.
 The owner subsequently described 0.1.5 as "Much improved" and requested density
 and omission options. That feedback does not establish acceptance of this new
 0.1.6 HXT or its option-specific behavior; its exact host test remains pending.
+
+The later sunglasses report identifies the running plugin as **0.1.5**, not
+0.1.6. The untouched MDL contains 118 splines, 848 CP records, 424 attachment
+heads and 404 patches. The only missing planned faces are the two hinge backs;
+both have a single closed boundary spline. There are 11 neutral selection
+groups, no color groups and an empty MATERIALS section. This establishes the
+native mismatch and the reason coloring was skipped. It does not establish
+host acceptance of the 0.1.7 rerouting fix. The uploaded model and its personal
+file metadata are not published in the repository.

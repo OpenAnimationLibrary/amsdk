@@ -249,6 +249,49 @@ class GLBImportTests(unittest.TestCase):
         p=self.run_file(raw=(SOURCE/'examples/cube.glb').read_bytes())
         self.assertEqual((p['triangles'],p['quads'],p['vertices'],p['boundary'],p['area']),(12,6,8,0,6))
 
+    def test_hinge_box_single_spline_face_regression(self):
+        # The owner's saved 0.1.5 model omitted the back of each 5.2 x 5.4 x
+        # 6.6 mm hinge: one closed spline surrounded all four patch edges.
+        # Reproduce the GLB face/vertex order without publishing the owner MDL.
+        for sign in (-1,1):
+            points=[];indices=[]
+            for axis in range(3):
+                a,b=[k for k in range(3) if k!=axis]
+                for side in (-1,1):
+                    quad=[]
+                    for u,v in ((-1,-1),(1,-1),(1,1),(-1,1)):
+                        xyz=[0.,0.,0.];xyz[axis]=side;xyz[a]=u;xyz[b]=v;quad.append(xyz)
+                    normal=[(quad[1][(k+1)%3]-quad[0][(k+1)%3])*(quad[2][(k+2)%3]-quad[0][(k+2)%3])-(quad[1][(k+2)%3]-quad[0][(k+2)%3])*(quad[2][(k+1)%3]-quad[0][(k+1)%3]) for k in range(3)]
+                    if normal[axis]*side<0:quad.reverse()
+                    base=len(points)
+                    points.extend([(x*.0026+sign*.0645,y*.0027+.008,z*.0033-.0054) for x,y,z in quad])
+                    indices.extend([base,base+1,base+2,base,base+2,base+3])
+            for omit in (False,True):
+                with self.subTest(side=sign,omit=omit):
+                    p=self.run_file(*fixture(points,indices),omit=omit)
+                    self.assertEqual((p['quads'],p['vertices'],p['seam_edges'],p['omitted_triangles']),(6,8,0,0))
+                    self.assertAlmostEqual(p['area'],2*(.0052*.0054+.0052*.0066+.0054*.0066),places=9)
+            triangles=[indices[i:i+3] for i in range(0,len(indices),3)]
+            for seed in range(12):
+                random.Random(seed).shuffle(triangles)
+                p=self.run_file(*fixture(points,[v for f in triangles for v in f]))
+                self.assertEqual((p['quads'],p['vertices'],p['seam_edges']),(6,8,0))
+
+    def test_box_routing_across_disconnected_rotated_solids(self):
+        base,faces=cube_sphere(1);points=[];indices=[]
+        for i in range(64):
+            angle=i*.17;c,s=math.cos(angle),math.sin(angle);offset=len(points)
+            for x,y,z in base:
+                x*=.0026*math.sqrt(3);y*=.0027*math.sqrt(3);z*=.0033*math.sqrt(3)
+                points.append((c*x-s*z+(i%8)*.02,y,s*x+c*z+(i//8)*.02))
+            indices.extend(offset+j for j in faces)
+        triangles=[indices[i:i+3] for i in range(0,len(indices),3)]
+        random.Random(195).shuffle(triangles)
+        p=self.run_file(*fixture(points,[v for f in triangles for v in f]))
+        self.assertEqual((p['parts'],p['quads'],p['vertices'],p['surface_components']),(1,384,512,64))
+        self.assertEqual((p['boundary'],p['seam_edges'],p['high_valence']),(0,0,0))
+        self.assertAlmostEqual(p['area'],64*2*(.0052*.0054+.0052*.0066+.0054*.0066),places=7)
+
     def test_nonmanifold_and_duplicate_faces_rejected(self):
         cases=[([(0,0,0),(1,0,0),(1,1,0),(0,1,0)],[0,1,2,0,1,2]),
                ([(0,0,0),(1,0,0),(1,1,0),(0,1,0)],[0,1,2,0,3,2]),

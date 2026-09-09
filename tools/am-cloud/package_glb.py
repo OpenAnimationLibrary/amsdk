@@ -20,7 +20,7 @@ def package(native_zip: Path, output: Path) -> Path:
     expected = native_zip.with_suffix('.zip.sha256').read_text().split()[0]
     verify_hash(native_zip, expected)
     with tempfile.TemporaryDirectory() as temporary:
-        root = Path(temporary) / 'AMGLBImport-0.1.6'
+        root = Path(temporary) / 'AMGLBImport-0.1.7'
         native = root / 'plugin'
         native.mkdir(parents=True)
         with zipfile.ZipFile(native_zip) as archive:
@@ -63,7 +63,7 @@ def package(native_zip: Path, output: Path) -> Path:
             for path in sorted(root.rglob('*')) if path.is_file()), encoding='utf-8')
         output.mkdir(parents=True)
         run = receipt['source']['run_id'] or 'local'
-        kit = output / f'AMGLBImport-0.1.6-Release-x64-r{run}-{commit[:12]}-kit.zip'
+        kit = output / f'AMGLBImport-0.1.7-Release-x64-r{run}-{commit[:12]}-kit.zip'
         with zipfile.ZipFile(kit, 'x', zipfile.ZIP_DEFLATED) as archive:
             for path in sorted(root.rglob('*')):
                 if path.is_file():

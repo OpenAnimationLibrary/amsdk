@@ -87,6 +87,7 @@ void ValidatePlan(Plan& plan);
 std::vector<std::array<float,3>> PreparePositions(const Part& part,double scale,bool mirror);
 // Each mesh edge occurs exactly once. Three-way junctions have two CP records:
 // one through-spline and one ending spline, never three overlapping splines.
+// Every quad boundary spans at least two distinct spline paths.
 SplinePlan RouteSplines(const Part& part);
 // A:M colors groups of CPs. Every quad enclosed by a group's CPs must have
 // that group's material, including quads incidentally enclosed by shared CPs.
