@@ -1,0 +1,4 @@
+meshoptimizer.h -text
+simplifier.cpp -text
+allocator.cpp -text
+LICENSE.md -text

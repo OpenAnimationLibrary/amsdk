@@ -25,7 +25,7 @@ using Edge=std::pair<uint32_t,uint32_t>;
 Edge Key(uint32_t a,uint32_t b) { return std::minmax(a,b); }
 struct Use { size_t face; uint32_t corner; };
 using Edges=std::map<Edge,std::vector<Use>>;
-Edges BuildEdges(const Part& p) {
+Edges BuildEdges(const Part& p,bool checkFans=true) {
     Edges edges;
     std::set<std::vector<uint32_t>> unique;
     for(size_t i=0;i<p.faces.size();++i) {
@@ -46,6 +46,7 @@ Edges BuildEdges(const Part& p) {
             if(a.vertex[u[0].corner]==b.vertex[u[1].corner]) throw Error("Inconsistent face winding. Recalculate source normals first.");
         }
     }
+    if(!checkFans)return edges;
     // An edge-manifold mesh can still have a bow-tie vertex. Require one fan.
     std::vector<std::vector<size_t>> incident(p.vertices.size());
     for(size_t i=0;i<p.faces.size();++i)
@@ -109,8 +110,70 @@ bool Pair(const Part& p,const Use& ua,const Use& ub,Face& out,double& score) {
     return true;
 }
 uint32_t Append(Part& p,Vec3 v) {
-    if(p.vertices.size()>=MaxVertices)throw Error("Quad conversion exceeds the vertex limit.");
-    const auto id=static_cast<uint32_t>(p.vertices.size());p.vertices.push_back(v);return id;
+    if(p.vertices.size()>=MaxVertices)throw LimitError("Quad conversion exceeds the vertex limit.");
+    const auto id=static_cast<uint32_t>(p.vertices.size());p.vertices.push_back(v);
+    if(!p.seamSource.empty())p.seamSource.push_back(id);
+    return id;
+}
+void InitSources(Part& p){if(p.seamSource.empty()){p.seamSource.resize(p.vertices.size());std::iota(p.seamSource.begin(),p.seamSource.end(),0U);}}
+uint32_t CopyVertex(Part& p,uint32_t v){InitSources(p);const auto copy=Append(p,p.vertices[v]);p.seamSource[copy]=p.seamSource[v];return copy;}
+void Compact(Part& p){
+    std::vector<uint32_t> remap(p.vertices.size(),UINT32_MAX),sources;std::vector<Vec3> compact;
+    std::map<uint32_t,uint32_t> first;
+    for(auto& f:p.faces)for(uint32_t k=0;k<f.count;++k){auto& v=f.vertex[k];
+        if(remap[v]==UINT32_MAX){
+            const auto id=static_cast<uint32_t>(compact.size());remap[v]=id;compact.push_back(p.vertices[v]);
+            if(!p.seamSource.empty())sources.push_back(first.emplace(p.seamSource[v],id).first->second);
+        }
+        v=remap[v];
+    }
+    p.vertices=std::move(compact);p.seamSource=std::move(sources);
+}
+void DetachFans(Part& p){
+    const auto edges=BuildEdges(p,false);Components corners(p.faces.size()*4);
+    for(const auto& e:edges)if(e.second.size()==2){const auto a=e.second[0],b=e.second[1];
+        corners.Join(4*a.face+a.corner,4*b.face+(b.corner+1)%4);
+        corners.Join(4*a.face+(a.corner+1)%4,4*b.face+b.corner);
+    }
+    std::map<std::pair<uint32_t,size_t>,uint32_t> ids;std::set<uint32_t> seen;
+    for(size_t i=0;i<p.faces.size();++i)for(size_t k=0;k<4;++k){auto& v=p.faces[i].vertex[k];
+        const auto key=std::make_pair(v,corners.Root(4*i+k));auto found=ids.find(key);
+        if(found==ids.end()){const auto id=seen.insert(v).second?v:CopyVertex(p,v);found=ids.emplace(key,id).first;}
+        v=found->second;
+    }
+}
+void KeepHolesOpen(Part& p){
+    // A:M discovers small patch loops automatically. Break accidental 3/4/5
+    // corner boundary loops using separate attachments, retaining every quad.
+    // Isolated quad loops are intentional and are left alone.
+    std::set<size_t> isolated;
+    for(size_t pass=0;pass<p.faces.size();++pass){
+        const auto edges=BuildEdges(p);std::vector<std::vector<uint32_t>> boundary(p.vertices.size());
+        std::map<Edge,size_t> owner;std::set<std::vector<uint32_t>> faces;
+        for(size_t i=0;i<p.faces.size();++i){auto key=std::vector<uint32_t>(p.faces[i].vertex.begin(),p.faces[i].vertex.end());std::sort(key.begin(),key.end());faces.insert(key);}
+        for(const auto& e:edges)if(e.second.size()==1){const auto [a,b]=e.first;boundary[a].push_back(b);boundary[b].push_back(a);owner[e.first]=e.second[0].face;}
+        std::vector<bool> visited(p.vertices.size(),false);std::set<size_t> separate;
+        for(uint32_t start=0;start<boundary.size();++start)if(!boundary[start].empty()&&!visited[start]){
+            std::vector<uint32_t> loop;uint32_t v=start,previous=UINT32_MAX;
+            do{
+                if(visited[v]||boundary[v].size()!=2)throw Error("Invalid boundary after omitting triangles.");
+                visited[v]=true;loop.push_back(v);
+                const auto next=boundary[v][0]==previous?boundary[v][1]:boundary[v][0];previous=v;v=next;
+            }while(v!=start);
+            if(loop.size()>5)continue;
+            auto key=loop;std::sort(key.begin(),key.end());if(faces.count(key))continue;
+            for(size_t k=0;k<loop.size();++k){const auto face=owner.at(Key(loop[k],loop[(k+1)%loop.size()]));
+                if(!isolated.count(face)){separate.insert(face);break;}
+            }
+        }
+        if(separate.empty())return;
+        // At most eight full scans. If a pathological hole keeps closing,
+        // separate its remaining incident faces in this final bounded pass.
+        if(pass==7){for(size_t i=0;i<p.faces.size();++i)if(!isolated.count(i))separate.insert(i);}
+        for(auto i:separate){isolated.insert(i);for(auto& v:p.faces[i].vertex)v=CopyVertex(p,v);}
+        DetachFans(p);Compact(p);
+        if(pass==7)return; // Every remaining face is now an independent quad.
+    }
 }
 struct VertexFan {
     std::vector<size_t> corners, joins;
@@ -225,14 +288,14 @@ void SeparateCrowdedJunctions(Part& p,Plan& plan) {
         corners.Join(4*a.face+a.corner,4*b.face+(b.corner+1)%4);
         corners.Join(4*a.face+(a.corner+1)%4,4*b.face+b.corner);
     }
-    p.seamSource.resize(p.vertices.size());std::iota(p.seamSource.begin(),p.seamSource.end(),0U);
+    InitSources(p);
     for(size_t v=0;v<incident.size();++v){
         std::map<size_t,uint32_t> copies;
         for(auto c:incident[v]){
             const auto root=corners.Root(c);auto found=copies.find(root);
             if(found==copies.end()){
                 auto id=static_cast<uint32_t>(v);
-                if(!copies.empty()){id=Append(p,p.vertices[v]);p.seamSource.push_back(static_cast<uint32_t>(v));++plan.seamCopies;}
+                if(!copies.empty()){id=CopyVertex(p,static_cast<uint32_t>(v));++plan.seamCopies;}
                 found=copies.emplace(root,id).first;
             }
             p.faces[c/4].vertex[c%4]=found->second;
@@ -246,7 +309,7 @@ void SeparateCrowdedJunctions(Part& p,Plan& plan) {
     }
     if(seams){++plan.seamedParts;plan.seamEdges+=seams;}
 }
-void ConvertPart(Part& p,Plan& plan,size_t& searchBudget) {
+void ConvertPart(Part& p,Plan& plan,size_t& searchBudget,bool omitUnpaired) {
     const auto edges=BuildEdges(p);
     Components components(p.faces.size());
     std::vector<int> degree(p.vertices.size());
@@ -280,7 +343,15 @@ void ConvertPart(Part& p,Plan& plan,size_t& searchBudget) {
     }
     std::set<size_t> split;
     for(size_t i=0;i<p.faces.size();++i)if(!used[i]){
+        if(omitUnpaired&&p.faces[i].count==3){++plan.omittedTriangles;continue;}
         mixed.push_back({components.Root(i),p.faces[i]});if(p.faces[i].count==3)split.insert(components.Root(i));
+    }
+    if(omitUnpaired){
+        p.faces.clear();for(const auto& item:mixed)p.faces.push_back(item.second);
+        DetachFans(p);Compact(p);
+        const auto retained=BuildEdges(p);components=Components(p.faces.size());degree.assign(p.vertices.size(),0);
+        for(const auto& e:retained){++degree[e.first.first];++degree[e.first.second];if(e.second.size()==2)components.Join(e.second[0].face,e.second[1].face);}
+        mixed.clear();for(size_t i=0;i<p.faces.size();++i)mixed.push_back({components.Root(i),p.faces[i]});
     }
     // Also subdivide crowded all-quad regions so any necessary seam repair is
     // local to a pole neighborhood, separated from neighboring poles.
@@ -288,7 +359,7 @@ void ConvertPart(Part& p,Plan& plan,size_t& searchBudget) {
         if(degree[item.second.vertex[k]]>4)split.insert(item.first);
     size_t required=0;
     for(const auto& item:mixed)required+=split.count(item.first)?item.second.count:1;
-    if(required>MaxOutputQuads-plan.outputQuads)throw Error("Quad conversion exceeds 100,000 patches. Simplify the source mesh first.");
+    if(required>MaxOutputQuads-plan.outputQuads)throw LimitError("Quad conversion exceeds 100,000 patches. Simplify the source mesh first.");
     plan.subdividedComponents+=split.size();
     std::map<Edge,uint32_t> midpoints;
     std::vector<Face> result;result.reserve(required);
@@ -309,17 +380,25 @@ void ConvertPart(Part& p,Plan& plan,size_t& searchBudget) {
     }
     p.faces=std::move(result);
     // Remove vertices left unused by reconstruction; A:M should receive no orphans.
-    std::vector<uint32_t> remap(p.vertices.size(),UINT32_MAX);std::vector<Vec3> compact;
-    for(auto& f:p.faces)for(auto& v:f.vertex){if(remap[v]==UINT32_MAX){remap[v]=static_cast<uint32_t>(compact.size());compact.push_back(p.vertices[v]);}v=remap[v];}
-    p.vertices=std::move(compact);
+    Compact(p);
     SeparateCrowdedJunctions(p,plan);
+    if(omitUnpaired)KeepHolesOpen(p);
     BuildEdges(p);
     plan.outputQuads+=p.faces.size();
 }
 }
+void ValidateSource(const Plan& p){
+    if(p.parts.empty()||p.parts.size()>MaxParts||p.materials.empty())throw Error("No supported mesh parts, or too many parts.");
+    for(const auto& part:p.parts){
+        BuildEdges(part);
+        for(const auto& v:part.vertices)if(!Finite(v))throw Error("Invalid source coordinates.");
+        for(const auto& f:part.faces)if(f.count!=3||f.material>=p.materials.size())throw Error("Expected source triangles with valid materials.");
+    }
+}
 void ValidatePlan(Plan& p) {
     if(p.parts.empty()||p.parts.size()>MaxParts||p.materials.empty())throw Error("No supported mesh parts, or too many parts.");
     p.vertices=0;p.outputQuads=0;
+    p.seamEdges=0;p.seamCopies=0;p.seamedParts=0;
     p.minimum={1e300,1e300,1e300};p.maximum={-1e300,-1e300,-1e300};
     for(const auto& part:p.parts){
         if(!part.seamSource.empty()){
@@ -332,6 +411,13 @@ void ValidatePlan(Plan& p) {
             }
         }
         const auto edges=BuildEdges(part);
+        if(!part.seamSource.empty()){
+            for(size_t v=0;v<part.vertices.size();++v)if(part.seamSource[v]!=v)++p.seamCopies;
+            std::map<Edge,std::set<Edge>> original;
+            for(const auto& e:edges)original[Key(part.seamSource[e.first.first],part.seamSource[e.first.second])].insert(e.first);
+            size_t seams=0;for(const auto& e:original)if(e.second.size()>1)++seams;
+            p.seamEdges+=seams;if(seams)++p.seamedParts;
+        }
         std::vector<size_t> degree(part.vertices.size());
         for(const auto& e:edges){++degree[e.first.first];++degree[e.first.second];}
         for(auto d:degree)if(d>4)throw Error("Quad plan exceeds the two-spline junction limit.");
@@ -348,13 +434,17 @@ void ValidatePlan(Plan& p) {
         }
         p.vertices+=part.vertices.size();p.outputQuads+=part.faces.size();
     }
-    if(p.vertices>MaxVertices||p.outputQuads>MaxOutputQuads)throw Error("Converted mesh exceeds import limits.");
+    if(p.vertices>MaxVertices||p.outputQuads>MaxOutputQuads)throw LimitError("Converted mesh exceeds import limits.");
 }
-void ConvertToQuads(Plan& p){
+void ConvertToQuads(Plan& p,bool omitUnpaired){
     p.pairedQuads=0;p.curvedPairs=0;p.subdividedComponents=0;p.outputQuads=0;
     p.seamedParts=0;p.seamEdges=0;p.seamCopies=0;
+    p.omittedTriangles=0;p.omittedParts=0;
     size_t searchBudget=1000000;
-    for(auto& part:p.parts)ConvertPart(part,p,searchBudget);
+    for(auto& part:p.parts)ConvertPart(part,p,searchBudget,omitUnpaired);
+    p.omittedParts=static_cast<size_t>(std::count_if(p.parts.begin(),p.parts.end(),[](const Part& part){return part.faces.empty();}));
+    p.parts.erase(std::remove_if(p.parts.begin(),p.parts.end(),[](const Part& part){return part.faces.empty();}),p.parts.end());
+    if(omitUnpaired&&p.parts.empty()){p.minimum=p.maximum={};p.vertices=p.outputQuads=0;return;}
     ValidatePlan(p);
 }
 std::vector<std::array<float,3>> PreparePositions(const Part& part,double scale,bool mirror){

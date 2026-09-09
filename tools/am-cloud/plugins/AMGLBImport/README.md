@@ -1,8 +1,53 @@
-# AMGLBImport 0.1.5 — Animation:Master GLB importer
+# AMGLBImport 0.1.6 — Animation:Master GLB importer
 
 Developed for Rodney Baker / OpenAnimationLibrary with OpenAI Codex assistance.
 Windows x64, A:M 19.5 SDK, native C++ command HXT. This is an updated host-test
 candidate: successful CI builds do not certify behavior inside A:M.
+
+## Options added in 0.1.6
+
+- **Target patches:** enter a desired maximum final patch count, up to 100,000.
+  `0` preserves the full-density conversion. This is a reduction budget, not an
+  instruction to add subdivisions when the source is already below the target.
+- **Leave unpaired triangles empty:** retain reconstructed quads and omit the
+  remaining triangles instead of filling them with three subdivided quads.
+  Empty parts are omitted too. Default is off, retaining the 0.1.5 behavior.
+- **Update preview:** recalculate after changing either option. The preview
+  reports target versus actual patches, reduced/omitted triangle counts, omitted
+  parts and seam counts. Import is disabled while the preview is stale or empty.
+  A preview error leaves the options available for adjustment; no model exists yet.
+
+Density reduction preserves named parts, material regions, sharp geometric
+edges, boundary corners and extrema. Intermediate points on straight boundary
+runs may be removed. It uses up to six candidate reductions and retains the best
+valid final quad count, so reducing source triangles cannot silently increase
+the delivered patch count. Topology checks reject unsafe candidates; an invalid
+reduced part falls back to its original geometry. Some targets are unreachable,
+particularly on small, sharply faceted parts. The actual count remains visible.
+
+The edge-collapse solver is pinned [meshoptimizer v1.2](https://github.com/zeux/meshoptimizer/tree/9d9890c73011d75920af614485296d1e03e95448),
+used with a relative error threshold of 0.05. That is its approximate shape-error
+metric, not a certified maximum pointwise distance. Remaining vertices use source
+positions; reduction changes tessellation and can lose detail. Reduced parts
+discard source UV/normal seams, which the native importer does not transfer as
+decals/custom shading normals. Full-density pairing retains its earlier seam
+protections. Basic material colors remain assigned to their retained surfaces.
+
+Omission leaves real holes. A:M can discover small patch loops automatically,
+so the converter separates attachments around unintended small boundary loops
+while preserving their neighboring quads. Disconnected vertex fans are separated
+too. These points appear in the existing neutral `Seam points` groups. Cutouts
+can therefore introduce additional unwelded seams. The cleanup is bounded to
+eight scans; a pathological remaining case separates its remaining quads rather
+than inventing triangle/five-point fills. Every retained patch still has four
+distinct corners and each attachment uses at most two spline CP records.
+
+Portable examples: the mixed quad/triangle retains one quad with omission on;
+the enclosed-triangle regression retains all three surrounding quads and its hole;
+the original sword retains 1,398 quads and omits 932 triangles/two empty parts.
+The 320-triangle icosphere reduces from 642 to 194 patches for a budget of 200;
+a lower budget can stop above target at the shape/topology limit. A two-color
+grid reduces from 64 to 25 patches for a budget of 32 with both colored areas intact.
 
 ## Changes in 0.1.5
 
@@ -42,7 +87,8 @@ hash. Host acceptance of this new binary remains pending.
    Do not copy SDK libraries or Debug `.hxtd` files into an ordinary A:M host.
 3. Start A:M and use a disposable project. Right-click **Objects**, a **Model**,
    or a **Group inside a model** → **Import → GLB as Quad Patches...**
-4. Choose a GLB. Review the part, quad and unwelded seam counts. Default scale is **100 cm per
+4. Choose a GLB. Set target patches and omission if desired, then click **Update
+   preview**. Review actual part, quad, omission and unwelded seam counts. Default scale is **100 cm per
    GLB unit**, matching glTF meters. Mirror Z is an explicit orientation option.
 5. Click Import. A new embedded, editable model is created. Check wireframe,
    shaded surfaces, dimensions, named groups and colors; save as `.mdl`.
@@ -109,7 +155,8 @@ alpha (0–100%). These properties use 0–1 fractions at the SDK boundary; this
 not PBR parity.
 Texture images/UV decals, vertex colors, animations, cameras and lights are omitted
 with preview notices. UV0/normals are read to protect pairing seams but are not
-transferred as texture coordinates or custom native shading normals.
+transferred as texture coordinates or custom native shading normals. Density
+reduction discards those pairing seams in parts whose geometry is reduced.
 
 Skins, morph targets, Draco, meshopt, GPU instancing and any required glTF extension
 are rejected. External buffers are never opened. Optional extensions may be omitted;
@@ -163,6 +210,7 @@ hash verifier including tamper rejection, and assembles this kit. Its unchanged
 `plugin/build-receipt.json` records exact checkout, PR head, CI run/attempt, SDK,
 compiler and binary identity. `runtime_tested` remains false. `KIT-SHA256SUMS.txt`
 covers all kit members except itself. Source dependencies: pinned MIT cgltf,
-with origin, commit and hashes in `source/third_party/provenance.json`.
+with origin, commit and hashes in `source/third_party/provenance.json`, and pinned
+MIT meshoptimizer with the same metadata in `source/third_party/meshoptimizer/`.
 
 Read `HOST-TEST-GLB.md` before treating a binary as ready for regular use.

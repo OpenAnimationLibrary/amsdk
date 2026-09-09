@@ -1,4 +1,4 @@
-// AMGLBImport 0.1.5. Developed for Rodney Baker with OpenAI Codex assistance.
+// AMGLBImport 0.1.6. Developed for Rodney Baker with OpenAI Codex assistance.
 #include "StdAfx.h"
 #include "ImportCore.h"
 #include "MaterialSurface.h"
@@ -29,30 +29,61 @@ bool ContextOK(HTreeObject* object,uint32_t index){
     return false;
 }
 class ImportDialog final:public CDialog {
-    const amglb::Plan& plan;
+    const amglb::Plan& source;
+    bool initialized=false,dirty=true;
 public:
+    amglb::Plan plan;
     double scale=100;
     bool mirror=false;
-    explicit ImportDialog(const amglb::Plan& p):CDialog(IDD_IMPORT,CWnd::FromHandle(GetMainApplicationWnd())),plan(p){}
+    explicit ImportDialog(const amglb::Plan& p):CDialog(IDD_IMPORT,CWnd::FromHandle(GetMainApplicationWnd())),source(p){}
 protected:
     BOOL OnInitDialog() override {
         CDialog::OnInitDialog();
+        SetDlgItemText(IDC_SCALE,"100");SetDlgItemText(IDC_TARGET,"0");
+        static_cast<CEdit*>(GetDlgItem(IDC_SCALE))->SetLimitText(32);
+        static_cast<CEdit*>(GetDlgItem(IDC_TARGET))->SetLimitText(6);
+        initialized=true;UpdatePreview();return TRUE;
+    }
+    BOOL OnCommand(WPARAM wParam,LPARAM lParam) override {
+        const auto id=LOWORD(wParam),notification=HIWORD(wParam);
+        if(initialized&&id==IDC_PREVIEW&&notification==BN_CLICKED){UpdatePreview();return TRUE;}
+        if(initialized&&((id==IDC_TARGET&&notification==EN_CHANGE)||(id==IDC_OMIT&&notification==BN_CLICKED))){
+            dirty=true;GetDlgItem(IDOK)->EnableWindow(FALSE);
+            SetDlgItemText(IDC_SUMMARY,"Options changed. Click Update preview to calculate the new patch count and omitted regions.");
+        }
+        return CDialog::OnCommand(wParam,lParam);
+    }
+    void UpdatePreview(){
+        dirty=true;GetDlgItem(IDOK)->EnableWindow(FALSE);
+        CString value;GetDlgItemText(IDC_TARGET,value);
+        std::istringstream input(value.GetString());input.imbue(std::locale::classic());amglb::ImportOptions options;
+        input>>options.targetPatches;const bool parsed=bool(input);input>>std::ws;
+        if(!parsed||!input.eof()||options.targetPatches>amglb::MaxOutputQuads){
+            SetDlgItemText(IDC_SUMMARY,"Enter a target patch count from 0 to 100000. Zero preserves full density.");return;
+        }
+        options.omitUnpaired=IsDlgButtonChecked(IDC_OMIT)==BST_CHECKED;
+        try{CWaitCursor busy;plan=amglb::BuildImportPlan(source,options);}
+        catch(const std::exception& e){SetDlgItemText(IDC_SUMMARY,(std::string("Preview unavailable: ")+e.what()+"\r\n\r\nAdjust the options and update the preview.").c_str());return;}
         std::ostringstream s;s.imbue(std::locale::classic());
-        s<<plan.parts.size()<<" named parts; "<<plan.inputTriangles<<" source triangles\r\n"
+        s<<plan.parts.size()<<" of "<<source.parts.size()<<" named parts retained; "<<plan.inputTriangles<<" source triangles\r\n";
+        if(options.targetPatches)s<<"Target: "<<options.targetPatches<<" patches; actual: "<<plan.outputQuads<<". "<<plan.reducedTriangles<<" source triangles reduced.\r\n";
+        if(options.omitUnpaired)s<<"Omitted "<<plan.omittedTriangles<<" unpaired triangles and "<<plan.omittedParts<<" empty parts. Omitted surfaces remain holes.\r\n";
+        s
          <<plan.pairedQuads<<" triangle pairs reconstructed ("<<plan.curvedPairs<<" curved); "<<plan.subdividedComponents<<" regions subdivided\r\n"
          <<plan.outputQuads<<" four-sided faces; "<<plan.vertices<<" mesh vertices\r\n\r\n"
          <<"Creates a new editable model with peaked control points and basic colors.\r\n"
          <<"Dimensions at 100 cm/unit: "<<(plan.maximum.x-plan.minimum.x)*100<<" x "
          <<(plan.maximum.y-plan.minimum.y)*100<<" x "<<(plan.maximum.z-plan.minimum.z)*100<<" cm.\r\n";
         s<<"\r\nFour-sided patches only. Each CP attachment uses at most two splines. Part selection groups have no surface overrides.\r\n";
-        if(plan.seamEdges)s<<"\r\nTopology fallback: "<<plan.seamEdges<<" unwelded seam edges in "<<plan.seamedParts
+        if(plan.seamCopies)s<<"\r\nTopology fallback/cutouts: "<<plan.seamEdges<<" unwelded seam edges in "<<plan.seamedParts
             <<" parts ("<<plan.seamCopies<<" separate vertex copies). Surfaces meet in place, but seam sides move separately when edited. See each part's Seam points selection group.\r\n";
         for(const auto& note:plan.notes)s<<"\r\n"<<note;
-        SetDlgItemText(IDC_SUMMARY,s.str().c_str());SetDlgItemText(IDC_SCALE,"100");
-        static_cast<CEdit*>(GetDlgItem(IDC_SCALE))->SetLimitText(32);
-        return TRUE;
+        if(!plan.outputQuads)s<<"\r\nNo four-point patches remain. Disable omission or adjust density to retain geometry.";
+        SetDlgItemText(IDC_SUMMARY,s.str().c_str());dirty=false;GetDlgItem(IDOK)->EnableWindow(plan.outputQuads!=0);
     }
     void OnOK() override {
+        if(dirty){UpdatePreview();return;} // Never import a stale preview.
+        if(!plan.outputQuads)return;
         CString value;GetDlgItemText(IDC_SCALE,value);
         std::istringstream input(value.GetString());input.imbue(std::locale::classic());
         input>>scale;const bool parsed=bool(input);input>>std::ws;
@@ -281,9 +312,9 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject* object,uint32_t 
             if(size<28||size>amglb::MaxFileBytes)throw amglb::Error("Select a complete GLB file, at most 32 MiB.");
             bytes.resize(static_cast<size_t>(size));
             if(input.Read(bytes.data(),static_cast<UINT>(bytes.size()))!=bytes.size())throw amglb::Error("Cannot read the complete GLB.");}
-        amglb::Plan plan;{CWaitCursor busy;plan=amglb::ReadGLB(bytes);amglb::ConvertToQuads(plan);}
-        for(const auto& part:plan.parts)amglb::RouteSplines(part);
-        ImportDialog dialog(plan);const auto result=dialog.DoModal();if(result==IDCANCEL)return TRUE;if(result!=IDOK)throw amglb::Error("Cannot open the import preview.");
+        amglb::Plan source;{CWaitCursor busy;source=amglb::ReadGLB(bytes);amglb::ValidateSource(source);}
+        ImportDialog dialog(source);const auto result=dialog.DoModal();if(result==IDCANCEL)return TRUE;if(result!=IDOK)throw amglb::Error("Cannot open the import preview.");
+        const auto& plan=dialog.plan;
         CWaitCursor busy;NativePlan expected;std::vector<PreparedPart> prepared;
         for(const auto& part:plan.parts)prepared.push_back(Prepare(part,dialog.scale,dialog.mirror));
         const auto name=amglb::SafeName(file.GetFileTitle().GetString(),"GLB Model");
@@ -293,11 +324,12 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject* object,uint32_t 
         VerifyAndColor(created,expected,plan);created->SetName(name.c_str());created->SetChanged();created->Update();created->OpenView();created->ZoomFit();RefreshAllTrees();
         CString message;message.Format("Imported %zu named parts as %zu four-sided patches.\n\nCheck the model in shaded and wireframe views, then save it as an A:M model.",plan.parts.size(),plan.outputQuads);
         if(plan.seamEdges){CString seamMessage;seamMessage.Format("\n\n%zu unwelded seam edges in %zu parts. Seam sides move separately; use the Seam points selection groups to inspect them.",plan.seamEdges,plan.seamedParts);message+=seamMessage;}
+        if(plan.omittedTriangles){CString omitted;omitted.Format("\n\n%zu unpaired triangles were omitted, leaving holes.",plan.omittedTriangles);message+=omitted;}
         AfxMessageBox(message,MB_OK|MB_ICONINFORMATION);return TRUE;
     }catch(CException* e){char message[512]{};e->GetErrorMessage(message,_countof(message));failure=message;e->Delete();}
     catch(const std::exception& e){failure=e.what();}catch(...){failure="Unexpected import error.";}
     if(created){failure+="\n\nA model named GLB INCOMPLETE may remain. Inspect or remove that new model. Existing models were not edited.";
         try{created->SetChanged();created->Update();created->OpenView();RefreshAllTrees();}catch(CException* e){e->Delete();}catch(...){} }
-    failure="GLB Import 0.1.5\n\n"+failure;
+    failure="GLB Import 0.1.6\n\n"+failure;
     AfxMessageBox(failure.c_str(),MB_OK|MB_ICONERROR);return FALSE;
 }

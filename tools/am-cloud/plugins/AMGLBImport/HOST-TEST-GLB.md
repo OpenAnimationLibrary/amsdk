@@ -1,8 +1,28 @@
-# AMGLBImport 0.1.5 native host acceptance — pending
+# AMGLBImport 0.1.6 native host acceptance — pending
 
 Record the exact HXT SHA-256 from the original receipt, A:M version, Release/Debug
 host type, OS, menu context and results. Keep `runtime_tested: false` in the
 build-generated receipt; append independent host evidence in a reviewed update.
+
+New option checks, in addition to the default-behavior checks below:
+
+- Verify the dialog title is 0.1.6. Target `0` and omission off preserve 0.1.5
+  conversion counts. Changing either option disables Import until Update preview.
+  Enter/Import must never use stale results. Reject invalid/out-of-range targets.
+- Set a lower patch budget on a dense curved mesh. Review target versus actual,
+  inspect shape/detail and color boundaries, then import. A protected cube at a
+  target of 1 should stay at 6 patches and explicitly report the target was not
+  reached. A larger budget should not add density. Test lower-density inputs
+  with sharp edges, multiple material regions, Mirror Z and a changed scale.
+- Enable omission for `triangle.glb`: zero patches, Import disabled, no new model.
+  `mixed_region.glb`: one quad, the triangle area empty. Original sword: 1,398
+  quads, 932 omitted triangles, two omitted parts. Check actual counts and holes.
+  Test a triangle enclosed by quads: the surrounding quads must remain and the
+  hole must stay empty after Find Patches, save/reload and rendering.
+- Combine a lower target with omission. Toggle options back to full density;
+  the original source must be reused, without cumulative simplification/deletion.
+  Cancel after preview, including after a preview error, and confirm no edits.
+  Inspect neutral Seam points groups and independent attachments at cutouts.
 
 1. With A:M closed, back up the old binary. Verify and install the Release HXT
    in the known working HXT folder. Keep the previous file available for rollback.
@@ -75,3 +95,6 @@ installed HXT hash is unknown. The owner subsequently reported the 0.1.3 fix
 working. The owner then reported 0.1.4 rejecting the original sword at its
 two-spline topology preflight. This is the regression addressed by 0.1.5; acceptance
 of the new binary, including its unwelded seams, remains pending.
+The owner subsequently described 0.1.5 as "Much improved" and requested density
+and omission options. That feedback does not establish acceptance of this new
+0.1.6 HXT or its option-specific behavior; its exact host test remains pending.

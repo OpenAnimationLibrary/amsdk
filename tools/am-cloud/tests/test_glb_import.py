@@ -114,6 +114,20 @@ def icosphere(level=1):
     return points,[v for f in faces for v in f]
 
 
+def colored_mesh(points,triangles,materials):
+    data,binary=fixture(points,[])
+    data['bufferViews']=data['bufferViews'][:1];data['accessors']=data['accessors'][:1];data['meshes'][0]['primitives']=[]
+    for material in sorted(set(materials)):
+        indices=[v for face,m in zip(triangles,materials) if m==material for v in face]
+        offset=len(binary);binary+=struct.pack('<'+'I'*len(indices),*indices)
+        data['bufferViews'].append({'buffer':0,'byteOffset':offset,'byteLength':len(binary)-offset})
+        accessor=len(data['accessors']);data['accessors'].append({'bufferView':len(data['bufferViews'])-1,'componentType':5125,'count':len(indices),'type':'SCALAR'})
+        data['meshes'][0]['primitives'].append({'attributes':{'POSITION':0},'indices':accessor,'material':material})
+    data['buffers'][0]['byteLength']=len(binary)
+    data['materials']=[{'pbrMetallicRoughness':{'baseColorFactor':c}} for c in ([1,0,0,1],[0,0,1,1],[0,1,0,1],[1,1,0,1])]
+    return data,binary
+
+
 class GLBImportTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -121,7 +135,7 @@ class GLBImportTests(unittest.TestCase):
         cls.temporary = tempfile.TemporaryDirectory(dir=HERE / '.work')
         cls.work = Path(cls.temporary.name)
         cls.env = None
-        sources = [str(SOURCE / name) for name in ('CoreTests.cpp', 'GLBReader.cpp', 'QuadConversion.cpp', 'SplineRouting.cpp', 'MaterialGroups.cpp')]
+        sources = [str(SOURCE / name) for name in ('CoreTests.cpp', 'GLBReader.cpp', 'QuadConversion.cpp', 'SplineRouting.cpp', 'MaterialGroups.cpp', 'DensityReduction.cpp', 'third_party/meshoptimizer/simplifier.cpp', 'third_party/meshoptimizer/allocator.cpp')]
         if os.name == 'nt':
             cls.env, _ = visual_studio_environment(cls.work, json.loads((HERE / 'toolchain.lock.json').read_text()))
             compiler = shutil.which('cl.exe', path=cls.env['PATH'])
@@ -142,10 +156,12 @@ class GLBImportTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.temporary.cleanup()
 
-    def run_file(self, data=None, binary=None, raw=None, valid=True):
+    def run_file(self, data=None, binary=None, raw=None, valid=True, target=0, omit=False):
         path = self.work / 'fixture.glb'
         path.write_bytes(raw if raw is not None else encode(data, binary))
-        result = subprocess.run([str(self.executable), str(path)], cwd=self.work, env=self.env, capture_output=True, text=True, timeout=10)
+        args=[str(self.executable), str(path), str(target)]
+        if omit:args.append('omit')
+        result = subprocess.run(args, cwd=self.work, env=self.env, capture_output=True, text=True, timeout=30 if target else 10)
         self.assertIn(result.returncode, (0, 1), result.stderr)
         self.assertNotIn('Sanitizer', result.stderr)
         if valid:
@@ -450,9 +466,74 @@ class GLBImportTests(unittest.TestCase):
         self.assertIn('precision collapse distinct vertices',error)
 
     def test_vendor_identity(self):
-        manifest=json.loads((SOURCE/'third_party/provenance.json').read_text())
-        for name,digest in manifest['sha256'].items():
-            self.assertEqual(hashlib.sha256((SOURCE/'third_party'/name).read_bytes()).hexdigest(),digest)
+        for directory in (SOURCE/'third_party',SOURCE/'third_party/meshoptimizer'):
+            manifest=json.loads((directory/'provenance.json').read_text())
+            for name,digest in manifest['sha256'].items():
+                self.assertEqual(hashlib.sha256((directory/name).read_bytes()).hexdigest(),digest)
+
+    def test_omit_unpaired_leaves_empty_and_retains_neighbor_quad(self):
+        p=self.run_file(*fixture([(0,0,0),(1,0,0),(0,1,0)],[0,1,2]),omit=True)
+        self.assertEqual((p['quads'],p['vertices'],p['parts'],p['omitted_triangles'],p['omitted_parts']),(0,0,0,1,1))
+        p=self.run_file(raw=(SOURCE/'examples/mixed_region.glb').read_bytes(),omit=True)
+        self.assertEqual((p['quads'],p['paired'],p['subdivided'],p['omitted_triangles']),(1,1,0,1))
+        self.assertEqual(p['vertices'],4)
+        self.assertAlmostEqual(p['area'],1)
+
+    def test_omit_enclosed_triangle_stays_open_without_removing_quads(self):
+        points=[(0,0,0),(1,0,0),(.5,1,0),(-1,-1,0),(2,-1,0),(.5,3,0)]
+        quads=[(0,3,4,1),(1,4,5,2),(2,5,3,0)]
+        triangles=[t for a,b,c,d in quads for t in [(a,b,c),(a,c,d)]]+[(0,1,2)]
+        p=self.run_file(*colored_mesh(points,triangles,[0,0,1,1,2,2,3]),omit=True)
+        self.assertEqual((p['quads'],p['paired'],p['omitted_triangles'],p['high_valence']),(3,3,1,0))
+        self.assertAlmostEqual(p['area'],5.5)
+        self.assertEqual(len(p['materials']),3)
+        self.assertGreater(p['seam_copies'],0)
+
+    def test_density_target_reduces_final_patch_count(self):
+        data,binary=fixture(*icosphere(2))
+        full=self.run_file(data,binary)
+        for target in (200,100):
+            with self.subTest(target=target):
+                p=self.run_file(data,binary,target=target)
+                self.assertEqual(p['target'],target)
+                self.assertGreater(p['reduced_triangles'],0)
+                self.assertLess(p['quads'],full['quads'])
+                if target==200:self.assertLessEqual(p['quads'],target)
+                self.assertEqual(p['density_target_met'],p['quads']<=target)
+                self.assertEqual((p['high_valence'],p['geometric_boundary']),(0,0))
+                self.assertEqual(p['min'],full['min']);self.assertEqual(p['max'],full['max'])
+                self.assertGreater(p['area'],full['area']*.85)
+        # A larger budget never adds density; zero preserves the existing build.
+        self.assertEqual(self.run_file(data,binary,target=10000)['quads'],full['quads'])
+
+    def test_density_locks_color_boundaries_and_reports_unreachable_target(self):
+        data,binary=color_grid(8,[int(x>=4) for y in range(8) for x in range(8)])
+        p=self.run_file(data,binary,target=32)
+        self.assertGreater(p['reduced_triangles'],0)
+        self.assertEqual(len(p['materials']),2)
+        self.assertAlmostEqual(p['area'],64)
+        self.assertEqual(p['min'],[0,0,0]);self.assertEqual(p['max'],[8,8,0])
+        self.assertLessEqual(p['quads'],32)
+        for area in p['material_areas']:self.assertAlmostEqual(area,32)
+        cube=self.run_file(raw=(SOURCE/'examples/cube.glb').read_bytes(),target=1)
+        self.assertEqual((cube['quads'],cube['target'],cube['reduced_triangles']),(6,1,0))
+        self.assertFalse(cube['density_target_met'])
+        error=self.run_file(*fixture(),target=100001,valid=False)
+        self.assertIn('Target patches',error)
+
+    def test_density_and_omission_options_work_together(self):
+        data,binary=fixture(*icosphere(2))
+        full=self.run_file(data,binary,omit=True)
+        p=self.run_file(data,binary,target=80,omit=True)
+        self.assertGreater(p['reduced_triangles'],0)
+        self.assertGreater(p['quads'],0)
+        self.assertLess(p['quads'],full['quads'])
+        self.assertEqual(p['density_target_met'],p['quads']<=80)
+        self.assertEqual(p['high_valence'],0)
+        sword=self.run_file(raw=(SOURCE/'examples/simple_sword.glb').read_bytes(),omit=True)
+        self.assertGreater(sword['omitted_triangles'],0)
+        self.assertLess(sword['quads'],5544)
+        self.assertEqual(sword['high_valence'],0)
 
     def test_color_fixture_surface_percentages(self):
         p=self.run_file(raw=(SOURCE/'examples/two_color_parts.glb').read_bytes())

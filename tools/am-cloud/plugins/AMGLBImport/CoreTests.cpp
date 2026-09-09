@@ -10,13 +10,17 @@
 #include <algorithm>
 int main(int argc,char** argv){
     try{
-        if(argc!=2)throw amglb::Error("Expected one GLB path.");
+        if(argc<2||argc>4)throw amglb::Error("Expected a GLB path, optional target, and optional omit.");
+        amglb::ImportOptions options;
+        if(argc>=3){size_t used=0;options.targetPatches=std::stoull(argv[2],&used);if(argv[2][used])throw amglb::Error("Invalid target.");}
+        if(argc==4){if(std::string(argv[3])!="omit")throw amglb::Error("Invalid omission option.");options.omitUnpaired=true;}
         std::ifstream input(argv[1],std::ios::binary);
         if(!input)throw amglb::Error("Cannot read fixture.");
         std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(input)),{});
-        auto plan=amglb::ReadGLB(bytes);amglb::ConvertToQuads(plan);
+        const auto source=amglb::ReadGLB(bytes);auto plan=amglb::BuildImportPlan(source,options);
         size_t boundary=0,geometricBoundary=0,threeWay=0,highValence=0,splineCount=0,closed=0,materialGroups=0,seams=0,copies=0,components=0,largest=0;double area=0;
         std::map<uint32_t,size_t> materials;
+        std::map<uint32_t,double> materialAreas;
         for(const auto& part:plan.parts){
             for(bool mirror:{false,true})amglb::PreparePositions(part,100,mirror);
             std::map<std::pair<uint32_t,uint32_t>,int> edges;
@@ -28,9 +32,25 @@ int main(int argc,char** argv){
                 if(f.count!=4)throw amglb::Error("Test found a non-quad.");
                 for(size_t i=0;i<4;++i){auto a=f.vertex[i],b=f.vertex[(i+1)%4];if(a>b)std::swap(a,b);++edges[{a,b}];facesAt[{a,b}].push_back(face);neighbors[a].insert(b);neighbors[b].insert(a);}
                 const auto a=part.vertices[f.vertex[0]],b=part.vertices[f.vertex[1]],c=part.vertices[f.vertex[2]],d=part.vertices[f.vertex[3]];
-                area+=(amglb::Length(amglb::Cross(b-a,c-a))+amglb::Length(amglb::Cross(c-a,d-a)))*.5;
+                const auto faceArea=(amglb::Length(amglb::Cross(b-a,c-a))+amglb::Length(amglb::Cross(c-a,d-a)))*.5;
+                area+=faceArea;materialAreas[f.material]+=faceArea;
             }
             for(const auto& e:edges)if(e.second==1)++boundary;
+            if(options.omitUnpaired){
+                std::vector<std::vector<uint32_t>> outline(part.vertices.size());std::set<std::set<uint32_t>> intended;
+                for(const auto& f:part.faces)intended.insert(std::set<uint32_t>(f.vertex.begin(),f.vertex.end()));
+                for(const auto& e:edges)if(e.second==1){outline[e.first.first].push_back(e.first.second);outline[e.first.second].push_back(e.first.first);}
+                std::set<uint32_t> checked;
+                for(uint32_t v=0;v<outline.size();++v)if(!outline[v].empty()&&!checked.count(v)){
+                    std::set<uint32_t> loop;std::vector<uint32_t> pending{v};
+                    while(!pending.empty()){const auto n=pending.back();pending.pop_back();if(!loop.insert(n).second)continue;
+                        if(outline[n].size()!=2)throw amglb::Error("Omission left a non-manifold boundary.");
+                        for(auto next:outline[n])pending.push_back(next);
+                    }
+                    checked.insert(loop.begin(),loop.end());
+                    if(loop.size()<=5&&!intended.count(loop))throw amglb::Error("Omission left a small loop that A:M could fill.");
+                }
+            }
             std::vector<std::vector<size_t>> adjacent(part.faces.size());
             for(const auto& e:facesAt)if(e.second.size()==2){adjacent[e.second[0]].push_back(e.second[1]);adjacent[e.second[1]].push_back(e.second[0]);}
             std::vector<bool> reached(part.faces.size(),false);
@@ -86,6 +106,8 @@ int main(int argc,char** argv){
             throw amglb::Error("Fallback seam reporting does not match actual topology.");
         std::cout<<std::setprecision(12)<<"{\"triangles\":"<<plan.inputTriangles<<",\"quads\":"<<plan.outputQuads
             <<",\"curved_pairs\":"<<plan.curvedPairs<<",\"paired\":"<<plan.pairedQuads<<",\"subdivided\":"<<plan.subdividedComponents
+            <<",\"target\":"<<plan.targetPatches<<",\"reduced_triangles\":"<<plan.reducedTriangles<<",\"omitted_triangles\":"<<plan.omittedTriangles<<",\"omitted_parts\":"<<plan.omittedParts<<",\"density_attempts\":"<<plan.densityAttempts
+            <<",\"density_target_met\":"<<(!plan.targetPatches||plan.outputQuads<=plan.targetPatches?"true":"false")
             <<",\"parts\":"<<plan.parts.size()<<",\"vertices\":"<<plan.vertices<<",\"boundary\":"<<boundary
             <<",\"geometric_boundary\":"<<geometricBoundary<<",\"seamed_parts\":"<<plan.seamedParts<<",\"seam_edges\":"<<seams<<",\"seam_copies\":"<<copies
             <<",\"surface_components\":"<<components<<",\"largest_component\":"<<largest
@@ -96,6 +118,8 @@ int main(int argc,char** argv){
         for(const auto& item:materials){if(!first)std::cout<<',';first=false;const auto& m=plan.materials[item.first];
             std::cout<<"{\"faces\":"<<item.second<<",\"rgba\":["<<m.color[0]<<','<<m.color[1]<<','<<m.color[2]<<','<<m.color[3]<<"]}";
         }
+        std::cout<<"],\"material_areas\":[";first=true;
+        for(const auto& item:materialAreas){if(!first)std::cout<<',';first=false;std::cout<<item.second;}
         std::cout<<"],\"surface_fractions\":[";first=true;
         for(const auto& item:materials){if(!first)std::cout<<',';first=false;
             const auto surface=amglb::SurfaceForMaterial(plan.materials[item.first]);

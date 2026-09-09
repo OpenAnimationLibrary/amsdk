@@ -1,16 +1,20 @@
 #include <winres.h>
 #include "resource.h"
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
-IDD_IMPORT DIALOGEX 0, 0, 365, 254
+IDD_IMPORT DIALOGEX 0, 0, 365, 312
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "GLB Import 0.1.5 - Quad Patches"
+CAPTION "GLB Import 0.1.6 - Quad Patches"
 FONT 9, "Segoe UI"
 BEGIN
-    EDITTEXT IDC_SUMMARY, 10, 10, 345, 169, ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL | WS_VSCROLL | WS_TABSTOP
-    LTEXT "Centimeters per GLB unit:", -1, 10, 190, 129, 12
-    EDITTEXT IDC_SCALE, 143, 187, 74, 15, ES_AUTOHSCROLL | WS_TABSTOP
-    AUTOCHECKBOX "Mirror Z axis", IDC_MIRROR, 232, 189, 105, 14
-    LTEXT "100 follows glTF meters. Control points remain peaked; inspect curved surfaces after import.", -1, 10, 209, 345, 18
-    DEFPUSHBUTTON "Import", IDOK, 239, 232, 55, 14
-    PUSHBUTTON "Cancel", IDCANCEL, 300, 232, 55, 14
+    LTEXT "Target patches (0 = full density):", -1, 10, 13, 146, 12
+    EDITTEXT IDC_TARGET, 163, 10, 65, 15, ES_AUTOHSCROLL | ES_NUMBER | WS_TABSTOP
+    PUSHBUTTON "Update preview", IDC_PREVIEW, 254, 10, 101, 16
+    AUTOCHECKBOX "Leave unpaired triangles empty (keep reconstructed quads)", IDC_OMIT, 10, 33, 345, 14
+    EDITTEXT IDC_SUMMARY, 10, 54, 345, 168, ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL | WS_VSCROLL | WS_TABSTOP
+    LTEXT "Centimeters per GLB unit:", -1, 10, 234, 129, 12
+    EDITTEXT IDC_SCALE, 143, 231, 74, 15, ES_AUTOHSCROLL | WS_TABSTOP
+    AUTOCHECKBOX "Mirror Z axis", IDC_MIRROR, 232, 233, 105, 14
+    LTEXT "Density is a best-effort reduction target. Boundaries and shape can limit reduction. Control points remain peaked.", -1, 10, 256, 345, 24
+    DEFPUSHBUTTON "Import", IDOK, 239, 290, 55, 14
+    PUSHBUTTON "Cancel", IDCANCEL, 300, 290, 55, 14
 END

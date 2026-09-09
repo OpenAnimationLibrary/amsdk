@@ -62,6 +62,12 @@
     <Link><AdditionalDependencies>FileIO_64d.lib;Matrix_64d.lib;Plugin_64d.lib;SDK_64d.lib;%(AdditionalDependencies)</AdditionalDependencies></Link>
   </ItemDefinitionGroup>
   <ItemGroup><ClCompile Include="AMGLBImport.cpp" /><ClInclude Include="StdAfx.h" /><ClInclude Include="ImportCore.h" /><ClInclude Include="QuadMatching.h" /><ClInclude Include="MaterialSurface.h" /><ClCompile Include="GLBReader.cpp" /><ClCompile Include="QuadConversion.cpp" /><ClCompile Include="SplineRouting.cpp" /><ClCompile Include="MaterialGroups.cpp" /><ClInclude Include="resource.h" /><ResourceCompile Include="AMGLBImport.rc" /></ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DensityReduction.cpp" />
+    <ClCompile Include="third_party\meshoptimizer\simplifier.cpp" />
+    <ClCompile Include="third_party\meshoptimizer\allocator.cpp" />
+    <ClInclude Include="third_party\meshoptimizer\meshoptimizer.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Target Name="ValidateAMBuild" BeforeTargets="PrepareForBuild">
     <Error Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug'" Text="Only Release or Debug configurations are supported." />

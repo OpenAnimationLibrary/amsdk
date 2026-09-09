@@ -14,6 +14,11 @@ constexpr size_t MaxVertices = 250000;
 constexpr size_t MaxParts = 256;
 
 struct Error : std::runtime_error { using std::runtime_error::runtime_error; };
+struct LimitError : Error { using Error::Error; };
+struct ImportOptions {
+    size_t targetPatches = 0; // Zero preserves full density; otherwise a best-effort budget.
+    bool omitUnpaired = false;
+};
 struct Vec3 {
     double x = 0, y = 0, z = 0;
     Vec3 operator+(Vec3 b) const { return {x+b.x,y+b.y,z+b.z}; }
@@ -67,11 +72,15 @@ struct Plan {
     size_t inputTriangles = 0, pairedQuads = 0, curvedPairs = 0, subdividedComponents = 0;
     size_t outputQuads = 0, vertices = 0;
     size_t seamedParts = 0, seamEdges = 0, seamCopies = 0;
+    size_t reducedTriangles = 0, omittedTriangles = 0, omittedParts = 0, densityAttempts = 0;
+    size_t targetPatches = 0;
     Vec3 minimum{}, maximum{};
 };
 // Parsing and conversion never call the A:M SDK or open external GLB resources.
 Plan ReadGLB(const std::vector<uint8_t>& bytes);
-void ConvertToQuads(Plan& plan);
+void ValidateSource(const Plan& plan);
+void ConvertToQuads(Plan& plan,bool omitUnpaired=false);
+Plan BuildImportPlan(const Plan& source,const ImportOptions& options);
 void ValidatePlan(Plan& plan);
 // Apply native float precision before touching the host. Only explicitly
 // recorded seam copies may coincide after scaling/mirroring.
