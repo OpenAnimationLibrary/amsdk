@@ -67,6 +67,26 @@ def color_grid(size=3, colors=None):
     return data,binary
 
 
+def cube_sphere(div=4):
+    points=[];lookup={};faces=[]
+    for axis in range(3):
+        a,b=[k for k in range(3) if k!=axis]
+        for sign in [-1,1]:
+            for j in range(div):
+                for i in range(div):
+                    quad=[]
+                    for u,v in [(i,j),(i+1,j),(i+1,j+1),(i,j+1)]:
+                        key=[0,0,0];key[axis]=sign*div;key[a]=2*u-div;key[b]=2*v-div;key=tuple(key)
+                        if key not in lookup:
+                            length=math.sqrt(sum(x*x for x in key));lookup[key]=len(points);points.append(tuple(x/length for x in key))
+                        quad.append(lookup[key])
+                    xyz=[points[k] for k in quad];u=[xyz[1][k]-xyz[0][k] for k in range(3)];v=[xyz[2][k]-xyz[0][k] for k in range(3)]
+                    normal=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]]
+                    if normal[axis]*sign<0:quad.reverse()
+                    faces.extend([quad[0],quad[1],quad[2],quad[0],quad[2],quad[3]])
+    return points,faces
+
+
 class GLBImportTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -106,6 +126,7 @@ class GLBImportTests(unittest.TestCase):
             return json.loads(result.stdout)
         self.assertEqual(result.returncode, 1, result.stdout)
         self.assertTrue(result.stderr.strip())
+        return result.stderr
 
     def test_quad_reconstruction_and_area(self):
         p = self.run_file(*fixture())
@@ -223,12 +244,11 @@ class GLBImportTests(unittest.TestCase):
             self.assertIn(result.returncode,(0,1),f'mutation {i}: {result.stderr}')
             self.assertNotIn('Sanitizer',result.stderr)
 
-    def test_sword_reference(self):
-        p=self.run_file(raw=(SOURCE/'examples/simple_sword.glb').read_bytes())
-        self.assertEqual((p['triangles'],p['parts'],p['quads'],p['paired'],p['vertices'],p['boundary']),(2324,13,5202,684,5236,20))
-        self.assertAlmostEqual(p['area'],.30014627789,places=8)
-        self.assertEqual((p['three_way'],p['high_valence']),(1068,906))
-        self.assertEqual(p['material_groups'],13)
+    def test_sword_unresolved_poles_are_reported(self):
+        error=self.run_file(raw=(SOURCE/'examples/simple_sword.glb').read_bytes(),valid=False)
+        self.assertIn('Tapered steel blade',error)
+        self.assertIn('more than two splines',error)
+        self.assertIn('No model was created',error)
 
     def test_named_parts_keep_explicit_colors_without_unused_default(self):
         data,binary=fixture()
@@ -253,15 +273,15 @@ class GLBImportTests(unittest.TestCase):
         p=self.run_file(*fixture(points,indices))
         self.assertEqual((p['quads'],p['high_valence']),(16,0))
         self.assertAlmostEqual(p['area'],16)
-        # Nonplanar fans retain source poles. The production driver independently
-        # checks every routed edge and the two-CP rule at all degree 3/4 vertices.
+        # These sharp fans cannot be safely reconstructed under the new limit.
+        # They must stop before native creation, not merely display a warning.
         for n in (5,6,7,8,9):
             points=[(0,0,1)]+[(math.cos(i*2*math.pi/n),math.sin(i*2*math.pi/n),0) for i in range(n)]
             indices=[v for i in range(n) for v in (0,i+1,(i+1)%n+1)]
             with self.subTest(valence=n):
-                p=self.run_file(*fixture(points,indices))
-                self.assertEqual((p['high_valence'],p['quads']),(1,3*n))
-                self.assertEqual(p['min'][2],0);self.assertEqual(p['max'][2],1)
+                error=self.run_file(*fixture(points,indices),valid=False)
+                self.assertIn('more than two splines',error)
+                self.assertIn('welded vertex: 1',error)
 
     def test_material_groups_do_not_enclose_another_color(self):
         p=self.run_file(*color_grid())
@@ -285,6 +305,62 @@ class GLBImportTests(unittest.TestCase):
         p=self.run_file(raw=(SOURCE/'examples/color_boundary.glb').read_bytes())
         self.assertEqual(p['quads'],9)
         self.assertGreater(p['material_groups'],2)
+
+    def test_curved_spheres_reconstruct_four_sided_layout(self):
+        for div in (4,8):
+            with self.subTest(divisions=div):
+                points,indices=cube_sphere(div)
+                p=self.run_file(*fixture(points,indices))
+                self.assertEqual((p['quads'],p['paired'],p['subdivided']),(6*div*div,6*div*div,0))
+                self.assertEqual((p['boundary'],p['high_valence'],p['three_way']),(0,0,8))
+                self.assertGreater(p['curved_pairs'],0)
+                self.assertEqual(p['vertices'],len(points))
+                self.assertEqual(p['min'],[-1,-1,-1]);self.assertEqual(p['max'],[1,1,1])
+                # Face ordering must not turn a reconstructible sphere into a fan.
+                faces=[indices[i:i+3] for i in range(0,len(indices),3)]
+                random.Random(19).shuffle(faces)
+                q=self.run_file(*fixture(points,[v for face in faces for v in face]))
+                self.assertEqual((q['quads'],q['subdivided'],q['high_valence']),(6*div*div,0,0))
+
+    def test_curved_pair_preserves_source_corners(self):
+        points=[(0,0,0),(1,0,0),(1,1,.2),(0,1,0)]
+        p=self.run_file(*fixture(points))
+        self.assertEqual((p['quads'],p['vertices'],p['curved_pairs']),(1,4,1))
+        self.assertEqual(p['subdivided'],0)
+        self.assertAlmostEqual(p['max'][2],.2)
+
+    def test_sharp_crease_is_not_paired(self):
+        p=self.run_file(*fixture([(0,0,0),(1,0,0),(1,1,2),(0,1,0)]))
+        self.assertEqual((p['paired'],p['curved_pairs'],p['quads']),(0,0,6))
+        self.assertEqual(p['high_valence'],0)
+
+    def test_pair_search_recovers_from_a_greedy_trap(self):
+        points=[(-1.2,0,0),(0,-1,0),(0,1,0),(-2,1,0),(2,-1,0),(1.2,0,0)]
+        indices=[0,1,2,0,2,3,1,4,5,1,5,2]
+        # The central diamond is the best individual pair, but choosing it
+        # strands the outer triangles. Re-pairing the region gives two quads.
+        p=self.run_file(*fixture(points,indices))
+        self.assertEqual((p['paired'],p['quads'],p['subdivided']),(2,2,0))
+        self.assertEqual(p['vertices'],6)
+
+    def test_shallow_fan_is_rebuilt_before_subdivision(self):
+        for n in (6,8):
+            points=[(0,0,.1)]+[(math.cos(i*2*math.pi/n),math.sin(i*2*math.pi/n),0) for i in range(n)]
+            indices=[v for i in range(n) for v in (0,i+1,(i+1)%n+1)]
+            with self.subTest(edges=n):
+                p=self.run_file(*fixture(points,indices))
+                self.assertEqual((p['paired'],p['quads'],p['subdivided']),(n//2,n//2,0))
+                self.assertEqual(p['high_valence'],0)
+                self.assertEqual(p['vertices'],len(points))
+
+    def test_packaged_topology_examples(self):
+        p=self.run_file(raw=(SOURCE/'examples/curved_quad_sphere.glb').read_bytes())
+        self.assertEqual((p['quads'],p['curved_pairs'],p['subdivided'],p['high_valence']),(96,96,0,0))
+        p=self.run_file(raw=(SOURCE/'examples/shallow_fan.glb').read_bytes())
+        self.assertEqual((p['quads'],p['paired'],p['subdivided'],p['high_valence']),(3,3,0,0))
+        error=self.run_file(raw=(SOURCE/'examples/crowded_pole.glb').read_bytes(),valid=False)
+        self.assertIn('Crowded pole',error)
+        self.assertIn('GLB position',error)
 
     def test_vendor_identity(self):
         manifest=json.loads((SOURCE/'third_party/provenance.json').read_text())

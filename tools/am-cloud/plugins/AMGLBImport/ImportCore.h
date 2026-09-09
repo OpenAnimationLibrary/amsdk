@@ -61,7 +61,7 @@ struct Plan {
     std::vector<Part> parts;
     std::vector<Material> materials;
     std::vector<std::string> notes;
-    size_t inputTriangles = 0, pairedQuads = 0, subdividedComponents = 0;
+    size_t inputTriangles = 0, pairedQuads = 0, curvedPairs = 0, subdividedComponents = 0;
     size_t outputQuads = 0, vertices = 0;
     Vec3 minimum{}, maximum{};
 };

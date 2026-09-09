@@ -1,4 +1,4 @@
-// AMGLBImport 0.1.3. Developed for Rodney Baker with OpenAI Codex assistance.
+// AMGLBImport 0.1.4. Developed for Rodney Baker with OpenAI Codex assistance.
 #include "StdAfx.h"
 #include "ImportCore.h"
 #include "MaterialSurface.h"
@@ -33,20 +33,18 @@ class ImportDialog final:public CDialog {
 public:
     double scale=100;
     bool mirror=false;
-    size_t highValence=0;
-    explicit ImportDialog(const amglb::Plan& p,size_t poles):CDialog(IDD_IMPORT,CWnd::FromHandle(GetMainApplicationWnd())),plan(p),highValence(poles){}
+    explicit ImportDialog(const amglb::Plan& p):CDialog(IDD_IMPORT,CWnd::FromHandle(GetMainApplicationWnd())),plan(p){}
 protected:
     BOOL OnInitDialog() override {
         CDialog::OnInitDialog();
         std::ostringstream s;s.imbue(std::locale::classic());
         s<<plan.parts.size()<<" named parts; "<<plan.inputTriangles<<" source triangles\r\n"
-         <<plan.pairedQuads<<" triangle pairs reconstructed; "<<plan.subdividedComponents<<" regions subdivided\r\n"
+         <<plan.pairedQuads<<" triangle pairs reconstructed ("<<plan.curvedPairs<<" curved); "<<plan.subdividedComponents<<" regions subdivided\r\n"
          <<plan.outputQuads<<" four-sided faces; "<<plan.vertices<<" mesh vertices\r\n\r\n"
          <<"Creates a new editable model with peaked control points and basic colors.\r\n"
          <<"Dimensions at 100 cm/unit: "<<(plan.maximum.x-plan.minimum.x)*100<<" x "
          <<(plan.maximum.y-plan.minimum.y)*100<<" x "<<(plan.maximum.z-plan.minimum.z)*100<<" cm.\r\n";
-        if(highValence)s<<"\r\n"<<highValence<<" source poles still require more than two splines. Inspect these for manual retopology.\r\n";
-        s<<"\r\nThree-way centers use two splines. Part selection groups have no surface overrides.\r\n";
+        s<<"\r\nFour-sided patches only. Every junction uses at most two splines. Part selection groups have no surface overrides.\r\n";
         for(const auto& note:plan.notes)s<<"\r\n"<<note;
         SetDlgItemText(IDC_SUMMARY,s.str().c_str());SetDlgItemText(IDC_SCALE,"100");
         static_cast<CEdit*>(GetDlgItem(IDC_SCALE))->SetLimitText(32);
@@ -209,7 +207,7 @@ void VerifyAndColor(HModelCache* model,const NativePlan& expected,const amglb::P
             auto* head=cp->GetHead();if(!head||!cp->GetModelPosition())throw amglb::Error("Missing native point.");
             const auto id=head->GetID();const auto found=expected.vertices.find(id);
             if(found==expected.vertices.end()||found->second.first!=Position(*cp->GetModelPosition()))throw amglb::Error("Native vertex differs from the spline plan.");
-            ++actualVertices[id];
+            if(++actualVertices[id]>2)throw amglb::Error("A:M attached more than two spline CPs at one junction.");
             if(auto* next=cp->GetNext())actualEdges.insert(std::minmax(id,next->GetHead()->GetID()));
             else if(expected.closed.count(spline)){
                 if(!cp->IsLoop()&&!first->IsLoop()&&first->GetPrev()!=cp)throw amglb::Error("A:M did not close a planned spline.");
@@ -281,8 +279,8 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject* object,uint32_t 
             bytes.resize(static_cast<size_t>(size));
             if(input.Read(bytes.data(),static_cast<UINT>(bytes.size()))!=bytes.size())throw amglb::Error("Cannot read the complete GLB.");}
         amglb::Plan plan;{CWaitCursor busy;plan=amglb::ReadGLB(bytes);amglb::ConvertToQuads(plan);}
-        size_t highValence=0;for(const auto& part:plan.parts)highValence+=amglb::RouteSplines(part).highValenceVertices;
-        ImportDialog dialog(plan,highValence);const auto result=dialog.DoModal();if(result==IDCANCEL)return TRUE;if(result!=IDOK)throw amglb::Error("Cannot open the import preview.");
+        for(const auto& part:plan.parts)amglb::RouteSplines(part);
+        ImportDialog dialog(plan);const auto result=dialog.DoModal();if(result==IDCANCEL)return TRUE;if(result!=IDOK)throw amglb::Error("Cannot open the import preview.");
         CWaitCursor busy;NativePlan expected;std::vector<PreparedPart> prepared;
         for(const auto& part:plan.parts)prepared.push_back(Prepare(part,dialog.scale,dialog.mirror));
         const auto name=amglb::SafeName(file.GetFileTitle().GetString(),"GLB Model");
@@ -296,6 +294,6 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject* object,uint32_t 
     catch(const std::exception& e){failure=e.what();}catch(...){failure="Unexpected import error.";}
     if(created){failure+="\n\nA model named GLB INCOMPLETE may remain. Inspect or remove that new model. Existing models were not edited.";
         try{created->SetChanged();created->Update();created->OpenView();RefreshAllTrees();}catch(CException* e){e->Delete();}catch(...){} }
-    failure="GLB Import 0.1.3\n\n"+failure;
+    failure="GLB Import 0.1.4\n\n"+failure;
     AfxMessageBox(failure.c_str(),MB_OK|MB_ICONERROR);return FALSE;
 }

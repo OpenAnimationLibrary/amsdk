@@ -1,4 +1,5 @@
 #include "ImportCore.h"
+#include "QuadMatching.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -81,10 +82,14 @@ bool Pair(const Part& p,const Use& ua,const Use& ub,Face& out,double& score) {
     if(!SameCorner(a,ua.corner,b,(ub.corner+1)%3)||!SameCorner(a,(ua.corner+1)%3,b,ub.corner))return false;
     const Vec3 an=Unit(Cross(p.vertices[a.vertex[1]]-p.vertices[a.vertex[0]],p.vertices[a.vertex[2]]-p.vertices[a.vertex[0]]));
     const Vec3 bn=Unit(Cross(p.vertices[b.vertex[1]]-p.vertices[b.vertex[0]],p.vertices[b.vertex[2]]-p.vertices[b.vertex[0]]));
-    if(Dot(an,bn)<.9999985)return false;
+    // Allow gentle curvature (up to 30 degrees) while retaining sharp seams.
+    const double alignment=Dot(an,bn);
+    if(alignment<.8660254037844386)return false;
     // Shared edge a0->a1 is replaced by the other three sides of the pair.
     out=a;out.count=4;
     out.vertex={a.vertex[(ua.corner+1)%3],a.vertex[(ua.corner+2)%3],a.vertex[ua.corner],b.vertex[(ub.corner+2)%3]};
+    for(uint32_t k=0;k<3;++k){const auto source=(ua.corner+1+k)%3;out.uv[k]=a.uv[source];out.normals[k]=a.normals[source];}
+    out.uv[3]=b.uv[(ub.corner+2)%3];out.normals[3]=b.normals[(ub.corner+2)%3];
     const Vec3 normal=Unit(an+bn);
     double minEdge=std::numeric_limits<double>::max(),maxEdge=0;
     score=0;
@@ -99,30 +104,55 @@ bool Pair(const Part& p,const Use& ua,const Use& ub,Face& out,double& score) {
     }
     if(minEdge<1e-10||maxEdge/minEdge>25)return false;
     for(uint32_t k=1;k<4;++k)
-        if(std::abs(Dot(p.vertices[out.vertex[k]]-p.vertices[out.vertex[0]],normal))>std::max(1e-9,maxEdge*1e-6))return false;
-    score+=.05*maxEdge/minEdge;
+        if(std::abs(Dot(p.vertices[out.vertex[k]]-p.vertices[out.vertex[0]],normal))>std::max(1e-9,maxEdge*.15))return false;
+    score+=.05*maxEdge/minEdge+2*(1-alignment);
     return true;
 }
 uint32_t Append(Part& p,Vec3 v) {
     if(p.vertices.size()>=MaxVertices)throw Error("Quad conversion exceeds the vertex limit.");
     const auto id=static_cast<uint32_t>(p.vertices.size());p.vertices.push_back(v);return id;
 }
-void ConvertPart(Part& p,Plan& plan) {
+void ConvertPart(Part& p,Plan& plan,size_t& searchBudget) {
     const auto edges=BuildEdges(p);
     Components components(p.faces.size());
-    struct Candidate{double score;size_t a,b;Face face;};
-    std::vector<Candidate> candidates;
+    std::vector<int> degree(p.vertices.size());
+    for(const auto& e:edges){++degree[e.first.first];++degree[e.first.second];}
+    std::vector<QuadCandidate> candidates;
     for(const auto& e:edges)if(e.second.size()==2){
         const auto a=e.second[0],b=e.second[1];components.Join(a.face,b.face);
         Face q;double score;
-        if(Pair(p,a,b,q,score))candidates.push_back({score,a.face,b.face,q});
+        if(Pair(p,a,b,q,score)){
+            const auto n1=Unit(Cross(p.vertices[q.vertex[1]]-p.vertices[q.vertex[0]],p.vertices[q.vertex[2]]-p.vertices[q.vertex[0]]));
+            const auto n2=Unit(Cross(p.vertices[q.vertex[2]]-p.vertices[q.vertex[0]],p.vertices[q.vertex[3]]-p.vertices[q.vertex[0]]));
+            candidates.push_back({score,a.face,b.face,{e.first.first,e.first.second},q,Dot(n1,n2)<.9999985});
+        }
     }
     std::sort(candidates.begin(),candidates.end(),[](const auto&a,const auto&b){return std::tie(a.score,a.a,a.b)<std::tie(b.score,b.a,b.b);});
+    std::vector<bool> selected;
+    auto best=std::make_pair(std::numeric_limits<size_t>::max(),std::numeric_limits<size_t>::max());
+    for(uint32_t seed=0;seed<8&&(seed==0||searchBudget);++seed){
+        const QuadMatching matching(candidates,p.faces.size(),degree,searchBudget,seed);
+        if(matching.CostValue()<best){best=matching.CostValue();selected=matching.Selected();}
+        if(best.first==0)break;
+    }
     std::vector<bool> used(p.faces.size(),false);
     std::vector<std::pair<size_t,Face>> mixed;
-    for(const auto& c:candidates)if(!used[c.a]&&!used[c.b]){
+    for(size_t i=0;i<candidates.size();++i)if(selected[i]){
+        const auto& c=candidates[i];
+        if(used[c.a]||used[c.b])throw Error("Quad matching reused a triangle.");
         used[c.a]=used[c.b]=true;mixed.push_back({components.Root(c.a),c.face});++plan.pairedQuads;
+        if(c.curved)++plan.curvedPairs;
+        for(auto v:c.diagonal)--degree[v];
     }
+    // Subdivision preserves these source junction degrees. Reject an unresolved
+    // fan now, before creating additional points or any native A:M model.
+    size_t crowded=0,first=0;
+    for(size_t v=0;v<degree.size();++v)if(degree[v]>4){if(!crowded)first=v;++crowded;}
+    if(crowded)throw Error("Part '"+p.name+"' still has "+std::to_string(crowded)+
+        " junction(s) requiring more than two splines after quad reconstruction. First welded vertex: "+
+        std::to_string(first+1)+" ("+std::to_string(degree[first])+" edges), GLB position ("+
+        std::to_string(p.vertices[first].x)+", "+std::to_string(p.vertices[first].y)+", "+
+        std::to_string(p.vertices[first].z)+"). Retopologize this region with four-sided patches. No model was created.");
     std::set<size_t> split;
     for(size_t i=0;i<p.faces.size();++i)if(!used[i]){
         mixed.push_back({components.Root(i),p.faces[i]});if(p.faces[i].count==3)split.insert(components.Root(i));
@@ -162,7 +192,10 @@ void ValidatePlan(Plan& p) {
     p.vertices=0;p.outputQuads=0;
     p.minimum={1e300,1e300,1e300};p.maximum={-1e300,-1e300,-1e300};
     for(const auto& part:p.parts){
-        BuildEdges(part);
+        const auto edges=BuildEdges(part);
+        std::vector<size_t> degree(part.vertices.size());
+        for(const auto& e:edges){++degree[e.first.first];++degree[e.first.second];}
+        for(auto d:degree)if(d>4)throw Error("Quad plan exceeds the two-spline junction limit.");
         for(const auto& v:part.vertices){
             if(!Finite(v)||std::max({std::abs(v.x),std::abs(v.y),std::abs(v.z)})>10000)throw Error("Invalid or excessively large coordinates.");
             p.minimum={std::min(v.x,p.minimum.x),std::min(v.y,p.minimum.y),std::min(v.z,p.minimum.z)};
@@ -178,5 +211,10 @@ void ValidatePlan(Plan& p) {
     }
     if(p.vertices>MaxVertices||p.outputQuads>MaxOutputQuads)throw Error("Converted mesh exceeds import limits.");
 }
-void ConvertToQuads(Plan& p){p.pairedQuads=0;p.subdividedComponents=0;p.outputQuads=0;for(auto& part:p.parts)ConvertPart(part,p);ValidatePlan(p);}
+void ConvertToQuads(Plan& p){
+    p.pairedQuads=0;p.curvedPairs=0;p.subdividedComponents=0;p.outputQuads=0;
+    size_t searchBudget=1000000;
+    for(auto& part:p.parts)ConvertPart(part,p,searchBudget);
+    ValidatePlan(p);
+}
 }

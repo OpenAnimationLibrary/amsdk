@@ -27,8 +27,7 @@ SplinePlan RouteSplines(const Part& part) {
     for(uint32_t v=0;v<neighbors.size();++v) {
         const auto& ns=neighbors[v];
         if(ns.empty())throw Error("Spline plan contains an unused vertex.");
-        if(ns.size()>64)throw Error("A source pole has more than 64 edges. Retopologize that pole before import.");
-        if(ns.size()>4)++result.highValenceVertices;
+        if(ns.size()>4)throw Error("Part '"+part.name+"' exceeds the two-spline limit at vertex "+std::to_string(v+1)+". Retopologize it before import.");
         for(auto n:ns)through[v][n]=end;
         // Two boundary edges terminate at their corner. At three-way junctions
         // continue the straightest pair; on a regular four-way junction the
@@ -76,7 +75,7 @@ SplinePlan RouteSplines(const Part& part) {
     for(size_t v=0;v<neighbors.size();++v) {
         const auto degree=neighbors[v].size();
         const auto expected=degree<3?degree:(degree+1)/2;
-        if(result.occurrences[v]!=expected&&!(degree==2&&result.occurrences[v]==1))throw Error("Spline junction does not match the routing plan.");
+        if(result.occurrences[v]>2||(result.occurrences[v]!=expected&&!(degree==2&&result.occurrences[v]==1)))throw Error("Spline junction does not match the routing plan.");
     }
     return result;
 }

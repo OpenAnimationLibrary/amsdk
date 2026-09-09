@@ -1,4 +1,4 @@
-# AMGLBImport 0.1.3 native host acceptance — pending
+# AMGLBImport 0.1.4 native host acceptance — pending
 
 Record the exact HXT SHA-256 from the original receipt, A:M version, Release/Debug
 host type, OS, menu context and results. Keep `runtime_tested: false` in the
@@ -29,17 +29,21 @@ build-generated receipt; append independent host evidence in a reviewed update.
    should appear. `color_boundary.glb` must show eight red squares around a blue
    center; the blue center must stay blue after group reordering and save/reload.
    Import must finish without the 0.1.1 “missing patch surface” error.
-6. `simple_sword.glb`: 13 named parts; 5,202 quads. At default 100 cm/unit, bounds
-   are approximately X -19..19 cm, Y 1.082623..132.700002 cm, Z -2.5..2.5 cm.
-   Verify blade/guard/grip orientation, sharp silhouette, materials and open accents.
-   Repeat with Mirror Z and a changed scale. Verify per-part selection groups and their separate material groups/colors. The preview should report
-   906 source poles still needing retopology; these are not claimed fixed.
+6. `curved_quad_sphere.glb`: 96 four-sided patches, no subdivision, no junction
+   with more than two spline CPs. Inspect eight three-edge junctions and curved
+   patch interiors. Default scale gives bounds -100..100 cm on each axis.
+   Repeat with Mirror Z and changed scale. `shallow_fan.glb` must produce three
+   quads from six triangles; its center must have only two spline CP records.
+   `crowded_pole.glb` and the original `simple_sword.glb` must stop with part and
+   unresolved welded-vertex details before adding any model/group or dirty flag.
+   Repeat rejection with an existing model selected; existing work must be intact.
 7. Confirm four distinct native corner CP heads per patch; no three/five-point
    patches, orphan geometry, unintended patches, missing surfaces or merged parts.
    At each generated three-way center, check one through-spline plus one ending
    spline, with only two attached CP records. Check continuous grid lines and
    closed paths. The plugin verifies native positions, edges and CP counts, but
    this cannot certify shading, patch interiors or interactive editing.
+   Three/four-edge junctions are allowed; five or more edges are not.
 8. Save the new model, close/reopen it and the project; counts, groups, appearance
    and dimensions should survive. Render a frame. Repeated import should create
    separate models without changing earlier models or corrupting lifetime/ownership.
@@ -59,4 +63,5 @@ Both have empty `<MATERIALS>` lists and correct red/blue group diffuse values
 and CP lists. Both also retain specular size 8000 and intensity 2000; a newly
 added working group sets only green diffuse color. This establishes a percentage
 unit error in the imported groups, not a missing color assignment. The exact
-installed HXT hash is unknown; this is not acceptance of the 0.1.3 binary.
+installed HXT hash is unknown. The owner subsequently reported the 0.1.3 fix
+working; this does not establish acceptance of the 0.1.4 binary.

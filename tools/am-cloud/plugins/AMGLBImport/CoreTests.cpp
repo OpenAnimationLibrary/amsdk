@@ -57,11 +57,11 @@ int main(int argc,char** argv){
                 const auto degree=neighbors[v].size();
                 if(degree==3){++threeWay;if(occurrences[v]!=2)throw amglb::Error("Three-way center has more than two spline CPs.");}
                 if(degree==4&&occurrences[v]!=2)throw amglb::Error("Four-way crossing has more than two spline CPs.");
-                if(degree>4)++highValence;
+                if(degree>4||occurrences[v]>2)throw amglb::Error("Test found a junction exceeding two splines.");
             }
         }
         std::cout<<std::setprecision(12)<<"{\"triangles\":"<<plan.inputTriangles<<",\"quads\":"<<plan.outputQuads
-            <<",\"paired\":"<<plan.pairedQuads<<",\"subdivided\":"<<plan.subdividedComponents
+            <<",\"curved_pairs\":"<<plan.curvedPairs<<",\"paired\":"<<plan.pairedQuads<<",\"subdivided\":"<<plan.subdividedComponents
             <<",\"parts\":"<<plan.parts.size()<<",\"vertices\":"<<plan.vertices<<",\"boundary\":"<<boundary
             <<",\"material_groups\":"<<materialGroups<<",\"three_way\":"<<threeWay<<",\"high_valence\":"<<highValence<<",\"splines\":"<<splineCount<<",\"closed_splines\":"<<closed
             <<",\"area\":"<<area<<",\"min\":["<<plan.minimum.x<<","<<plan.minimum.y<<","<<plan.minimum.z
