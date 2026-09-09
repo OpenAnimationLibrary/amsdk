@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/jkuhlmann/cgltf",
+  "commit": "85cd62382dfea638278962690cf515023f33ed00",
+  "license": "MIT",
+  "sha256": {
+    "cgltf.h": "1ef62ed2d0fa3cecb9b852f9bcb9b726a2b5bd45c16759277e688a06490a4909",
+    "LICENSE": "88c3fcc650f492aa02a17dfd10610c831a43bf06e55fcb5c6fb7cd2bd8f44252"
+  }
+}
