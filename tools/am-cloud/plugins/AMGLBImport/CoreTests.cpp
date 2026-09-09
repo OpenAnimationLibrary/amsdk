@@ -15,19 +15,41 @@ int main(int argc,char** argv){
         if(!input)throw amglb::Error("Cannot read fixture.");
         std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(input)),{});
         auto plan=amglb::ReadGLB(bytes);amglb::ConvertToQuads(plan);
-        size_t boundary=0,threeWay=0,highValence=0,splineCount=0,closed=0,materialGroups=0;double area=0;
+        size_t boundary=0,geometricBoundary=0,threeWay=0,highValence=0,splineCount=0,closed=0,materialGroups=0,seams=0,copies=0,components=0,largest=0;double area=0;
         std::map<uint32_t,size_t> materials;
         for(const auto& part:plan.parts){
+            for(bool mirror:{false,true})amglb::PreparePositions(part,100,mirror);
             std::map<std::pair<uint32_t,uint32_t>,int> edges;
+            std::map<std::pair<uint32_t,uint32_t>,std::vector<size_t>> facesAt;
+            std::map<std::pair<uint32_t,uint32_t>,std::set<std::pair<uint32_t,uint32_t>>> weldedEdges;
             std::vector<std::set<uint32_t>> neighbors(part.vertices.size());
-            for(const auto& f:part.faces){
+            for(size_t face=0;face<part.faces.size();++face){const auto& f=part.faces[face];
                 ++materials[f.material];
                 if(f.count!=4)throw amglb::Error("Test found a non-quad.");
-                for(size_t i=0;i<4;++i){auto a=f.vertex[i],b=f.vertex[(i+1)%4];if(a>b)std::swap(a,b);++edges[{a,b}];neighbors[a].insert(b);neighbors[b].insert(a);}
+                for(size_t i=0;i<4;++i){auto a=f.vertex[i],b=f.vertex[(i+1)%4];if(a>b)std::swap(a,b);++edges[{a,b}];facesAt[{a,b}].push_back(face);neighbors[a].insert(b);neighbors[b].insert(a);}
                 const auto a=part.vertices[f.vertex[0]],b=part.vertices[f.vertex[1]],c=part.vertices[f.vertex[2]],d=part.vertices[f.vertex[3]];
                 area+=(amglb::Length(amglb::Cross(b-a,c-a))+amglb::Length(amglb::Cross(c-a,d-a)))*.5;
             }
             for(const auto& e:edges)if(e.second==1)++boundary;
+            std::vector<std::vector<size_t>> adjacent(part.faces.size());
+            for(const auto& e:facesAt)if(e.second.size()==2){adjacent[e.second[0]].push_back(e.second[1]);adjacent[e.second[1]].push_back(e.second[0]);}
+            std::vector<bool> reached(part.faces.size(),false);
+            for(size_t f=0;f<reached.size();++f)if(!reached[f]){
+                ++components;size_t count=0;std::vector<size_t> pending{f};
+                while(!pending.empty()){const auto next=pending.back();pending.pop_back();if(reached[next])continue;reached[next]=true;++count;for(auto n:adjacent[next])pending.push_back(n);}
+                largest=std::max(largest,count);
+            }
+            for(const auto& e:edges){const auto [a,b]=e.first;
+                auto original=e.first;if(!part.seamSource.empty())original=std::minmax(part.seamSource[a],part.seamSource[b]);
+                weldedEdges[original].insert(e.first);
+            }
+            for(const auto& e:weldedEdges){
+                size_t uses=0;for(const auto& edge:e.second)uses+=static_cast<size_t>(edges.at(edge));
+                if(uses==1)++geometricBoundary;
+                if(uses>2||e.second.size()>2)throw amglb::Error("Fallback duplicated a surface edge.");
+                if(e.second.size()==2){++seams;for(const auto& edge:e.second)if(edges.at(edge)!=1)throw amglb::Error("Seam is not two matching boundaries.");}
+            }
+            for(size_t v=0;v<part.seamSource.size();++v)if(part.seamSource[v]!=v)++copies;
             const auto colorGroups=amglb::GroupMaterials(part);materialGroups+=colorGroups.size();
             std::vector<bool> colored(part.faces.size(),false);
             for(const auto& group:colorGroups){
@@ -60,9 +82,13 @@ int main(int argc,char** argv){
                 if(degree>4||occurrences[v]>2)throw amglb::Error("Test found a junction exceeding two splines.");
             }
         }
+        if(seams!=plan.seamEdges||copies!=plan.seamCopies||boundary!=geometricBoundary+2*seams)
+            throw amglb::Error("Fallback seam reporting does not match actual topology.");
         std::cout<<std::setprecision(12)<<"{\"triangles\":"<<plan.inputTriangles<<",\"quads\":"<<plan.outputQuads
             <<",\"curved_pairs\":"<<plan.curvedPairs<<",\"paired\":"<<plan.pairedQuads<<",\"subdivided\":"<<plan.subdividedComponents
             <<",\"parts\":"<<plan.parts.size()<<",\"vertices\":"<<plan.vertices<<",\"boundary\":"<<boundary
+            <<",\"geometric_boundary\":"<<geometricBoundary<<",\"seamed_parts\":"<<plan.seamedParts<<",\"seam_edges\":"<<seams<<",\"seam_copies\":"<<copies
+            <<",\"surface_components\":"<<components<<",\"largest_component\":"<<largest
             <<",\"material_groups\":"<<materialGroups<<",\"three_way\":"<<threeWay<<",\"high_valence\":"<<highValence<<",\"splines\":"<<splineCount<<",\"closed_splines\":"<<closed
             <<",\"area\":"<<area<<",\"min\":["<<plan.minimum.x<<","<<plan.minimum.y<<","<<plan.minimum.z
             <<"],\"max\":["<<plan.maximum.x<<","<<plan.maximum.y<<","<<plan.maximum.z<<"],\"materials\":[";

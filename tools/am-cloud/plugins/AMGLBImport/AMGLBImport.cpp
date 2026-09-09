@@ -1,4 +1,4 @@
-// AMGLBImport 0.1.4. Developed for Rodney Baker with OpenAI Codex assistance.
+// AMGLBImport 0.1.5. Developed for Rodney Baker with OpenAI Codex assistance.
 #include "StdAfx.h"
 #include "ImportCore.h"
 #include "MaterialSurface.h"
@@ -44,7 +44,9 @@ protected:
          <<"Creates a new editable model with peaked control points and basic colors.\r\n"
          <<"Dimensions at 100 cm/unit: "<<(plan.maximum.x-plan.minimum.x)*100<<" x "
          <<(plan.maximum.y-plan.minimum.y)*100<<" x "<<(plan.maximum.z-plan.minimum.z)*100<<" cm.\r\n";
-        s<<"\r\nFour-sided patches only. Every junction uses at most two splines. Part selection groups have no surface overrides.\r\n";
+        s<<"\r\nFour-sided patches only. Each CP attachment uses at most two splines. Part selection groups have no surface overrides.\r\n";
+        if(plan.seamEdges)s<<"\r\nTopology fallback: "<<plan.seamEdges<<" unwelded seam edges in "<<plan.seamedParts
+            <<" parts ("<<plan.seamCopies<<" separate vertex copies). Surfaces meet in place, but seam sides move separately when edited. See each part's Seam points selection group.\r\n";
         for(const auto& note:plan.notes)s<<"\r\n"<<note;
         SetDlgItemText(IDC_SUMMARY,s.str().c_str());SetDlgItemText(IDC_SCALE,"100");
         static_cast<CEdit*>(GetDlgItem(IDC_SCALE))->SetLimitText(32);
@@ -70,18 +72,7 @@ struct PreparedPart {
 };
 PreparedPart Prepare(const amglb::Part& part,double scale,bool mirror){
     PreparedPart out;out.routing=amglb::RouteSplines(part);out.materials=amglb::GroupMaterials(part);out.vertices.reserve(part.vertices.size());
-    std::set<Point> unique;
-    for(auto v:part.vertices){v=v*scale;if(mirror)v.z=-v.z;
-        if(std::max({std::abs(v.x),std::abs(v.y),std::abs(v.z)})>1000000)throw amglb::Error("Scaled coordinates exceed 1,000,000 cm.");
-        Vector p(static_cast<float>(v.x),static_cast<float>(v.y),static_cast<float>(v.z));
-        if(!unique.insert(Position(p)).second)throw amglb::Error("Scale and coordinate precision collapse distinct vertices. Recenter or simplify the mesh.");
-        out.vertices.push_back(p);
-    }
-    for(const auto& f:part.faces){std::array<amglb::Vec3,4> p;
-        for(size_t k=0;k<4;++k){const auto& v=out.vertices[f.vertex[k]];p[k]={v.x,v.y,v.z};}
-        const auto n=amglb::Cross(p[1]-p[0],p[2]-p[0]),n2=amglb::Cross(p[2]-p[0],p[3]-p[0]);
-        if(amglb::Length(n)<1e-12||amglb::Length(n2)<1e-12||amglb::Dot(n,n2)<=0)throw amglb::Error("Scaled quad is degenerate at A:M precision.");
-    }
+    for(const auto& p:amglb::PreparePositions(part,scale,mirror))out.vertices.emplace_back(p[0],p[1],p[2]);
     return out;
 }
 void SetFloat(HFloatProperty* property,double value){
@@ -187,6 +178,18 @@ void CreatePart(HModelCache* model,const amglb::Part& part,const PreparedPart& p
     AddGroupPoints(group,allPoints);
     if(auto* attr=group->GetAttr()){attr->SetNullable(TRUE);attr->SetNull(TRUE);}
     expected.groups.push_back(group);
+    if(!part.seamSource.empty()){
+        std::vector<size_t> copies(heads.size());for(auto source:part.seamSource)++copies[source];
+        std::vector<HCP*> points;
+        for(size_t v=0;v<stacks.size();++v)if(copies[part.seamSource[v]]>1)points.insert(points.end(),stacks[v].begin(),stacks[v].end());
+        if(!points.empty()){
+            auto* seams=model->CreateGroup((part.name.substr(0,75)+" / Seam points").c_str());
+            if(!seams)throw amglb::Error("A:M could not create a seam selection group.");
+            AddGroupPoints(seams,points);
+            if(auto* attr=seams->GetAttr()){attr->SetNullable(TRUE);attr->SetNull(TRUE);}
+            expected.groups.push_back(seams);
+        }
+    }
 }
 Quad PatchKey(HPatch* patch){
     if(!patch)throw amglb::Error("A:M returned a missing patch.");
@@ -289,11 +292,12 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject* object,uint32_t 
             CreatePart(created,plan.parts[i],prepared[i],dialog.mirror,expected);
         VerifyAndColor(created,expected,plan);created->SetName(name.c_str());created->SetChanged();created->Update();created->OpenView();created->ZoomFit();RefreshAllTrees();
         CString message;message.Format("Imported %zu named parts as %zu four-sided patches.\n\nCheck the model in shaded and wireframe views, then save it as an A:M model.",plan.parts.size(),plan.outputQuads);
+        if(plan.seamEdges){CString seamMessage;seamMessage.Format("\n\n%zu unwelded seam edges in %zu parts. Seam sides move separately; use the Seam points selection groups to inspect them.",plan.seamEdges,plan.seamedParts);message+=seamMessage;}
         AfxMessageBox(message,MB_OK|MB_ICONINFORMATION);return TRUE;
     }catch(CException* e){char message[512]{};e->GetErrorMessage(message,_countof(message));failure=message;e->Delete();}
     catch(const std::exception& e){failure=e.what();}catch(...){failure="Unexpected import error.";}
     if(created){failure+="\n\nA model named GLB INCOMPLETE may remain. Inspect or remove that new model. Existing models were not edited.";
         try{created->SetChanged();created->Update();created->OpenView();RefreshAllTrees();}catch(CException* e){e->Delete();}catch(...){} }
-    failure="GLB Import 0.1.4\n\n"+failure;
+    failure="GLB Import 0.1.5\n\n"+failure;
     AfxMessageBox(failure.c_str(),MB_OK|MB_ICONERROR);return FALSE;
 }

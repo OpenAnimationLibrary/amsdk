@@ -1,6 +1,7 @@
 """Compile the production GLB/quad core, then exercise binary fixtures and failures."""
 import copy
 import hashlib
+import itertools
 import json
 import math
 import os
@@ -85,6 +86,32 @@ def cube_sphere(div=4):
                     if normal[axis]*sign<0:quad.reverse()
                     faces.extend([quad[0],quad[1],quad[2],quad[0],quad[2],quad[3]])
     return points,faces
+
+
+def icosphere(level=1):
+    phi=(1+math.sqrt(5))/2
+    points=[(0,a,b*phi) for a in (-1,1) for b in (-1,1)]+[(a,b*phi,0) for a in (-1,1) for b in (-1,1)]+[(b*phi,0,a) for a in (-1,1) for b in (-1,1)]
+    faces=[]
+    for face in itertools.combinations(range(12),3):
+        if not all(abs(sum((points[a][k]-points[b][k])**2 for k in range(3))-4)<1e-9 for a,b in itertools.combinations(face,2)):continue
+        a,b,c=[points[i] for i in face];u=[b[k]-a[k] for k in range(3)];v=[c[k]-a[k] for k in range(3)]
+        normal=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]]
+        faces.append(face if sum(normal[k]*a[k] for k in range(3))>0 else (face[0],face[2],face[1]))
+    def unit(point):
+        length=math.sqrt(sum(v*v for v in point));return tuple(v/length for v in point)
+    points=[unit(p) for p in points]
+    for _ in range(level):
+        edges={};result=[]
+        def mid(a,b):
+            key=tuple(sorted((a,b)))
+            if key not in edges:
+                edges[key]=len(points);points.append(unit(tuple((points[a][k]+points[b][k])*.5 for k in range(3))))
+            return edges[key]
+        for a,b,c in faces:
+            ab,bc,ca=mid(a,b),mid(b,c),mid(c,a)
+            result.extend([(a,ab,ca),(ab,b,bc),(ca,bc,c),(ab,bc,ca)])
+        faces=result
+    return points,[v for f in faces for v in f]
 
 
 class GLBImportTests(unittest.TestCase):
@@ -244,11 +271,16 @@ class GLBImportTests(unittest.TestCase):
             self.assertIn(result.returncode,(0,1),f'mutation {i}: {result.stderr}')
             self.assertNotIn('Sanitizer',result.stderr)
 
-    def test_sword_unresolved_poles_are_reported(self):
-        error=self.run_file(raw=(SOURCE/'examples/simple_sword.glb').read_bytes(),valid=False)
-        self.assertIn('Tapered steel blade',error)
-        self.assertIn('more than two splines',error)
-        self.assertIn('No model was created',error)
+    def test_original_sword_imports_with_quad_seam_fallback(self):
+        p=self.run_file(raw=(SOURCE/'examples/simple_sword.glb').read_bytes())
+        self.assertEqual((p['triangles'],p['parts'],p['material_groups'],p['high_valence']),(2324,13,13,0))
+        self.assertEqual(p['quads'],5544)
+        self.assertEqual(len(p['materials']),6)
+        self.assertEqual(sum(m['faces'] for m in p['materials']),p['quads'])
+        self.assertGreater(p['seam_edges'],0)
+        self.assertLess(p['seamed_parts'],p['parts'])
+        self.assertLess(p['surface_components'],p['quads']//4)
+        self.assertEqual(p['geometric_boundary'],20)
 
     def test_named_parts_keep_explicit_colors_without_unused_default(self):
         data,binary=fixture()
@@ -273,15 +305,18 @@ class GLBImportTests(unittest.TestCase):
         p=self.run_file(*fixture(points,indices))
         self.assertEqual((p['quads'],p['high_valence']),(16,0))
         self.assertAlmostEqual(p['area'],16)
-        # These sharp fans cannot be safely reconstructed under the new limit.
-        # They must stop before native creation, not merely display a warning.
-        for n in (5,6,7,8,9):
+        self.assertEqual(p['seam_edges'],0)
+        # Unpairable fans now import using matching, independently editable
+        # seam boundaries, while the driver verifies every routed CP/quad.
+        for n in (5,6,7,8,9,64):
             points=[(0,0,1)]+[(math.cos(i*2*math.pi/n),math.sin(i*2*math.pi/n),0) for i in range(n)]
             indices=[v for i in range(n) for v in (0,i+1,(i+1)%n+1)]
             with self.subTest(valence=n):
-                error=self.run_file(*fixture(points,indices),valid=False)
-                self.assertIn('more than two splines',error)
-                self.assertIn('welded vertex: 1',error)
+                p=self.run_file(*fixture(points,indices))
+                self.assertEqual(p['high_valence'],0)
+                self.assertGreater(p['seam_edges'],0)
+                self.assertEqual(p['geometric_boundary'],2*n)
+                self.assertLess(p['surface_components'],p['quads']//2)
 
     def test_material_groups_do_not_enclose_another_color(self):
         p=self.run_file(*color_grid())
@@ -313,6 +348,7 @@ class GLBImportTests(unittest.TestCase):
                 p=self.run_file(*fixture(points,indices))
                 self.assertEqual((p['quads'],p['paired'],p['subdivided']),(6*div*div,6*div*div,0))
                 self.assertEqual((p['boundary'],p['high_valence'],p['three_way']),(0,0,8))
+                self.assertEqual(p['seam_edges'],0)
                 self.assertGreater(p['curved_pairs'],0)
                 self.assertEqual(p['vertices'],len(points))
                 self.assertEqual(p['min'],[-1,-1,-1]);self.assertEqual(p['max'],[1,1,1])
@@ -358,9 +394,60 @@ class GLBImportTests(unittest.TestCase):
         self.assertEqual((p['quads'],p['curved_pairs'],p['subdivided'],p['high_valence']),(96,96,0,0))
         p=self.run_file(raw=(SOURCE/'examples/shallow_fan.glb').read_bytes())
         self.assertEqual((p['quads'],p['paired'],p['subdivided'],p['high_valence']),(3,3,0,0))
-        error=self.run_file(raw=(SOURCE/'examples/crowded_pole.glb').read_bytes(),valid=False)
-        self.assertIn('Crowded pole',error)
-        self.assertIn('GLB position',error)
+        p=self.run_file(raw=(SOURCE/'examples/crowded_pole.glb').read_bytes())
+        self.assertEqual((p['quads'],p['high_valence'],p['seamed_parts']),(24,0,1))
+        self.assertGreater(p['seam_edges'],0)
+        self.assertEqual(p['geometric_boundary'],24)
+
+    def test_icospheres_and_boundary_poles_use_seams_without_holes(self):
+        for level in (1,2):
+            points,indices=icosphere(level)
+            faces=[indices[i:i+3] for i in range(0,len(indices),3)]
+            for seed in (0,19):
+                random.Random(seed).shuffle(faces)
+                with self.subTest(level=level,order=seed):
+                    p=self.run_file(*fixture(points,[v for f in faces for v in f]))
+                    self.assertEqual((p['high_valence'],p['geometric_boundary']),(0,0))
+                    self.assertLess(p['surface_components'],p['quads']//4)
+        # A boundary pole has an open fan, so its sector limits differ from
+        # a closed star. Geometry remains the same planar half disk.
+        n=11
+        points=[(0,0,0)]+[(math.cos(i*math.pi/n),math.sin(i*math.pi/n),0) for i in range(n+1)]
+        indices=[v for i in range(n) for v in (0,i+1,i+2)]
+        p=self.run_file(*fixture(points,indices))
+        self.assertEqual(p['high_valence'],0)
+        self.assertGreater(p['seam_edges'],0)
+        self.assertAlmostEqual(p['area'],n*math.sin(math.pi/n)/2,places=6)
+        self.assertEqual(p['geometric_boundary'],2*(n+2))
+
+    def test_seam_fallback_preserves_alternating_colors_and_surface_area(self):
+        n=12
+        points=[(0,0,1)]+[(math.cos(i*2*math.pi/n),math.sin(i*2*math.pi/n),0) for i in range(n)]
+        indices=[v for i in range(n) for v in (0,i+1,(i+1)%n+1)]
+        data,binary=fixture(points,[])
+        data['bufferViews']=data['bufferViews'][:1];data['accessors']=data['accessors'][:1]
+        data['meshes'][0]['primitives']=[]
+        for color in (0,1):
+            selected=[v for i in range(color,n,2) for v in indices[3*i:3*i+3]]
+            offset=len(binary);binary+=struct.pack('<'+'I'*len(selected),*selected)
+            data['bufferViews'].append({'buffer':0,'byteOffset':offset,'byteLength':len(binary)-offset})
+            data['accessors'].append({'bufferView':color+1,'componentType':5125,'count':len(selected),'type':'SCALAR'})
+            data['meshes'][0]['primitives'].append({'attributes':{'POSITION':0},'indices':color+1,'material':color})
+        data['buffers'][0]['byteLength']=len(binary)
+        data['materials']=[{'pbrMetallicRoughness':{'baseColorFactor':c}} for c in ([1,0,0,1],[0,0,1,1])]
+        p=self.run_file(data,binary)
+        self.assertEqual((p['paired'],p['quads'],p['high_valence']),(0,36,0))
+        self.assertEqual(p['materials'],[{'faces':18,'rgba':[1,0,0,1]},{'faces':18,'rgba':[0,0,1,1]}])
+        self.assertGreater(p['seam_edges'],0)
+        self.assertEqual(p['geometric_boundary'],24)
+        expected=n*math.sin(math.pi/n)*math.sqrt(1+math.cos(math.pi/n)**2)
+        self.assertAlmostEqual(p['area'],expected,places=6)
+
+    def test_unrelated_vertices_still_reject_native_precision_collapse(self):
+        data,binary=fixture([(0,0,0),(.00001,0,0),(.00001,.00001,0),(0,.00001,0)])
+        data['nodes'][0]['translation']=[1000,0,0]
+        error=self.run_file(data,binary,valid=False)
+        self.assertIn('precision collapse distinct vertices',error)
 
     def test_vendor_identity(self):
         manifest=json.loads((SOURCE/'third_party/provenance.json').read_text())

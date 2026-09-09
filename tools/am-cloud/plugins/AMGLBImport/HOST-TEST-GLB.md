@@ -1,4 +1,4 @@
-# AMGLBImport 0.1.4 native host acceptance — pending
+# AMGLBImport 0.1.5 native host acceptance — pending
 
 Record the exact HXT SHA-256 from the original receipt, A:M version, Release/Debug
 host type, OS, menu context and results. Keep `runtime_tested: false` in the
@@ -34,16 +34,24 @@ build-generated receipt; append independent host evidence in a reviewed update.
    patch interiors. Default scale gives bounds -100..100 cm on each axis.
    Repeat with Mirror Z and changed scale. `shallow_fan.glb` must produce three
    quads from six triangles; its center must have only two spline CP records.
-   `crowded_pole.glb` and the original `simple_sword.glb` must stop with part and
-   unresolved welded-vertex details before adding any model/group or dirty flag.
-   Repeat rejection with an existing model selected; existing work must be intact.
+   `crowded_pole.glb` must reach the preview and import 24 quads. The original
+   `simple_sword.glb` must reach the preview and import 5,544 quads, 13 material
+   groups, and seams in nine parts. Neither should show the 0.1.4 crowded-junction
+   refusal. Check matching seam sides in shaded/wireframe views, preserved colors,
+   and the reported seam counts. `Part / Seam points` selection groups must remain
+   Surface = Not Set and include every copy of each separated point. Move only one
+   seam-side CP to demonstrate its independent attachment, then undo that edit.
+   Seams may open under deformation; do not interpret them as welded continuity.
+   Repeat with Mirror Z and changed scale, and with an existing model selected;
+   existing work must remain intact. Cancel at the seam preview and verify no edits.
 7. Confirm four distinct native corner CP heads per patch; no three/five-point
    patches, orphan geometry, unintended patches, missing surfaces or merged parts.
    At each generated three-way center, check one through-spline plus one ending
    spline, with only two attached CP records. Check continuous grid lines and
    closed paths. The plugin verifies native positions, edges and CP counts, but
    this cannot certify shading, patch interiors or interactive editing.
-   Three/four-edge junctions are allowed; five or more edges are not.
+   Three/four-edge attachments are allowed; five or more edges on one attachment
+   are not. Separate attachments may share a spatial position along fallback seams.
 8. Save the new model, close/reopen it and the project; counts, groups, appearance
    and dimensions should survive. Render a frame. Repeated import should create
    separate models without changing earlier models or corrupting lifetime/ownership.
@@ -64,4 +72,6 @@ and CP lists. Both also retain specular size 8000 and intensity 2000; a newly
 added working group sets only green diffuse color. This establishes a percentage
 unit error in the imported groups, not a missing color assignment. The exact
 installed HXT hash is unknown. The owner subsequently reported the 0.1.3 fix
-working; this does not establish acceptance of the 0.1.4 binary.
+working. The owner then reported 0.1.4 rejecting the original sword at its
+two-spline topology preflight. This is the regression addressed by 0.1.5; acceptance
+of the new binary, including its unwelded seams, remains pending.

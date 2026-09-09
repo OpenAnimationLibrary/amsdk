@@ -112,6 +112,140 @@ uint32_t Append(Part& p,Vec3 v) {
     if(p.vertices.size()>=MaxVertices)throw Error("Quad conversion exceeds the vertex limit.");
     const auto id=static_cast<uint32_t>(p.vertices.size());p.vertices.push_back(v);return id;
 }
+struct VertexFan {
+    std::vector<size_t> corners, joins;
+    bool closed=false;
+    bool Fits(const std::vector<bool>& cuts) const {
+        if(corners.empty())return true;
+        size_t start=0;
+        if(closed){
+            const auto cut=std::find_if(joins.begin(),joins.end(),[&](size_t e){return cuts[e];});
+            if(cut==joins.end())return corners.size()<=4;
+            start=(static_cast<size_t>(cut-joins.begin())+1)%corners.size();
+        }
+        size_t run=0;
+        for(size_t i=0;i<corners.size();++i){
+            const auto k=(start+i)%corners.size();
+            if(++run>3)return false; // A boundary fan has one more edge than faces.
+            if(k<joins.size()&&cuts[joins[k]])run=0;
+        }
+        return true;
+    }
+};
+void SeparateCrowdedJunctions(Part& p,Plan& plan) {
+    const auto edges=BuildEdges(p);
+    std::vector<Edge> keys;std::map<Edge,size_t> index;
+    std::vector<std::vector<size_t>> incident(p.vertices.size());
+    std::vector<size_t> degree(p.vertices.size());
+    for(const auto& e:edges){
+        index.emplace(e.first,keys.size());keys.push_back(e.first);
+        ++degree[e.first.first];++degree[e.first.second];
+    }
+    if(std::none_of(degree.begin(),degree.end(),[](size_t d){return d>4;}))return;
+    for(size_t i=0;i<p.faces.size();++i)for(size_t k=0;k<4;++k)incident[p.faces[i].vertex[k]].push_back(4*i+k);
+    std::vector<VertexFan> fans(p.vertices.size());
+    for(size_t v=0;v<fans.size();++v){
+        if(incident[v].empty())continue;
+        auto start=incident[v][0];
+        for(auto c:incident[v]){
+            const auto& f=p.faces[c/4];
+            if(edges.at(Key(f.vertex[(c%4+3)%4],static_cast<uint32_t>(v))).size()==1){start=c;break;}
+        }
+        auto c=start;auto& fan=fans[v];
+        do{
+            if(fan.corners.size()>=incident[v].size())throw Error("Cannot order a junction fan.");
+            fan.corners.push_back(c);
+            const auto& f=p.faces[c/4];const auto edge=Key(static_cast<uint32_t>(v),f.vertex[(c%4+1)%4]);
+            const auto& uses=edges.at(edge);
+            if(uses.size()==1)break;
+            fan.joins.push_back(index.at(edge));
+            const auto other=uses[0].face==c/4?uses[1]:uses[0];
+            c=4*other.face+(other.corner+1)%4;
+            if(c==start)fan.closed=true;
+        }while(c!=start);
+        if(fan.corners.size()!=incident[v].size())throw Error("Junction fan lost a face.");
+    }
+    std::vector<bool> cuts(keys.size(),false);
+    const auto cutEdge=[&](uint32_t a,uint32_t b){const auto key=Key(a,b);if(edges.at(key).size()==2)cuts[index.at(key)]=true;};
+    for(size_t v=0;v<fans.size();++v)if(degree[v]>4){
+        const auto& fan=fans[v];
+        // Subdivision separates old poles by regular midpoints/face centers.
+        // A closed seam around each pole bounds propagation; radial seams
+        // divide its fan into sectors of at most three faces (four edges).
+        for(auto c:fan.corners){const auto& f=p.faces[c/4];const auto k=c%4;
+            for(size_t j=1;j<4;++j)if(degree[f.vertex[(k+j)%4]]>4)throw Error("Crowded junctions were not separated by subdivision.");
+            cutEdge(f.vertex[(k+1)%4],f.vertex[(k+2)%4]);
+            cutEdge(f.vertex[(k+2)%4],f.vertex[(k+3)%4]);
+        }
+        for(size_t k=2;k<fan.joins.size();k+=3)cuts[fan.joins[k]]=true;
+        if(fan.closed)cuts[fan.joins.back()]=true;
+    }
+    for(const auto& fan:fans)if(!fan.Fits(cuts))throw Error("Cannot bound a seam junction.");
+    // Reconnect wherever possible. Prefer removing long seams and preserve
+    // ordinary welded regions; this is bounded cleanup, not a minimum-cut claim.
+    std::vector<size_t> order;
+    for(size_t i=0;i<cuts.size();++i)if(cuts[i])order.push_back(i);
+    std::sort(order.begin(),order.end(),[&](size_t a,size_t b){
+        const auto length=[&](size_t e){return Length(p.vertices[keys[e].first]-p.vertices[keys[e].second]);};
+        const auto al=length(a),bl=length(b);return al==bl?a<b:al>bl;
+    });
+    size_t budget=1000000;
+    for(size_t pass=0;pass<4&&budget;++pass){
+        std::vector<std::vector<size_t>> cutAt(fans.size());
+        for(auto i:order)if(cuts[i]){cutAt[keys[i].first].push_back(i);cutAt[keys[i].second].push_back(i);}
+        std::vector<bool> visited(keys.size(),false);bool changed=false;
+        for(auto i:order)if(cuts[i]&&!visited[i]){
+            std::vector<size_t> chain{i};visited[i]=true;
+            // A single removed edge would leave an invalid seam tip at a
+            // regular four-edge vertex. Reconnect whole paths through those
+            // vertices together, including closed loops.
+            for(auto start:{keys[i].first,keys[i].second}){
+                auto v=start;auto previous=i;
+                while(degree[v]==4&&fans[v].closed&&cutAt[v].size()==2){
+                    const auto next=cutAt[v][0]==previous?cutAt[v][1]:cutAt[v][0];
+                    if(visited[next]||!cuts[next])break;
+                    chain.push_back(next);visited[next]=true;
+                    v=keys[next].first==v?keys[next].second:keys[next].first;previous=next;
+                }
+            }
+            std::set<uint32_t> touched;
+            for(auto e:chain){touched.insert(keys[e].first);touched.insert(keys[e].second);}
+            size_t cost=0;for(auto v:touched)cost+=fans[v].corners.size();
+            if(cost>budget)continue;
+            budget-=cost;for(auto e:chain)cuts[e]=false;
+            if(std::all_of(touched.begin(),touched.end(),[&](uint32_t v){return fans[v].Fits(cuts);}))changed=true;
+            else for(auto e:chain)cuts[e]=true;
+        }
+        if(!changed)break;
+    }
+    Components corners(p.faces.size()*4);
+    for(size_t i=0;i<keys.size();++i)if(!cuts[i]){
+        const auto& uses=edges.at(keys[i]);if(uses.size()!=2)continue;
+        const auto a=uses[0],b=uses[1];
+        corners.Join(4*a.face+a.corner,4*b.face+(b.corner+1)%4);
+        corners.Join(4*a.face+(a.corner+1)%4,4*b.face+b.corner);
+    }
+    p.seamSource.resize(p.vertices.size());std::iota(p.seamSource.begin(),p.seamSource.end(),0U);
+    for(size_t v=0;v<incident.size();++v){
+        std::map<size_t,uint32_t> copies;
+        for(auto c:incident[v]){
+            const auto root=corners.Root(c);auto found=copies.find(root);
+            if(found==copies.end()){
+                auto id=static_cast<uint32_t>(v);
+                if(!copies.empty()){id=Append(p,p.vertices[v]);p.seamSource.push_back(static_cast<uint32_t>(v));++plan.seamCopies;}
+                found=copies.emplace(root,id).first;
+            }
+            p.faces[c/4].vertex[c%4]=found->second;
+        }
+    }
+    size_t seams=0;
+    for(const auto& e:edges)if(e.second.size()==2){
+        const auto a=e.second[0],b=e.second[1];
+        if(Key(p.faces[a.face].vertex[a.corner],p.faces[a.face].vertex[(a.corner+1)%4])!=
+           Key(p.faces[b.face].vertex[b.corner],p.faces[b.face].vertex[(b.corner+1)%4]))++seams;
+    }
+    if(seams){++plan.seamedParts;plan.seamEdges+=seams;}
+}
 void ConvertPart(Part& p,Plan& plan,size_t& searchBudget) {
     const auto edges=BuildEdges(p);
     Components components(p.faces.size());
@@ -144,19 +278,14 @@ void ConvertPart(Part& p,Plan& plan,size_t& searchBudget) {
         if(c.curved)++plan.curvedPairs;
         for(auto v:c.diagonal)--degree[v];
     }
-    // Subdivision preserves these source junction degrees. Reject an unresolved
-    // fan now, before creating additional points or any native A:M model.
-    size_t crowded=0,first=0;
-    for(size_t v=0;v<degree.size();++v)if(degree[v]>4){if(!crowded)first=v;++crowded;}
-    if(crowded)throw Error("Part '"+p.name+"' still has "+std::to_string(crowded)+
-        " junction(s) requiring more than two splines after quad reconstruction. First welded vertex: "+
-        std::to_string(first+1)+" ("+std::to_string(degree[first])+" edges), GLB position ("+
-        std::to_string(p.vertices[first].x)+", "+std::to_string(p.vertices[first].y)+", "+
-        std::to_string(p.vertices[first].z)+"). Retopologize this region with four-sided patches. No model was created.");
     std::set<size_t> split;
     for(size_t i=0;i<p.faces.size();++i)if(!used[i]){
         mixed.push_back({components.Root(i),p.faces[i]});if(p.faces[i].count==3)split.insert(components.Root(i));
     }
+    // Also subdivide crowded all-quad regions so any necessary seam repair is
+    // local to a pole neighborhood, separated from neighboring poles.
+    for(const auto& item:mixed)for(uint32_t k=0;k<item.second.count;++k)
+        if(degree[item.second.vertex[k]]>4)split.insert(item.first);
     size_t required=0;
     for(const auto& item:mixed)required+=split.count(item.first)?item.second.count:1;
     if(required>MaxOutputQuads-plan.outputQuads)throw Error("Quad conversion exceeds 100,000 patches. Simplify the source mesh first.");
@@ -183,6 +312,7 @@ void ConvertPart(Part& p,Plan& plan,size_t& searchBudget) {
     std::vector<uint32_t> remap(p.vertices.size(),UINT32_MAX);std::vector<Vec3> compact;
     for(auto& f:p.faces)for(auto& v:f.vertex){if(remap[v]==UINT32_MAX){remap[v]=static_cast<uint32_t>(compact.size());compact.push_back(p.vertices[v]);}v=remap[v];}
     p.vertices=std::move(compact);
+    SeparateCrowdedJunctions(p,plan);
     BuildEdges(p);
     plan.outputQuads+=p.faces.size();
 }
@@ -192,6 +322,15 @@ void ValidatePlan(Plan& p) {
     p.vertices=0;p.outputQuads=0;
     p.minimum={1e300,1e300,1e300};p.maximum={-1e300,-1e300,-1e300};
     for(const auto& part:p.parts){
+        if(!part.seamSource.empty()){
+            if(part.seamSource.size()!=part.vertices.size())throw Error("Incomplete seam vertex provenance.");
+            for(size_t i=0;i<part.vertices.size();++i){
+                const auto source=part.seamSource[i];
+                if(source>=part.vertices.size()||part.seamSource[source]!=source)throw Error("Invalid seam vertex provenance.");
+                const auto a=part.vertices[i],b=part.vertices[source];
+                if(a.x!=b.x||a.y!=b.y||a.z!=b.z)throw Error("Seam copies changed position.");
+            }
+        }
         const auto edges=BuildEdges(part);
         std::vector<size_t> degree(part.vertices.size());
         for(const auto& e:edges){++degree[e.first.first];++degree[e.first.second];}
@@ -213,8 +352,29 @@ void ValidatePlan(Plan& p) {
 }
 void ConvertToQuads(Plan& p){
     p.pairedQuads=0;p.curvedPairs=0;p.subdividedComponents=0;p.outputQuads=0;
+    p.seamedParts=0;p.seamEdges=0;p.seamCopies=0;
     size_t searchBudget=1000000;
     for(auto& part:p.parts)ConvertPart(part,p,searchBudget);
     ValidatePlan(p);
+}
+std::vector<std::array<float,3>> PreparePositions(const Part& part,double scale,bool mirror){
+    if(!std::isfinite(scale)||scale<.001||scale>100000)throw Error("Invalid import scale.");
+    if(!part.seamSource.empty()&&part.seamSource.size()!=part.vertices.size())throw Error("Incomplete seam vertex provenance.");
+    std::vector<std::array<float,3>> out;out.reserve(part.vertices.size());
+    std::map<std::array<float,3>,size_t> unique;
+    for(size_t i=0;i<part.vertices.size();++i){auto v=part.vertices[i]*scale;if(mirror)v.z=-v.z;
+        if(!Finite(v)||std::max({std::abs(v.x),std::abs(v.y),std::abs(v.z)})>1000000)throw Error("Scaled coordinates exceed 1,000,000 cm.");
+        const std::array<float,3> p={static_cast<float>(v.x),static_cast<float>(v.y),static_cast<float>(v.z)};
+        const auto [found,inserted]=unique.emplace(p,i);
+        if(!inserted&&(part.seamSource.empty()||part.seamSource[i]!=part.seamSource[found->second]))
+            throw Error("Scale and coordinate precision collapse distinct vertices. Recenter or simplify the mesh.");
+        out.push_back(p);
+    }
+    for(const auto& f:part.faces){std::array<Vec3,4> p;
+        for(size_t k=0;k<4;++k){const auto& v=out.at(f.vertex[k]);p[k]={v[0],v[1],v[2]};}
+        const auto n=Cross(p[1]-p[0],p[2]-p[0]),n2=Cross(p[2]-p[0],p[3]-p[0]);
+        if(Length(n)<1e-12||Length(n2)<1e-12||Dot(n,n2)<=0)throw Error("Scaled quad is degenerate at A:M precision.");
+    }
+    return out;
 }
 }

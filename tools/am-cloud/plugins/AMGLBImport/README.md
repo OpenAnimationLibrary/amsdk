@@ -1,30 +1,33 @@
-# AMGLBImport 0.1.4 — Animation:Master GLB importer
+# AMGLBImport 0.1.5 — Animation:Master GLB importer
 
 Developed for Rodney Baker / OpenAnimationLibrary with OpenAI Codex assistance.
 Windows x64, A:M 19.5 SDK, native C++ command HXT. This is an updated host-test
 candidate: successful CI builds do not certify behavior inside A:M.
 
-## Changes in 0.1.4
+## Changes in 0.1.5
 
-Four-sided patches and at most two splines at every control point are now
-requirements. The converter can pair triangles across gentle curvature, then
-revisit local pair choices to reduce crowded junctions and recover missed pairs.
-It preserves source vertices, part separation, material boundaries, UV seams and
-normal discontinuities. Spline routing happens only after the quad topology passes.
+Fixes the 0.1.4 refusal to import otherwise valid models with unresolved crowded
+junctions, including the original sword. Triangle pairing and local reconstruction
+still run first. Remaining crowded regions use a seam fallback: keep four-sided
+faces, but separate CP attachments along selected matching boundaries. Every
+attachment has at most two spline CP records. No triangular/five-point patches
+or three-spline attachments are enabled.
 
-A region that still has more than four incident edges at a vertex is rejected
-before any native model is created. The error identifies the part, number of
-unresolved junctions, and first welded vertex/GLB position. Subdivision is used
-only when the resulting junctions meet the limit. No triangular or five-point
-patch exception is enabled. Independent plan, routing and native CP checks enforce
-the same contract. Three-edge junctions remain valid: one through-spline plus
-one ending spline, with four-sided patches around them.
+**Fallback seams are unwelded.** Their two sides have matching positions, but
+are separate CPs and can move apart during editing or deformation. Multiple
+independent attachments can occupy the same position. The two-spline limit is
+per attachment, not a claim of at most two spline paths at each spatial position.
+This retains surface coverage and color assignments, but sacrifices some welded
+continuity; it is not global retopology or a watertight deformation mesh. Dense
+unstructured input may need many seams. Welding their sides back together can
+recreate the crowded junction. Quad-compatible regions do not acquire seams.
 
-This is bounded local reconstruction, not a general-purpose quad remesher. Dense
-icosphere layouts and the original sword can still need external retopology.
-The sword is now a rejection regression; it is no longer offered as a successful
-import merely because its output faces are quads. Source positions are preserved,
-but curved patch interiors and shading must be checked inside A:M.
+The preview and completion message report seam counts. Neutral `Part / Seam points`
+groups select all copies of the separated points for inspection. They have no
+surface override. The fallback leaves the converted quad corner positions and
+materials unchanged; curved patch interiors and shading still need a host check.
+The original sword is again a successful portable conversion regression: 2,324
+triangles become 5,544 quads with 13 material groups. Native A:M acceptance is pending.
 
 The 0.1.3 group-color and normalized surface-percentage fixes are retained. The
 owner reported that version working; the report did not identify an exact HXT
@@ -39,7 +42,7 @@ hash. Host acceptance of this new binary remains pending.
    Do not copy SDK libraries or Debug `.hxtd` files into an ordinary A:M host.
 3. Start A:M and use a disposable project. Right-click **Objects**, a **Model**,
    or a **Group inside a model** → **Import → GLB as Quad Patches...**
-4. Choose a GLB. Review the part and quad counts. Default scale is **100 cm per
+4. Choose a GLB. Review the part, quad and unwelded seam counts. Default scale is **100 cm per
    GLB unit**, matching glTF meters. Mirror Z is an explicit orientation option.
 5. Click Import. A new embedded, editable model is created. Check wireframe,
    shaded surfaces, dimensions, named groups and colors; save as `.mdl`.
@@ -63,21 +66,28 @@ that new model. Automatic rollback and one-step Undo are not promised.
   triangles. Up to eight deterministic orderings share a file-wide budget of
   one million search steps; each local search is limited to 12 pairs/1,024 steps.
   The search is not guaranteed to find every possible valid reconstruction.
-- Reject unresolved crowded vertices before subdivision/native creation. If a
-  supported connected region retains triangles, subdivide the whole region to
-  avoid T-junctions: a triangle becomes three quads and a quad becomes four.
-  Shared midpoints and centers introduce no vertex with more than four edges.
+- If a connected region retains triangles or crowded vertices, subdivide the
+  whole region to avoid T-junctions: a triangle becomes three quads and a quad
+  becomes four. This separates old crowded poles by regular midpoints/centers.
+- Around each remaining crowded pole, separate a bounded neighborhood into
+  sectors of at most three incident faces, each bounded by at most four edges.
+  Reconnect whole seam paths when both ends still satisfy the limit. Four cleanup
+  passes share one million fan-corner checks per part; minimum seam count is not
+  guaranteed. Only remaining cut fans receive coincident, unwelded vertex copies.
+  No converted face is removed, duplicated or reassigned to a different material.
+  Native float preparation permits these explicitly tracked copies, while still
+  rejecting unrelated vertices collapsed by scale/coordinate precision.
 - Route each mesh edge once. Four-edge junctions use two through-splines;
   three-edge junctions use one through-spline and one ending spline. CPs remain
-  peaked. Every junction has at most two spline CP records.
+  peaked. Every attachment has at most two spline CP records, including seam sides.
 - Verify native positions, edges, junction counts and each patch's four distinct
   CP heads. Reject missing, duplicate, triangular, five-point or unintended
   patches. Align normals to source winding and Mirror Z. Native failure can still
   leave an incomplete new model for inspection/removal.
 
 Four-sided faces alone do not establish good deformation or ideal spline flow.
-This version improves reconstruction and enforces the junction limit; it does
-not provide global field-guided retopology or fitted smooth spline biases.
+This version provides usable fallback surfaces under the attachment limit; it
+does not provide global field-guided retopology or fitted smooth spline biases.
 
 ## Supported inputs and limits
 
@@ -121,11 +131,11 @@ the model. A:M SDK internal allocation/exception behavior remains host-dependent
   not arbitrary sphere remeshing.
 - `shallow_fan.glb`: six triangles at a common center reconstruct into three
   quads, reducing the center from six edges to three without subdivision.
-- `crowded_pole.glb`: a twelve-edge source pole must stop before model creation,
-  with its part and first unresolved vertex identified.
-- `simple_sword.glb`: the original 2,324-triangle sword retains unresolved crowded
-  regions and must also stop before native creation. Its historical 5,202-quad
-  result does not satisfy this release's two-spline requirement.
+- `crowded_pole.glb`: a twelve-edge source pole now produces 24 quads with
+  unwelded seams. It must reach the preview/import instead of the 0.1.4 refusal.
+- `simple_sword.glb`: the original 2,324-triangle sword now produces 5,544 quads,
+  with seams in nine parts and all 13 material groups covered. It deliberately
+  remains the original input; no replacement sword hides the regression.
 - The square, single triangle, mixed region and cube isolate basic conversion.
   `two_color_parts.glb` tests red/blue groups; `color_boundary.glb` tests a blue
   patch surrounded by red patches sharing CPs.

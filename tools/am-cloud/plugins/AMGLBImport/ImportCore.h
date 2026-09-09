@@ -42,6 +42,9 @@ struct Part {
     std::string name;
     std::vector<Vec3> vertices;
     std::vector<Face> faces;
+    // Empty for welded parts. Otherwise maps intentional seam copies to the
+    // original vertex in this part; unrelated coincident points stay invalid.
+    std::vector<uint32_t> seamSource;
 };
 struct SplinePath {
     std::vector<uint32_t> vertex;
@@ -63,12 +66,16 @@ struct Plan {
     std::vector<std::string> notes;
     size_t inputTriangles = 0, pairedQuads = 0, curvedPairs = 0, subdividedComponents = 0;
     size_t outputQuads = 0, vertices = 0;
+    size_t seamedParts = 0, seamEdges = 0, seamCopies = 0;
     Vec3 minimum{}, maximum{};
 };
 // Parsing and conversion never call the A:M SDK or open external GLB resources.
 Plan ReadGLB(const std::vector<uint8_t>& bytes);
 void ConvertToQuads(Plan& plan);
 void ValidatePlan(Plan& plan);
+// Apply native float precision before touching the host. Only explicitly
+// recorded seam copies may coincide after scaling/mirroring.
+std::vector<std::array<float,3>> PreparePositions(const Part& part,double scale,bool mirror);
 // Each mesh edge occurs exactly once. Three-way junctions have two CP records:
 // one through-spline and one ending spline, never three overlapping splines.
 SplinePlan RouteSplines(const Part& part);
