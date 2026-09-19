@@ -18,7 +18,7 @@ tester records it against that exact binary.
 ## Required functional checks
 
 - Cancel the prompt dialog: no API call/log attempt and no model.
-- Submit `A simple red cube, 20 cm on each side.` with defaults. Confirm the log
+- Submit `Use exactly one red box component: a 20 cm cube.` with defaults. Confirm the log
   start record appears before the network result, the preview reports six patches,
   and cancelling the preview creates no model.
 - Submit the cube again and approve it. Confirm a new embedded model opens, is

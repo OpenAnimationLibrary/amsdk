@@ -45,12 +45,23 @@ def package(native_zip: Path, output: Path) -> Path:
         tracked = subprocess.check_output(
             ['git', 'ls-files', '--', str(plugin_source.relative_to(REPOSITORY))],
             cwd=REPOSITORY, text=True).splitlines()
+        if any(Path(relative).name.casefold() == 'api_key.txt' for relative in tracked):
+            raise ValueError('Refusing to package api_key.txt.')
         for relative in tracked:
             path = REPOSITORY / relative
             destination = root / path.relative_to(plugin_source)
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(path, destination)
-        shutil.copy2(HERE / 'test-results/tests.log', root / 'CORE-AND-BUILDER-TESTS.log')
+        helper_log = (HERE / 'test-results/tests.log').read_text(encoding='utf-8', errors='replace')
+        build_log = (HERE / 'artifacts/diagnostics/msbuild.log').read_text(
+            encoding='utf-8', errors='replace')
+        planner_lines = [line for line in build_log.splitlines()
+                         if 'AMAstraModeler core tests passed:' in line]
+        if len(planner_lines) != 1:
+            raise ValueError('Expected one successful AMAstraModeler pre-link core-test record.')
+        (root / 'CORE-AND-BUILDER-TESTS.log').write_text(
+            helper_log.rstrip() + '\n\nPlanner pre-link gate:\n' + planner_lines[0] + '\n',
+            encoding='utf-8')
         sdk_lock = json.loads((HERE / 'sdk.lock.json').read_text())
         verify_hash(HERE / 'vendor/sdk195.zip', sdk_lock['sha256'])
         shutil.copy2(HERE / 'vendor/sdk195.zip', root / 'sdk195.zip')
