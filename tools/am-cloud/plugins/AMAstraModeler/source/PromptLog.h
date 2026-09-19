@@ -18,7 +18,8 @@ public:
     PromptLog(const PromptLog&) = delete;
     PromptLog& operator=(const PromptLog&) = delete;
 
-    void Begin(std::string_view prompt, std::size_t componentLimit, std::size_t patchLimit);
+    void Begin(std::string_view prompt, std::size_t componentLimit, std::size_t patchLimit,
+               const ReferenceImageMetadata* referenceImage = nullptr);
     void Finish(std::string_view status, const ApiResult* api, const PreparedPlan* plan,
                 std::string_view detail = {});
 

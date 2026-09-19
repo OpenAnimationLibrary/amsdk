@@ -66,7 +66,7 @@
       <Optimization>MaxSpeed</Optimization>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>FileIO_64.lib;Matrix_64.lib;Plugin_64.lib;SDK_64.lib;winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>FileIO_64.lib;Matrix_64.lib;Plugin_64.lib;SDK_64.lib;winhttp.lib;comdlg32.lib;windowscodecs.lib;ole32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreLinkEvent>
       <Command>cl.exe /nologo /std:c++20 /EHsc /W4 /WX /MD /DNDEBUG &quot;$(ProjectDir)ModelPlan.cpp&quot; &quot;$(ProjectDir)..\tests\CoreTests.cpp&quot; /Fe:&quot;$(IntDir)AMAstraModelerCoreTests.exe&quot; /Fo:&quot;$(IntDir)&quot; /Fd:&quot;$(IntDir)AMAstraModelerCoreTests.pdb&quot; /link /INCREMENTAL:NO
@@ -80,7 +80,7 @@
       <Optimization>Disabled</Optimization>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>FileIO_64d.lib;Matrix_64d.lib;Plugin_64d.lib;SDK_64d.lib;winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>FileIO_64d.lib;Matrix_64d.lib;Plugin_64d.lib;SDK_64d.lib;winhttp.lib;comdlg32.lib;windowscodecs.lib;ole32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreLinkEvent>
       <Command>cl.exe /nologo /std:c++20 /EHsc /W4 /WX /MDd /D_DEBUG &quot;$(ProjectDir)ModelPlan.cpp&quot; &quot;$(ProjectDir)..\tests\CoreTests.cpp&quot; /Fe:&quot;$(IntDir)AMAstraModelerCoreTests.exe&quot; /Fo:&quot;$(IntDir)&quot; /Fd:&quot;$(IntDir)AMAstraModelerCoreTests.pdb&quot; /link /INCREMENTAL:NO

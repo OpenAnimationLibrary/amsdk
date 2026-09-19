@@ -8,6 +8,7 @@
 #endif
 #include <windows.h>
 #include <winhttp.h>
+#include <wincodec.h>
 
 #include <algorithm>
 #include <array>
@@ -38,6 +39,19 @@ public:
     explicit operator bool() const { return value_ != nullptr; }
 private:
     HINTERNET value_ = nullptr;
+};
+
+template<class Interface>
+class ComHandle {
+public:
+    ComHandle() = default;
+    ~ComHandle() { if (value_) value_->Release(); }
+    ComHandle(const ComHandle&) = delete;
+    ComHandle& operator=(const ComHandle&) = delete;
+    Interface* get() const { return value_; }
+    Interface** put() { return &value_; }
+private:
+    Interface* value_ = nullptr;
 };
 
 std::string WindowsError(const char* operation) {
@@ -89,6 +103,88 @@ void CheckCancel(const std::atomic_bool& cancelRequested) {
     if (cancelRequested.load(std::memory_order_relaxed)) throw Error("Generation cancelled");
 }
 
+[[noreturn]] void ImageDecodeError(const char* operation, HRESULT result) {
+    std::ostringstream message;
+    message << operation << " failed while decoding the selected reference image (HRESULT 0x"
+            << std::hex << static_cast<unsigned long>(result) << ')';
+    throw Error(message.str());
+}
+
+void DecodeReferenceImage(std::vector<unsigned char>& bytes,
+                          const ReferenceImageMetadata& metadata) {
+    const HRESULT initialized = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+    if (FAILED(initialized) && initialized != RPC_E_CHANGED_MODE)
+        ImageDecodeError("Initialize Windows imaging", initialized);
+    struct UninitializeCom {
+        bool active;
+        ~UninitializeCom() { if (active) CoUninitialize(); }
+    } uninitialize{initialized == S_OK || initialized == S_FALSE};
+
+    ComHandle<IWICImagingFactory> factory;
+    HRESULT result = CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER,
+                                      IID_PPV_ARGS(factory.put()));
+    if (FAILED(result)) ImageDecodeError("Create Windows image decoder", result);
+    ComHandle<IWICStream> stream;
+    result = factory.get()->CreateStream(stream.put());
+    if (FAILED(result)) ImageDecodeError("Create image memory stream", result);
+    result = stream.get()->InitializeFromMemory(bytes.data(), static_cast<DWORD>(bytes.size()));
+    if (FAILED(result)) ImageDecodeError("Open image memory stream", result);
+    ComHandle<IWICBitmapDecoder> decoder;
+    result = factory.get()->CreateDecoderFromStream(stream.get(), nullptr,
+                                                     WICDecodeMetadataCacheOnLoad,
+                                                     decoder.put());
+    if (FAILED(result)) ImageDecodeError("Decode image container", result);
+    UINT frames = 0;
+    result = decoder.get()->GetFrameCount(&frames);
+    if (FAILED(result) || frames != 1)
+        throw Error("Reference image must contain exactly one decodable frame");
+    ComHandle<IWICBitmapFrameDecode> frame;
+    result = decoder.get()->GetFrame(0, frame.put());
+    if (FAILED(result)) ImageDecodeError("Read image frame", result);
+    UINT width = 0;
+    UINT height = 0;
+    result = frame.get()->GetSize(&width, &height);
+    if (FAILED(result)) ImageDecodeError("Read decoded image dimensions", result);
+    if (width != metadata.width || height != metadata.height)
+        throw Error("Decoded reference-image dimensions do not match its file header");
+
+    constexpr UINT PreviewMaximum = 1024;
+    UINT decodedWidth = width;
+    UINT decodedHeight = height;
+    ComHandle<IWICBitmapScaler> scaler;
+    IWICBitmapSource* source = frame.get();
+    if (width > PreviewMaximum || height > PreviewMaximum) {
+        if (width >= height) {
+            decodedWidth = PreviewMaximum;
+            decodedHeight = std::max<UINT>(1, static_cast<UINT>(
+                (static_cast<std::uint64_t>(height) * PreviewMaximum) / width));
+        } else {
+            decodedHeight = PreviewMaximum;
+            decodedWidth = std::max<UINT>(1, static_cast<UINT>(
+                (static_cast<std::uint64_t>(width) * PreviewMaximum) / height));
+        }
+        result = factory.get()->CreateBitmapScaler(scaler.put());
+        if (FAILED(result)) ImageDecodeError("Create image decoder scaler", result);
+        result = scaler.get()->Initialize(frame.get(), decodedWidth, decodedHeight,
+                                           WICBitmapInterpolationModeNearestNeighbor);
+        if (FAILED(result)) ImageDecodeError("Scale decoded image", result);
+        source = scaler.get();
+    }
+    ComHandle<IWICFormatConverter> converter;
+    result = factory.get()->CreateFormatConverter(converter.put());
+    if (FAILED(result)) ImageDecodeError("Create image format converter", result);
+    result = converter.get()->Initialize(source, GUID_WICPixelFormat32bppBGRA,
+                                         WICBitmapDitherTypeNone, nullptr, 0,
+                                         WICBitmapPaletteTypeCustom);
+    if (FAILED(result)) ImageDecodeError("Convert decoded image", result);
+    const UINT stride = decodedWidth * 4;
+    std::vector<unsigned char> decoded(static_cast<std::size_t>(stride) * decodedHeight);
+    result = converter.get()->CopyPixels(nullptr, stride, static_cast<UINT>(decoded.size()),
+                                         decoded.data());
+    if (!decoded.empty()) SecureZeroMemory(decoded.data(), decoded.size());
+    if (FAILED(result)) ImageDecodeError("Read decoded image pixels", result);
+}
+
 } // namespace
 
 std::wstring ProgramDirectory() {
@@ -138,12 +234,15 @@ std::wstring WideFromUtf8(std::string_view text) {
 void SecureErase(std::string& value) noexcept {
     if (!value.empty()) SecureZeroMemory(value.data(), value.size());
     value.clear();
-    value.shrink_to_fit();
 }
 
 std::string LoadApiKey() {
     const std::wstring path = ProgramDirectory() + L"\\api_key.txt";
     auto bytes = ReadSmallFile(path);
+    struct EraseKeyBytes {
+        std::vector<unsigned char>& value;
+        ~EraseKeyBytes() { if (!value.empty()) SecureZeroMemory(value.data(), value.size()); }
+    } eraseKeyBytes{bytes};
     std::size_t begin = 0;
     if (bytes.size() >= 3 && bytes[0] == 0xef && bytes[1] == 0xbb && bytes[2] == 0xbf) begin = 3;
     std::size_t end = bytes.size();
@@ -152,9 +251,10 @@ std::string LoadApiKey() {
     while (end > begin && whitespace(bytes[end - 1])) --end;
     if (begin == end) throw Error("api_key.txt is empty");
     std::string key(reinterpret_cast<const char*>(bytes.data() + begin), end - begin);
-    SecureZeroMemory(bytes.data(), bytes.size());
-    if (key.size() < 20 || key.size() > 4096)
+    if (key.size() < 20 || key.size() > 4096) {
+        SecureErase(key);
         throw Error("api_key.txt does not contain a plausible API key");
+    }
     for (unsigned char c : key) {
         if (c <= 0x20 || c == 0x7f) {
             SecureErase(key);
@@ -164,16 +264,50 @@ std::string LoadApiKey() {
     return key;
 }
 
+ReferenceImage LoadReferenceImage(const std::wstring& path) {
+    if (path.empty()) throw Error("Select a reference image or clear the image field");
+    HANDLE raw = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
+                             FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
+    if (raw == INVALID_HANDLE_VALUE)
+        throw Error("Cannot open the selected reference image. " +
+                    WindowsError("Open reference image"));
+    struct CloseFile { HANDLE value; ~CloseFile() { CloseHandle(value); } } file{raw};
+    LARGE_INTEGER size{};
+    if (!GetFileSizeEx(raw, &size))
+        throw Error("Cannot read the selected reference image size. " +
+                    WindowsError("Read reference image size"));
+    if (size.QuadPart <= 0) throw Error("The selected reference image is empty");
+    if (size.QuadPart > static_cast<LONGLONG>(MaxReferenceImageBytes))
+        throw Error("Reference image exceeds the 4 MiB safety limit");
+    std::vector<unsigned char> bytes(static_cast<std::size_t>(size.QuadPart));
+    struct EraseBytes {
+        std::vector<unsigned char>& value;
+        ~EraseBytes() { if (!value.empty()) SecureZeroMemory(value.data(), value.size()); }
+    } eraseBytes{bytes};
+    DWORD read = 0;
+    if (!ReadFile(raw, bytes.data(), static_cast<DWORD>(bytes.size()), &read, nullptr) ||
+        read != static_cast<DWORD>(bytes.size()))
+        throw Error("Cannot read the complete selected reference image. " +
+                    WindowsError("Read reference image"));
+    const auto separator = path.find_last_of(L"\\/");
+    const std::wstring_view baseName = separator == std::wstring::npos
+        ? std::wstring_view(path) : std::wstring_view(path).substr(separator + 1);
+    if (baseName.empty()) throw Error("The selected reference image has no filename");
+    auto image = PrepareReferenceImage(Utf8FromWide(baseName), bytes);
+    DecodeReferenceImage(bytes, image.metadata);
+    return image;
+}
+
 HttpResponse PostResponses(const std::string& apiKey, const std::string& requestBody,
                            const std::atomic_bool& cancelRequested) {
     if (apiKey.empty()) throw Error("The API key is empty");
-    if (requestBody.empty() || requestBody.size() > MaxResponseBytes)
+    if (requestBody.empty() || requestBody.size() > MaxRequestBytes)
         throw Error("The OpenAI request body has an invalid size");
     if (requestBody.size() > std::numeric_limits<DWORD>::max())
         throw Error("The OpenAI request body is too large for WinHTTP");
     CheckCancel(cancelRequested);
 
-    InternetHandle session(WinHttpOpen(L"AnimationMaster-AstraModeler/0.1.0",
+    InternetHandle session(WinHttpOpen(L"AnimationMaster-AstraModeler/0.2.0",
                                         WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,
                                         WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0));
     if (!session) throw Error(WindowsError("Initialize HTTPS"));

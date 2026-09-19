@@ -11,6 +11,7 @@ from build_support import archive_name, sha256, verify_hash
 
 HERE = Path(__file__).resolve().parent
 REPOSITORY = HERE.parent.parent
+VERSION = '0.2.0'
 
 
 def package(native_zip: Path, output: Path) -> Path:
@@ -19,7 +20,7 @@ def package(native_zip: Path, output: Path) -> Path:
     expected = native_zip.with_suffix('.zip.sha256').read_text().split()[0]
     verify_hash(native_zip, expected)
     with tempfile.TemporaryDirectory() as temporary:
-        root = Path(temporary) / 'AMAstraModeler-0.1.0'
+        root = Path(temporary) / f'AMAstraModeler-{VERSION}'
         native = root / 'plugin'
         native.mkdir(parents=True)
         with zipfile.ZipFile(native_zip) as archive:
@@ -72,7 +73,7 @@ def package(native_zip: Path, output: Path) -> Path:
             for path in sorted(root.rglob('*')) if path.is_file()), encoding='utf-8')
         output.mkdir(parents=True)
         run = receipt['source']['run_id'] or 'local'
-        kit = output / f'AMAstraModeler-0.1.0-Release-x64-r{run}-{commit[:12]}-kit.zip'
+        kit = output / f'AMAstraModeler-{VERSION}-Release-x64-r{run}-{commit[:12]}-kit.zip'
         with zipfile.ZipFile(kit, 'x', zipfile.ZIP_DEFLATED) as archive:
             for path in sorted(root.rglob('*')):
                 if path.is_file():

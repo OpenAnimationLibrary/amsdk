@@ -35,6 +35,24 @@ std::string ValidPlan() {
       ]
     })JSON";
 }
+
+std::vector<unsigned char> PngFixture(std::uint32_t width = 3, std::uint32_t height = 2) {
+    return {
+        0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a,
+        0, 0, 0, 13, 'I', 'H', 'D', 'R',
+        static_cast<unsigned char>(width >> 24), static_cast<unsigned char>(width >> 16),
+        static_cast<unsigned char>(width >> 8), static_cast<unsigned char>(width),
+        static_cast<unsigned char>(height >> 24), static_cast<unsigned char>(height >> 16),
+        static_cast<unsigned char>(height >> 8), static_cast<unsigned char>(height),
+        8, 2, 0, 0, 0, 0, 0, 0, 0
+    };
+}
+
+std::vector<unsigned char> JpegFixture() {
+    return {0xff, 0xd8, 0xff, 0xc0, 0x00, 0x0b, 0x08, 0x00, 0x02, 0x00,
+            0x03, 0x01, 0x01, 0x11, 0x00, 0xff, 0xd9};
+}
+
 }
 
 int main() {
@@ -48,8 +66,17 @@ int main() {
             Reject([] { amjson::parse(R"("\ud800")"); }, "Unpaired surrogate accepted");
         }
         {
-            const auto request = amjson::parse(amastra::BuildRequestJson("Build a red robot.", 12, 1500));
+            const auto textOnlyJson = amastra::BuildRequestJson("Build a red robot.", 12, 1500);
+            Check(textOnlyJson.find("data:image/") == std::string::npos &&
+                  textOnlyJson.find("input_image") == std::string::npos,
+                  "Text-only request contains image data");
+            const auto request = amjson::parse(textOnlyJson);
             Check(request.at("model").as_string() == "gpt-6-astra", "Wrong API model");
+            Check(request.at("input").as_string() == "Build a red robot.",
+                  "Text-only request input changed");
+            Check(request.at("instructions").as_string().find("A reference image is attached") ==
+                      std::string::npos,
+                  "Text-only request contains image instructions");
             Check(request.at("store").as_bool() == false, "API storage was not disabled");
             Check(request.at("parallel_tool_calls").as_bool() == false, "Parallel tool calls were not disabled");
             Check(request.at("reasoning").at("effort").as_string() == "high", "Wrong reasoning effort");
@@ -70,6 +97,119 @@ int main() {
                                                  .at("properties").at("components");
             Check(clampedComponents.at("maxItems").as_number() == 100,
                   "Component request schema was not clamped to the hard maximum");
+        }
+        {
+            Check(amastra::Base64Encode({}) == "", "Empty Base64 vector changed");
+            Check(amastra::Base64Encode({'M'}) == "TQ==", "One-byte Base64 encoding failed");
+            Check(amastra::Base64Encode({'M', 'a'}) == "TWE=", "Two-byte Base64 encoding failed");
+            Check(amastra::Base64Encode({'M', 'a', 'n'}) == "TWFu", "Three-byte Base64 encoding failed");
+            Check(amastra::Base64Encode({0, 1, 2, 0xfd, 0xfe, 0xff}) == "AAEC/f7/",
+                  "Binary Base64 encoding failed");
+
+            const auto png = amastra::PrepareReferenceImage("subject.jpg", PngFixture());
+            Check(png.metadata.mimeType == "image/png", "PNG magic was not authoritative");
+            Check(png.metadata.fileName == "subject.jpg", "Reference-image basename changed");
+            Check(png.metadata.width == 3 && png.metadata.height == 2, "PNG dimensions were not read");
+            Check(png.metadata.byteSize == PngFixture().size(), "PNG byte size was not retained");
+            Check(!png.base64.empty() && png.base64.find('\n') == std::string::npos,
+                  "PNG Base64 is empty or wrapped");
+
+            const auto jpeg = amastra::PrepareReferenceImage("subject.jpeg", JpegFixture());
+            Check(jpeg.metadata.mimeType == "image/jpeg", "JPEG MIME detection failed");
+            Check(jpeg.metadata.width == 3 && jpeg.metadata.height == 2,
+                  "JPEG dimensions were not read");
+
+            Reject([] { amastra::PrepareReferenceImage("empty.png", {}); },
+                   "Empty reference image accepted");
+            Reject([] { amastra::PrepareReferenceImage("bad.png", {1, 2, 3, 4}); },
+                   "Unsupported reference image accepted");
+            Reject([] {
+                auto shortPng = PngFixture();
+                shortPng.resize(12);
+                amastra::PrepareReferenceImage("short.png", shortPng);
+            }, "Truncated PNG accepted");
+            Reject([] {
+                auto zero = PngFixture(0, 2);
+                amastra::PrepareReferenceImage("zero.png", zero);
+            }, "Zero-width PNG accepted");
+            Reject([] {
+                auto tooManyPixels = PngFixture(8193, 8193);
+                amastra::PrepareReferenceImage("huge.png", tooManyPixels);
+            }, "Reference image above the pixel limit accepted");
+            Reject([] { amastra::PrepareReferenceImage("no-frame.jpg", {0xff, 0xd8, 0xff, 0xd9}); },
+                   "JPEG without a frame header accepted");
+            Reject([] { amastra::PrepareReferenceImage("unsupported.webp",
+                                                        {'R', 'I', 'F', 'F', 4, 0, 0, 0,
+                                                         'W', 'E', 'B', 'P'}); },
+                   "Unsupported WebP accepted");
+            Reject([] { amastra::PrepareReferenceImage("folder/subject.png", PngFixture()); },
+                   "Reference-image path accepted as a basename");
+            Reject([] {
+                std::vector<unsigned char> oversized(amastra::MaxReferenceImageBytes + 1, 0);
+                amastra::PrepareReferenceImage("large.png", oversized);
+            }, "Oversized reference image accepted");
+
+            const auto serialized = amastra::BuildRequestJson("Match the pictured vehicle.", 100, 2000,
+                                                               &png);
+            Check(serialized.size() <= amastra::MaxRequestBytes, "Image request exceeds request limit");
+            const auto request = amjson::parse(serialized);
+            const auto& input = request.at("input").as_array();
+            Check(input.size() == 1 && input[0].at("role").as_string() == "user",
+                  "Image request user message is malformed");
+            const auto& content = input[0].at("content").as_array();
+            Check(content.size() == 2, "Image request content count changed");
+            Check(content[0].at("type").as_string() == "input_text" &&
+                  content[0].at("text").as_string() == "Match the pictured vehicle.",
+                  "Image request prompt changed");
+            Check(content[1].at("type").as_string() == "input_image" &&
+                  content[1].at("detail").as_string() == "high",
+                  "Image request type or detail changed");
+            Check(content[1].at("image_url").as_string() ==
+                      "data:image/png;base64," + png.base64,
+                  "Image data URL changed");
+            Check(request.at("instructions").as_string().find("A reference image is attached") !=
+                      std::string::npos,
+                  "Image-specific modeling instruction is missing");
+            Check(request.at("store").as_bool() == false, "Image request enabled API storage");
+            Check(serialized.find("subject.jpg") == std::string::npos,
+                  "Image basename leaked into API request");
+
+            auto badMime = png;
+            badMime.metadata.mimeType = "image/gif";
+            Reject([&] { amastra::BuildRequestJson("Use this image.", 100, 2000, &badMime); },
+                   "Unsupported image MIME accepted by request builder");
+            auto shortBase64 = png;
+            shortBase64.base64.pop_back();
+            Reject([&] { amastra::BuildRequestJson("Use this image.", 100, 2000, &shortBase64); },
+                   "Truncated image Base64 accepted by request builder");
+        }
+        {
+            const std::string encoded(256, 'A');
+            const auto sanitized = amastra::SanitizeDiagnostic(
+                "bad data:image/png;base64," + encoded + " and token " + encoded);
+            Check(sanitized.find("data:image/") == std::string::npos,
+                  "Diagnostic retained an image data URL");
+            Check(sanitized.find(encoded) == std::string::npos,
+                  "Diagnostic retained a long encoded value");
+            Check(sanitized.find("[image data omitted]") != std::string::npos &&
+                  sanitized.find("[long encoded value omitted]") != std::string::npos,
+                  "Diagnostic redaction markers are missing");
+            Check(amastra::SanitizeDiagnostic(std::string(3000, '!')).size() == 2048,
+                  "Diagnostic length limit was not enforced");
+            try {
+                amastra::ExtractApiResult(
+                    amjson::dump(amjson::Value::object({
+                        {"error", amjson::Value::object({
+                            {"message", "invalid data:image/jpeg;base64," + encoded}
+                        })}
+                    })));
+                throw std::runtime_error("API error response was accepted");
+            } catch (const amastra::Error& error) {
+                const std::string message = error.what();
+                Check(message.find("data:image/") == std::string::npos &&
+                      message.find(encoded) == std::string::npos,
+                      "API error exposed image data");
+            }
         }
         {
             const std::string arguments = ValidPlan();

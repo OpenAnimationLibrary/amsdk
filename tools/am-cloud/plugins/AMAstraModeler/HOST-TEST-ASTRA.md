@@ -1,4 +1,4 @@
-# AMAstraModeler 0.1.0 host acceptance — Animation:Master 19.5 x64
+# AMAstraModeler 0.2.0 host acceptance — Animation:Master 19.5 x64
 
 Record the exact Release HXT SHA-256 and build receipt before testing. CI cannot
 launch or inspect Animation:Master, so every item below remains pending until a
@@ -37,6 +37,28 @@ tester records it against that exact binary.
 - Prompt for a 3×3 custom patch-grid flag. Verify exactly four patches, consistent
   winding, smooth/peaked behavior requested by the plan, and editable splines.
 
+## Reference image checks
+
+- Click **Browse...**, cancel the Windows picker, and confirm the prompt dialog is
+  unchanged. Select a small PNG and confirm its path appears. Click **Clear** and
+  confirm the field returns to `No image selected` and the request is text-only.
+- Select known-good PNG and JPEG examples in turn. For each,
+  submit a short prompt such as `Make a stylized model of this vehicle.` with the
+  100-component/2,000-patch defaults. Confirm the validated preview names the
+  image basename and that the resulting silhouette/proportions broadly follow it.
+- Confirm an image request creates no decal, rotoscope, or other image asset in
+  the A:M project. Save/reload the generated `.mdl` and check geometry normally.
+- Try a zero-byte file, a corrupt/truncated file, an unsupported format, a valid
+  image renamed to a different extension, a file over 4 MiB, and an image over
+  64 megapixels.
+  Signature-valid renamed input must use its actual media type; every invalid or
+  oversized input must fail before reading the API key or sending a request.
+- Select an image, then delete or replace it before pressing **Generate Plan**.
+  Confirm the plugin reopens and revalidates the current file rather than using a
+  stale selection.
+- Compare the same short prompt with and without a simple reference image. Record
+  both attempt IDs, previews, token counts, topology totals, and screenshots.
+
 ## Isolation, limits, and failure paths
 
 - Invoke the command from an existing model containing recognizable geometry.
@@ -60,6 +82,12 @@ tester records it against that exact binary.
 - Cancel during generation. Confirm the UI remains responsive, no model is made,
   and the completion log status is `cancelled_during_generation`. Note the time
   needed for a blocking HTTPS operation to return.
+- During generation, test the Cancel button, Escape, Alt+F4, and the title-bar X.
+  Each must request cancellation and keep the modal window open until the worker
+  finishes; A:M must not crash or expose a partial preview.
+- At Windows display scaling of 100%, 150%, and 200%, confirm the prompt field,
+  image path, Browse/Clear controls, limits, disclosure, and Generate/Cancel
+  buttons remain visible and keyboard reachable.
 - Force a native failure only in a disposable project if a reproducible case is
   available. Confirm any partial model retains the `ASTRA INCOMPLETE -` prefix,
   existing models are unchanged, and the log reports failure.
@@ -69,11 +97,17 @@ tester records it against that exact binary.
 - Open `astra_modeler.log` as UTF-8 JSON Lines. Parse every line independently.
 - Confirm the exact prompt—including punctuation and line breaks—is present in the
   matching `attempt_started` record.
+- For image attempts, confirm `reference_image` contains only basename, canonical
+  media type, byte size, dimensions, and `detail: "high"`. For text-only attempts,
+  confirm it is `null`.
 - Confirm the finish record has the same attempt ID, UTC time, `gpt-6-astra`, final
   status, IDs/tokens when supplied, and validated component/patch summary.
 - Search the log, popup screenshots, build diagnostics, and model names for the
   full key. The search must return no matches.
-- Confirm the log contains no raw API response or function-call argument payload.
+- Confirm the log contains no raw API response, function-call argument payload,
+  absolute image path, `data:image/` URL, or recognizable Base64 image fragment.
+- Exercise an API error after selecting an image and confirm the popup and log
+  show redaction markers rather than an echoed data URL or long encoded value.
 
 ## Acceptance record
 

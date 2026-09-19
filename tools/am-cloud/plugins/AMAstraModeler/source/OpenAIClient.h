@@ -6,6 +6,8 @@
 
 namespace amastra {
 
+struct ReferenceImage;
+
 struct HttpResponse {
     unsigned status = 0;
     std::string requestId;
@@ -16,6 +18,7 @@ std::wstring ProgramDirectory();
 std::string Utf8FromWide(std::wstring_view text);
 std::wstring WideFromUtf8(std::string_view text);
 std::string LoadApiKey();
+ReferenceImage LoadReferenceImage(const std::wstring& path);
 void SecureErase(std::string& value) noexcept;
 
 HttpResponse PostResponses(const std::string& apiKey, const std::string& requestBody,

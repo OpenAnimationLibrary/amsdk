@@ -85,14 +85,27 @@ void PromptLog::Write(const amjson::Value& record) {
         throw Error("Cannot append a complete record to astra_modeler.log");
 }
 
-void PromptLog::Begin(std::string_view prompt, std::size_t componentLimit, std::size_t patchLimit) {
+void PromptLog::Begin(std::string_view prompt, std::size_t componentLimit, std::size_t patchLimit,
+                      const ReferenceImageMetadata* referenceImage) {
     if (begun_) throw Error("The prompt-log attempt was already started");
+    amjson::Value imageRecord = nullptr;
+    if (referenceImage) {
+        imageRecord = amjson::Value::object({
+            {"file_name", referenceImage->fileName},
+            {"media_type", referenceImage->mimeType},
+            {"byte_size", static_cast<double>(referenceImage->byteSize)},
+            {"width_px", static_cast<double>(referenceImage->width)},
+            {"height_px", static_cast<double>(referenceImage->height)},
+            {"detail", "high"}
+        });
+    }
     Write(amjson::Value::object({
         {"timestamp_utc", UtcTimestamp()}, {"event", "attempt_started"},
-        {"attempt_id", attemptId_}, {"plugin_version", "0.1.0"},
+        {"attempt_id", attemptId_}, {"plugin_version", "0.2.0"},
         {"model", "gpt-6-astra"}, {"prompt", std::string(prompt)},
         {"component_limit", static_cast<double>(componentLimit)},
-        {"patch_limit", static_cast<double>(patchLimit)}
+        {"patch_limit", static_cast<double>(patchLimit)},
+        {"reference_image", std::move(imageRecord)}
     }));
     begun_ = true;
 }
@@ -120,7 +133,7 @@ void PromptLog::Finish(std::string_view status, const ApiResult* api, const Prep
         record.emplace("spline_paths", static_cast<double>(plan->splinePaths));
         record.emplace("control_point_records", static_cast<double>(plan->controlPointRecords));
     }
-    if (!detail.empty()) record.emplace("detail", std::string(detail));
+    if (!detail.empty()) record.emplace("detail", SanitizeDiagnostic(detail));
     Write(amjson::Value(std::move(record)));
     finished_ = true;
 }

@@ -3,36 +3,41 @@
 
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
-IDD_PROMPT DIALOGEX 0, 0, 430, 286
+IDD_PROMPT DIALOGEX 0, 0, 430, 326
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Astra Modeler 0.1.0 - Prompt"
+CAPTION "Astra Modeler 0.2.0 - Prompt"
 FONT 9, "Segoe UI"
 BEGIN
     LTEXT "Describe the model to create:", -1, 10, 10, 190, 12
-    EDITTEXT IDC_PROMPT, 10, 26, 410, 145, ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP
-    LTEXT "Maximum components:", -1, 10, 183, 102, 12
-    EDITTEXT IDC_COMPONENT_LIMIT, 116, 180, 48, 15, ES_AUTOHSCROLL | ES_NUMBER | WS_TABSTOP
-    LTEXT "Maximum patches:", -1, 187, 183, 90, 12
-    EDITTEXT IDC_PATCH_LIMIT, 281, 180, 58, 15, ES_AUTOHSCROLL | ES_NUMBER | WS_TABSTOP
-    LTEXT "A new embedded model is created only after you approve a validated preview. Existing model geometry is not edited.", -1, 10, 204, 410, 20
-    LTEXT "", IDC_PATH_NOTE, 10, 229, 410, 30
-    DEFPUSHBUTTON "Generate Plan", IDOK, 303, 264, 72, 14
-    PUSHBUTTON "Cancel", IDCANCEL, 381, 264, 39, 14
+    EDITTEXT IDC_PROMPT, 10, 26, 410, 118, ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP
+    LTEXT "Reference image (optional):", -1, 10, 153, 130, 12
+    EDITTEXT IDC_REFERENCE_IMAGE_PATH, 10, 168, 297, 15, ES_READONLY | ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON "&Browse...", IDC_BROWSE_IMAGE, 313, 168, 57, 15
+    PUSHBUTTON "C&lear", IDC_CLEAR_IMAGE, 376, 168, 44, 15, WS_DISABLED
+    LTEXT "PNG or JPEG; 4 MiB and 64 megapixels maximum. The selected image is sent to OpenAI.", -1, 10, 188, 410, 20
+    LTEXT "Maximum components:", -1, 10, 216, 102, 12
+    EDITTEXT IDC_COMPONENT_LIMIT, 116, 213, 48, 15, ES_AUTOHSCROLL | ES_NUMBER | WS_TABSTOP
+    LTEXT "Maximum patches:", -1, 187, 216, 90, 12
+    EDITTEXT IDC_PATCH_LIMIT, 281, 213, 58, 15, ES_AUTOHSCROLL | ES_NUMBER | WS_TABSTOP
+    LTEXT "A new embedded model is created only after you approve a validated preview. Existing model geometry is not edited.", -1, 10, 237, 410, 20
+    LTEXT "", IDC_PATH_NOTE, 10, 262, 410, 30
+    DEFPUSHBUTTON "Generate Plan", IDOK, 303, 304, 72, 14
+    PUSHBUTTON "Cancel", IDCANCEL, 381, 304, 39, 14
 END
 
 IDD_GENERATING DIALOGEX 0, 0, 330, 92
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Astra Modeler 0.1.0 - Generating"
+CAPTION "Astra Modeler 0.2.0 - Generating"
 FONT 9, "Segoe UI"
 BEGIN
-    LTEXT "Astra is creating and validating a bounded A:M patch plan. This can take several minutes.", IDC_GENERATION_STATUS, 12, 13, 306, 32
+    LTEXT "Astra is using the prompt and any selected reference image to create a bounded A:M patch plan. This can take several minutes.", IDC_GENERATION_STATUS, 12, 13, 306, 32
     LTEXT "The A:M project has not been modified.", -1, 12, 51, 220, 12
     PUSHBUTTON "Cancel", IDCANCEL, 269, 66, 49, 14
 END
 
 IDD_PREVIEW DIALOGEX 0, 0, 445, 320
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Astra Modeler 0.1.0 - Validated Plan"
+CAPTION "Astra Modeler 0.2.0 - Validated Plan"
 FONT 9, "Segoe UI"
 BEGIN
     EDITTEXT IDC_PREVIEW_SUMMARY, 10, 10, 425, 277, ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL | WS_VSCROLL | WS_TABSTOP
@@ -41,8 +46,8 @@ BEGIN
 END
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,1,0,0
- PRODUCTVERSION 0,1,0,0
+ FILEVERSION 0,2,0,0
+ PRODUCTVERSION 0,2,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -59,11 +64,11 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "OpenAnimationLibrary"
             VALUE "FileDescription", "Animation:Master Astra Modeler HXT"
-            VALUE "FileVersion", "0.1.0"
+            VALUE "FileVersion", "0.2.0"
             VALUE "InternalName", "AMAstraModeler"
             VALUE "OriginalFilename", "AMAstraModeler_64.hxt"
             VALUE "ProductName", "Astra Modeler for Animation:Master"
-            VALUE "ProductVersion", "0.1.0"
+            VALUE "ProductVersion", "0.2.0"
         END
     END
     BLOCK "VarFileInfo"

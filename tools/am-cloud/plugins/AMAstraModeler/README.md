@@ -1,4 +1,4 @@
-# AMAstraModeler 0.1.0 — Astra model generation for Animation:Master
+# AMAstraModeler 0.2.0 — Astra model generation for Animation:Master
 
 Developed for Rodney Baker / OpenAnimationLibrary with OpenAI Codex assistance.
 Windows x64, Animation:Master 19.5 SDK, native C++ command HXT.
@@ -10,15 +10,16 @@ and begin with a disposable project.
 ## What it does
 
 Right-click **Objects**, a **Model**, or a **Group inside a model**, then choose
-**Wizard → Create Model with Astra...**. Enter a model description and optional
-component/patch limits. The plugin sends the prompt to OpenAI's Responses API
-with model `gpt-6-astra`, receives one strict function call, validates the complete
-plan, and shows a preview. Nothing is added to the A:M project until **Create
-Model** is pressed.
+**Wizard → Create Model with Astra...**. Enter a model description, optionally
+load one reference image with **Browse...**, and set component/patch limits. The
+plugin sends the prompt and selected image to OpenAI's Responses API with model
+`gpt-6-astra`, receives one strict function call, validates the complete plan,
+and shows a preview. Nothing is added to the A:M project until **Create Model**
+is pressed.
 
 The command always creates a **new embedded model** and opens its modeling window.
 It never edits the selected model. Components become disconnected named groups
-with A:M surface colors and finish approximations. Version 0.1.0 supports:
+with A:M surface colors and finish approximations. Version 0.2.0 supports:
 
 - boxes;
 - smooth cube-sphere ellipsoids;
@@ -31,6 +32,25 @@ Tube and lathe ends are intentionally open, so the planner is instructed to bury
 or cover them when a closed silhouette matters. Components can overlap but are
 not Booleaned or welded together. This favors modest stylized models rather than
 dense production topology.
+
+## Reference image input
+
+The prompt dialog now has a **Reference image (optional)** row. Click **Browse...**
+to choose one PNG or JPEG file; the selected path appears in
+the read-only field. Click **Clear** to return to a text-only request. The image is
+read and revalidated when **Generate Plan** is pressed. Validation uses the file
+signature rather than trusting its extension.
+
+Reference images are limited to 4 MiB, 65,535 pixels per side, and 64 megapixels.
+Their signature, dimensions, single-frame structure, and decoded pixels are
+validated with Windows Imaging Component before the API key is read. They are
+sent to OpenAI as a Base64 data URL with `detail: "high"`; they are not added to the
+A:M project as decals, rotoscopes, or image assets. The plugin uses the visible
+subject, silhouette, proportions, and large color regions as modeling guidance.
+It is not photogrammetry: backgrounds and fine texture are ignored, unseen sides
+are inferred, components remain disconnected, and this version does not create
+bones. A clean view with a simple background and a short prompt such as
+`Make a stylized model of this vehicle.` is the intended starting point.
 
 ## Install and configure
 
@@ -66,15 +86,18 @@ The plugin opens and flushes the first log record **before** reading the key or
 sending the prompt. If neither log can be opened, the API request is not made.
 Each attempt has two append-only records:
 
-- `attempt_started`: UTC timestamp, attempt ID, plugin/model, exact prompt, and
-  requested limits;
+- `attempt_started`: UTC timestamp, attempt ID, plugin/model, exact prompt,
+  requested limits, and either `reference_image: null` or the selected image's
+  basename, canonical media type, byte size, dimensions, and `high` detail mode;
 - `attempt_finished`: success, failure, or cancellation; request/response IDs and
   token counts when available; and validated model/material/component/patch/
   vertex/spline/CP totals when available.
 
-Failure detail is recorded, but the API key, Authorization header, full response,
-and function arguments are not. The log can still contain sensitive prompt text;
-protect, retain, or delete it according to your own policy.
+Failure detail is recorded, but the API key, Authorization header, absolute image
+path, image bytes/Base64, full response, and function arguments are not. The log
+can still contain sensitive prompt text and the image basename; protect, retain,
+or delete it according to your own policy. Image data URLs and unusually long
+encoded values are redacted from diagnostic text before display or logging.
 
 ## Validation and failure behavior
 
@@ -86,8 +109,9 @@ quads, junctions that require more than two A:M spline CP records, unsafe spline
 routing, or a limit overrun.
 
 Hard limits are 16 materials, 100 components, 20,000 four-point patches, 100,000
-native CP records, a 16,000-byte prompt, a 1 MiB tool-call argument payload, and
-an 8 MiB API response. The defaults are 100 components and 2,000 patches.
+native CP records, a 16,000-byte prompt, a 4 MiB/64-megapixel reference image, an 8 MiB API
+request, a 1 MiB tool-call argument payload, and an 8 MiB API response. The
+defaults are 100 components and 2,000 patches.
 
 After native creation, the plugin independently checks spline edges, CP positions
 and attachment counts, smooth/peaked state, four-point patch identity, absence of
@@ -111,10 +135,13 @@ The request uses the Responses API with:
 - response storage disabled; and
 - no unsupported sampling fields such as `temperature` or `top_p`.
 
-The exact prompt and the fixed modeling instructions/schema are sent to OpenAI.
-No A:M project geometry or local file contents are uploaded. Review OpenAI's
-current API data controls and your organization's policy before using confidential
-prompts.
+The exact prompt, fixed modeling instructions/schema, and the explicitly selected
+image bytes are sent to OpenAI. Raw image metadata such as EXIF may be present in
+those bytes. No A:M project geometry or other local files are uploaded. The
+request sets `store: false`, but API processing still occurs. Review the current
+[OpenAI image-input documentation](https://developers.openai.com/api/docs/guides/images-vision),
+API data controls, and your organization's policy before using confidential
+prompts or images.
 
 ## Build
 

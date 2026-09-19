@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <set>
@@ -675,7 +676,131 @@ amjson::Value BuildToolSchema(std::size_t componentLimit) {
         {"parameters",std::move(parameters)},{"strict",true}});
 }
 
-std::string BuildRequestJson(std::string_view prompt,std::size_t componentLimit,std::size_t patchLimit) {
+std::string Base64Encode(const std::vector<unsigned char>& bytes) {
+    static constexpr char Alphabet[] =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    if (bytes.size() > MaxReferenceImageBytes)
+        throw Error("Reference image exceeds the 4 MiB safety limit");
+    std::string encoded;
+    encoded.reserve(((bytes.size() + 2) / 3) * 4);
+    for (std::size_t offset = 0; offset < bytes.size(); offset += 3) {
+        const std::uint32_t first = bytes[offset];
+        const std::uint32_t second = offset + 1 < bytes.size() ? bytes[offset + 1] : 0;
+        const std::uint32_t third = offset + 2 < bytes.size() ? bytes[offset + 2] : 0;
+        const std::uint32_t value = (first << 16) | (second << 8) | third;
+        encoded.push_back(Alphabet[(value >> 18) & 63]);
+        encoded.push_back(Alphabet[(value >> 12) & 63]);
+        encoded.push_back(offset + 1 < bytes.size() ? Alphabet[(value >> 6) & 63] : '=');
+        encoded.push_back(offset + 2 < bytes.size() ? Alphabet[value & 63] : '=');
+    }
+    return encoded;
+}
+
+namespace {
+
+std::uint16_t Big16(const std::vector<unsigned char>& bytes, std::size_t offset) {
+    return static_cast<std::uint16_t>((static_cast<std::uint16_t>(bytes[offset]) << 8) |
+                                      bytes[offset + 1]);
+}
+
+std::uint32_t Big32(const std::vector<unsigned char>& bytes, std::size_t offset) {
+    return (static_cast<std::uint32_t>(bytes[offset]) << 24) |
+           (static_cast<std::uint32_t>(bytes[offset + 1]) << 16) |
+           (static_cast<std::uint32_t>(bytes[offset + 2]) << 8) |
+           static_cast<std::uint32_t>(bytes[offset + 3]);
+}
+
+bool BytesEqual(const std::vector<unsigned char>& bytes, std::size_t offset,
+                std::string_view expected) {
+    if (offset > bytes.size() || bytes.size() - offset < expected.size()) return false;
+    for (std::size_t index = 0; index < expected.size(); ++index)
+        if (bytes[offset + index] != static_cast<unsigned char>(expected[index])) return false;
+    return true;
+}
+
+void ValidateDimensions(std::size_t width, std::size_t height) {
+    if (!width || !height || width > MaxReferenceImageDimension ||
+        height > MaxReferenceImageDimension || width > MaxReferenceImagePixels / height)
+        throw Error("Reference image dimensions exceed the 65,535-pixel or 64-megapixel safety limit");
+}
+
+ReferenceImageMetadata InspectPng(const std::vector<unsigned char>& bytes) {
+    static constexpr unsigned char Signature[] = {0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a};
+    if (bytes.size() < 33 || !std::equal(std::begin(Signature), std::end(Signature), bytes.begin()) ||
+        Big32(bytes, 8) != 13 || !BytesEqual(bytes, 12, "IHDR"))
+        throw Error("The selected PNG is malformed or truncated");
+    const auto width = static_cast<std::size_t>(Big32(bytes, 16));
+    const auto height = static_cast<std::size_t>(Big32(bytes, 20));
+    ValidateDimensions(width, height);
+    return {{}, "image/png", bytes.size(), width, height};
+}
+
+bool IsJpegSof(unsigned char marker) {
+    switch (marker) {
+    case 0xc0: case 0xc1: case 0xc2: case 0xc3:
+    case 0xc5: case 0xc6: case 0xc7:
+    case 0xc9: case 0xca: case 0xcb:
+    case 0xcd: case 0xce: case 0xcf:
+        return true;
+    default:
+        return false;
+    }
+}
+
+ReferenceImageMetadata InspectJpeg(const std::vector<unsigned char>& bytes) {
+    if (bytes.size() < 4 || bytes[0] != 0xff || bytes[1] != 0xd8)
+        throw Error("The selected JPEG is malformed or truncated");
+    std::size_t cursor = 2;
+    while (cursor < bytes.size()) {
+        if (bytes[cursor++] != 0xff) throw Error("The selected JPEG has an invalid marker");
+        while (cursor < bytes.size() && bytes[cursor] == 0xff) ++cursor;
+        if (cursor >= bytes.size()) break;
+        const unsigned char marker = bytes[cursor++];
+        if (marker == 0xd9 || marker == 0xda) break;
+        if (marker == 0x01 || marker == 0xd8 || (marker >= 0xd0 && marker <= 0xd7)) continue;
+        if (cursor + 2 > bytes.size()) throw Error("The selected JPEG is truncated");
+        const std::size_t segmentLength = Big16(bytes, cursor);
+        if (segmentLength < 2 || segmentLength > bytes.size() - cursor)
+            throw Error("The selected JPEG has an invalid segment length");
+        if (IsJpegSof(marker)) {
+            if (segmentLength < 7) throw Error("The selected JPEG has an invalid frame header");
+            const auto height = static_cast<std::size_t>(Big16(bytes, cursor + 3));
+            const auto width = static_cast<std::size_t>(Big16(bytes, cursor + 5));
+            ValidateDimensions(width, height);
+            return {{}, "image/jpeg", bytes.size(), width, height};
+        }
+        cursor += segmentLength;
+    }
+    throw Error("The selected JPEG has no supported frame header");
+}
+
+} // namespace
+
+ReferenceImage PrepareReferenceImage(std::string fileName,
+                                     const std::vector<unsigned char>& bytes) {
+    if (bytes.empty()) throw Error("The selected reference image is empty");
+    if (bytes.size() > MaxReferenceImageBytes)
+        throw Error("Reference image exceeds the 4 MiB safety limit");
+    if (fileName.empty() || fileName.size() > 512 ||
+        fileName.find('/') != std::string::npos || fileName.find('\\') != std::string::npos)
+        throw Error("Reference image filename is invalid");
+    for (unsigned char character : fileName)
+        if (character < 0x20 || character == 0x7f)
+            throw Error("Reference image filename contains a control character");
+
+    ReferenceImageMetadata metadata;
+    if (bytes.size() >= 8 && bytes[0] == 0x89 && BytesEqual(bytes, 1, "PNG\r\n\x1a\n"))
+        metadata = InspectPng(bytes);
+    else if (bytes.size() >= 2 && bytes[0] == 0xff && bytes[1] == 0xd8)
+        metadata = InspectJpeg(bytes);
+    else
+        throw Error("Reference image must be a valid PNG or JPEG file");
+    metadata.fileName = std::move(fileName);
+    return {std::move(metadata), Base64Encode(bytes)};
+}
+
+std::string BuildRequestJson(std::string_view prompt,std::size_t componentLimit,std::size_t patchLimit,
+                             const ReferenceImage* image) {
     if(prompt.empty()||prompt.size()>MaxPromptBytes)throw Error("Prompt must contain 1-16000 UTF-8 bytes");
     componentLimit=std::clamp(componentLimit,std::size_t(1),MaxComponents);patchLimit=std::clamp(patchLimit,std::size_t(1),HardMaxPatches);
     std::ostringstream instructions;
@@ -686,11 +811,89 @@ std::string BuildRequestJson(std::string_view prompt,std::size_t componentLimit,
         <<"Tube and lathe ends are open: bury or cover them with another component when a closed silhouette matters. Components are separate A:M groups and are not welded to one another. "
         <<"Prefer low detail, meaningful unique ASCII names, a compact material palette, and deliberate overlap. Avoid zero thickness, coincident duplicate surfaces, and coplanar overlaps. "
         <<"For patch_grid, provide exactly rows*columns row-major points with consistent winding. Material indexes are zero-based. Follow the user's requested subject and proportions.";
-    amjson::Value request=amjson::Value::object({{"model","gpt-6-astra"},{"instructions",instructions.str()},{"input",std::string(prompt)},
+    amjson::Value input{std::string(prompt)};
+    if (image) {
+        const auto& metadata = image->metadata;
+        if ((metadata.mimeType != "image/png" && metadata.mimeType != "image/jpeg") ||
+            metadata.fileName.empty() ||
+            !metadata.byteSize || metadata.byteSize > MaxReferenceImageBytes ||
+            !metadata.width || !metadata.height ||
+            metadata.width > MaxReferenceImageDimension ||
+            metadata.height > MaxReferenceImageDimension ||
+            metadata.width > MaxReferenceImagePixels / metadata.height || image->base64.empty() ||
+            image->base64.size() != ((metadata.byteSize + 2) / 3) * 4)
+            throw Error("Reference image data is incomplete or invalid");
+        instructions << " A reference image is attached. Use its primary subject, major silhouette, proportions, "
+            "and large color regions as guidance. Ignore the background, lighting, texture, text, logos, and tiny "
+            "or hidden details. Infer unseen sides conservatively using only the supported component types.";
+        const std::string imageUrl = "data:" + metadata.mimeType + ";base64," + image->base64;
+        input = amjson::Value::array({amjson::Value::object({
+            {"role", "user"},
+            {"content", amjson::Value::array({
+                amjson::Value::object({{"type", "input_text"}, {"text", std::string(prompt)}}),
+                amjson::Value::object({{"type", "input_image"}, {"image_url", imageUrl},
+                                       {"detail", "high"}})
+            })}
+        })});
+    }
+    amjson::Value request=amjson::Value::object({{"model","gpt-6-astra"},{"instructions",instructions.str()},{"input",std::move(input)},
         {"reasoning",amjson::Value::object({{"effort","high"}})},{"max_output_tokens",20000},{"store",false},{"parallel_tool_calls",false},
         {"tools",amjson::Value::array({BuildToolSchema(componentLimit)})},
         {"tool_choice",amjson::Value::object({{"type","function"},{"name","build_animation_master_model"}})}});
-    return amjson::dump(request);
+    auto serialized = amjson::dump(request);
+    if (serialized.size() > MaxRequestBytes)
+        throw Error("OpenAI request exceeds the 8 MiB safety limit");
+    return serialized;
+}
+
+std::string SanitizeDiagnostic(std::string_view detail) {
+    constexpr std::size_t Limit = 2048;
+    const auto base64Character = [](unsigned char character) {
+        return (character >= 'A' && character <= 'Z') ||
+               (character >= 'a' && character <= 'z') ||
+               (character >= '0' && character <= '9') ||
+               character == '+' || character == '/' || character == '=';
+    };
+    const auto dataImageAt = [&](std::size_t offset) {
+        static constexpr std::string_view Prefix = "data:image/";
+        if (detail.size() - offset < Prefix.size()) return false;
+        for (std::size_t index = 0; index < Prefix.size(); ++index) {
+            unsigned char found = static_cast<unsigned char>(detail[offset + index]);
+            if (found >= 'A' && found <= 'Z') found = static_cast<unsigned char>(found + ('a' - 'A'));
+            if (found != static_cast<unsigned char>(Prefix[index])) return false;
+        }
+        return true;
+    };
+    std::string result;
+    result.reserve(std::min(detail.size(), Limit));
+    for (std::size_t offset = 0; offset < detail.size() && result.size() < Limit;) {
+        if (dataImageAt(offset)) {
+            static constexpr std::string_view Replacement = "[image data omitted]";
+            result.append(Replacement.substr(0, Limit - result.size()));
+            offset += 11;
+            while (offset < detail.size()) {
+                const unsigned char character = static_cast<unsigned char>(detail[offset]);
+                if (character <= 0x20 || character == '"' || character == '\'' ||
+                    character == '<' || character == '>' || character == ')' ||
+                    character == ']' || character == '}') break;
+                ++offset;
+            }
+            continue;
+        }
+        if (base64Character(static_cast<unsigned char>(detail[offset]))) {
+            std::size_t end = offset + 1;
+            while (end < detail.size() &&
+                   base64Character(static_cast<unsigned char>(detail[end]))) ++end;
+            if (end - offset >= 128) {
+                static constexpr std::string_view Replacement = "[long encoded value omitted]";
+                result.append(Replacement.substr(0, Limit - result.size()));
+                offset = end;
+                continue;
+            }
+        }
+        result.push_back(detail[offset++]);
+    }
+    return result;
 }
 
 ApiResult ExtractApiResult(std::string_view responseJson,std::string requestId) {
@@ -698,7 +901,7 @@ ApiResult ExtractApiResult(std::string_view responseJson,std::string requestId) 
     const auto root=amjson::parse(responseJson);
     if(const auto* error=root.find("error");error&&error->is_object()){
         if(const auto* message=error->find("message");message&&message->is_string())
-            throw Error("OpenAI API: "+message->as_string().substr(0,2048));
+            throw Error("OpenAI API: "+SanitizeDiagnostic(message->as_string()));
         throw Error("OpenAI API returned an error");}
     ApiResult result;result.requestId=std::move(requestId);
     result.responseId=root.at("id").as_string();

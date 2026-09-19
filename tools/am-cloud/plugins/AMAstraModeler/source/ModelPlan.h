@@ -13,7 +13,11 @@
 namespace amastra {
 
 constexpr std::size_t MaxResponseBytes = 8 * 1024 * 1024;
+constexpr std::size_t MaxRequestBytes = 8 * 1024 * 1024;
 constexpr std::size_t MaxPromptBytes = 16000;
+constexpr std::size_t MaxReferenceImageBytes = 4 * 1024 * 1024;
+constexpr std::size_t MaxReferenceImageDimension = 65535;
+constexpr std::size_t MaxReferenceImagePixels = 64 * 1024 * 1024;
 constexpr std::size_t MaxMaterials = 16;
 constexpr std::size_t MaxComponents = 100;
 constexpr std::size_t HardMaxPatches = 20000;
@@ -21,6 +25,19 @@ constexpr std::size_t HardMaxControlPointRecords = 100000;
 
 struct Error : std::runtime_error {
     using std::runtime_error::runtime_error;
+};
+
+struct ReferenceImageMetadata {
+    std::string fileName;
+    std::string mimeType;
+    std::size_t byteSize = 0;
+    std::size_t width = 0;
+    std::size_t height = 0;
+};
+
+struct ReferenceImage {
+    ReferenceImageMetadata metadata;
+    std::string base64;
 };
 
 struct Vec3 {
@@ -137,9 +154,13 @@ PreparedPlan PreparePlan(ModelPlan plan, std::size_t requestedPatchLimit,
 SplinePlan RouteSplines(const MeshPart& part);
 
 amjson::Value BuildToolSchema(std::size_t componentLimit);
+std::string Base64Encode(const std::vector<unsigned char>& bytes);
+ReferenceImage PrepareReferenceImage(std::string fileName,
+                                     const std::vector<unsigned char>& bytes);
 std::string BuildRequestJson(std::string_view prompt, std::size_t componentLimit,
-                             std::size_t patchLimit);
+                             std::size_t patchLimit, const ReferenceImage* image = nullptr);
 ApiResult ExtractApiResult(std::string_view responseJson, std::string requestId = {});
+std::string SanitizeDiagnostic(std::string_view detail);
 
 std::string KindName(Component::Kind kind);
 std::string FinishName(Material::Finish finish);
