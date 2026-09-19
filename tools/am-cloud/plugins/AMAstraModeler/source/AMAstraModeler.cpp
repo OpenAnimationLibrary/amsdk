@@ -93,7 +93,7 @@ std::size_t PositiveInteger(std::wstring_view text, std::size_t minimum, std::si
 class PromptDialog final : public CDialog {
 public:
     std::string prompt;
-    std::size_t componentLimit = 24;
+    std::size_t componentLimit = 100;
     std::size_t patchLimit = 2000;
 
     PromptDialog() : CDialog(IDD_PROMPT, CWnd::FromHandle(GetMainApplicationWnd())) {}
@@ -102,7 +102,7 @@ protected:
     BOOL OnInitDialog() override {
         CDialog::OnInitDialog();
         try {
-            SetControlText(m_hWnd, IDC_COMPONENT_LIMIT, L"24");
+            SetControlText(m_hWnd, IDC_COMPONENT_LIMIT, L"100");
             SetControlText(m_hWnd, IDC_PATCH_LIMIT, L"2000");
             const auto directory = amastra::ProgramDirectory();
             SetControlText(m_hWnd, IDC_PATH_NOTE,

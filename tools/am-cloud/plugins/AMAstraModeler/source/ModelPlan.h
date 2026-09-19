@@ -15,7 +15,7 @@ namespace amastra {
 constexpr std::size_t MaxResponseBytes = 8 * 1024 * 1024;
 constexpr std::size_t MaxPromptBytes = 16000;
 constexpr std::size_t MaxMaterials = 16;
-constexpr std::size_t MaxComponents = 32;
+constexpr std::size_t MaxComponents = 100;
 constexpr std::size_t HardMaxPatches = 20000;
 constexpr std::size_t HardMaxControlPointRecords = 100000;
 

@@ -516,7 +516,8 @@ ModelPlan ParseModelPlan(const amjson::Value& root) {
         plan.materials.push_back(std::move(material));
     }
     const auto& components = root.at("components").as_array();
-    if (components.empty() || components.size() > MaxComponents) throw Error("components must contain 1-32 entries");
+    if (components.empty() || components.size() > MaxComponents)
+        throw Error("components must contain 1-" + std::to_string(MaxComponents) + " entries");
     std::set<std::string> componentNames;
     for (const auto& value : components) {
         const auto kind = value.at("kind").as_string();
@@ -645,7 +646,8 @@ SplinePlan RouteSplines(const MeshPart& part) {
 PreparedPlan PreparePlan(ModelPlan plan, std::size_t requestedPatchLimit,
                          std::size_t requestedComponentLimit) {
     if(requestedPatchLimit<1||requestedPatchLimit>HardMaxPatches)throw Error("Patch limit must be 1-20000");
-    if(requestedComponentLimit<1||requestedComponentLimit>MaxComponents)throw Error("Component limit must be 1-32");
+    if(requestedComponentLimit<1||requestedComponentLimit>MaxComponents)
+        throw Error("Component limit must be 1-" + std::to_string(MaxComponents));
     if(plan.components.size()>requestedComponentLimit)throw Error("Astra plan exceeds the requested component limit");
     PreparedPlan prepared;prepared.source=std::move(plan);prepared.parts.reserve(prepared.source.components.size());
     for(const auto& component:prepared.source.components){MeshPart part=BuildMesh(component);RoundToNativePrecision(part);ValidateMesh(part);
@@ -679,6 +681,7 @@ std::string BuildRequestJson(std::string_view prompt,std::size_t componentLimit,
     std::ostringstream instructions;
     instructions<<"Create a modest, editable, stylized patch model for Animation:Master. Call build_animation_master_model exactly once. "
         <<"All coordinates and dimensions are centimeters. Y is up. Use at most "<<componentLimit<<" components and keep the estimated total below "<<patchLimit<<" quad patches. "
+        <<"The component limit is a ceiling, not a target: use only the components needed for a clear result. "
         <<"Use boxes for hard forms, ellipsoids for rounded closed forms, tori for rings, open tapered tubes for limbs/rails, bottom-to-top positive-radius lathes for revolved forms, and patch grids for custom sheets. "
         <<"Tube and lathe ends are open: bury or cover them with another component when a closed silhouette matters. Components are separate A:M groups and are not welded to one another. "
         <<"Prefer low detail, meaningful unique ASCII names, a compact material palette, and deliberate overlap. Avoid zero thickness, coincident duplicate surfaces, and coplanar overlaps. "

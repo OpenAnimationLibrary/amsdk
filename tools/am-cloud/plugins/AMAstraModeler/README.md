@@ -85,9 +85,9 @@ out-of-range coordinates, collapsed points, zero-area/duplicate/non-manifold
 quads, junctions that require more than two A:M spline CP records, unsafe spline
 routing, or a limit overrun.
 
-Hard limits are 16 materials, 32 components, 20,000 four-point patches, 100,000
+Hard limits are 16 materials, 100 components, 20,000 four-point patches, 100,000
 native CP records, a 16,000-byte prompt, a 1 MiB tool-call argument payload, and
-an 8 MiB API response. The defaults are 24 components and 2,000 patches.
+an 8 MiB API response. The defaults are 100 components and 2,000 patches.
 
 After native creation, the plugin independently checks spline edges, CP positions
 and attachment counts, smooth/peaked state, four-point patch identity, absence of

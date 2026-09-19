@@ -60,6 +60,16 @@ int main() {
             Check(request.find("temperature") == nullptr && request.find("top_p") == nullptr,
                   "Unsupported sampling fields were sent");
             Reject([] { amastra::BuildRequestJson("", 12, 1500); }, "Empty prompt accepted");
+            const auto maximumRequest = amjson::parse(amastra::BuildRequestJson("Build a detailed model.", 100, 2000));
+            const auto& maximumComponents = maximumRequest.at("tools").as_array().at(0).at("parameters")
+                                                 .at("properties").at("components");
+            Check(maximumComponents.at("maxItems").as_number() == 100,
+                  "100-component request schema was not preserved");
+            const auto clampedRequest = amjson::parse(amastra::BuildRequestJson("Build a detailed model.", 101, 2000));
+            const auto& clampedComponents = clampedRequest.at("tools").as_array().at(0).at("parameters")
+                                                 .at("properties").at("components");
+            Check(clampedComponents.at("maxItems").as_number() == 100,
+                  "Component request schema was not clamped to the hard maximum");
         }
         {
             const std::string arguments = ValidPlan();
@@ -121,6 +131,32 @@ int main() {
             auto unknown = amjson::parse(ValidPlan());
             unknown.as_object().at("components").as_array()[0].as_object().emplace("surprise", true);
             Reject([&] { amastra::ParseModelPlan(unknown); }, "Unknown component field accepted");
+        }
+        {
+            auto hundred = amjson::parse(ValidPlan());
+            auto& components = hundred.as_object().at("components").as_array();
+            const auto prototype = components.front();
+            components.clear();
+            for (std::size_t index = 0; index < amastra::MaxComponents; ++index) {
+                auto component = prototype;
+                component.as_object().at("name") = "Box" + std::to_string(index);
+                component.as_object().at("center") = amjson::Value::array({static_cast<double>(index) * 20, 0, 0});
+                components.push_back(std::move(component));
+            }
+            auto plan = amastra::ParseModelPlan(hundred);
+            Check(plan.components.size() == 100, "100-component plan was not accepted");
+            const auto prepared = amastra::PreparePlan(std::move(plan), 2000, 100);
+            Check(prepared.parts.size() == 100 && prepared.patches == 600,
+                  "100-component plan produced unexpected totals");
+            Reject([&] { amastra::PreparePlan(amastra::ParseModelPlan(hundred), 2000, 99); },
+                   "Requested 99-component limit was not enforced");
+            Reject([&] { amastra::PreparePlan(amastra::ParseModelPlan(hundred), 2000, 101); },
+                   "Requested component limit above 100 was accepted");
+            auto extra = prototype;
+            extra.as_object().at("name") = "Box100";
+            extra.as_object().at("center") = amjson::Value::array({2000, 0, 0});
+            hundred.as_object().at("components").as_array().push_back(std::move(extra));
+            Reject([&] { amastra::ParseModelPlan(hundred); }, "101-component plan was accepted");
         }
         std::cout << "AMAstraModeler core tests passed: " << checks << " checks\n";
         return 0;

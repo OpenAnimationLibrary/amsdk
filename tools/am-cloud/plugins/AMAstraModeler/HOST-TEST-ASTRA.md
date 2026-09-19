@@ -45,6 +45,8 @@ tester records it against that exact binary.
   models and closing one view does not corrupt the other.
 - Enter a one-patch limit for a cube. Confirm preflight rejects the plan before a
   model is created and records failure in the log.
+- Confirm the maximum-components field accepts `100` and rejects `101` before
+  reading the key or sending a network request. Keep the patch limit at `2000`.
 - Temporarily rename `api_key.txt`. Confirm a clear error, no network request, no
   model, and a failure completion record. Restore the key afterward.
 - Use a deliberately invalid/revoked test key. Confirm the popup and log include a
