@@ -294,6 +294,17 @@ void ValidateMesh(const MeshPart& part) {
     }
 }
 
+void RoundToNativePrecision(MeshPart& part) {
+    std::set<std::array<float, 3>> positions;
+    for (auto& point : part.vertices) {
+        const std::array<float, 3> native{static_cast<float>(point.x), static_cast<float>(point.y),
+                                          static_cast<float>(point.z)};
+        if (!positions.insert(native).second)
+            throw Error("Component '" + part.name + "' collapses distinct points at A:M float precision");
+        point = {native[0], native[1], native[2]};
+    }
+}
+
 MeshPart BuildMesh(const Component& component) {
     switch (component.kind) {
     case Component::Kind::Box: return Box(component);
@@ -631,10 +642,13 @@ SplinePlan RouteSplines(const MeshPart& part) {
     return result;
 }
 
-PreparedPlan PreparePlan(ModelPlan plan, std::size_t requestedPatchLimit) {
+PreparedPlan PreparePlan(ModelPlan plan, std::size_t requestedPatchLimit,
+                         std::size_t requestedComponentLimit) {
     if(requestedPatchLimit<1||requestedPatchLimit>HardMaxPatches)throw Error("Patch limit must be 1-20000");
+    if(requestedComponentLimit<1||requestedComponentLimit>MaxComponents)throw Error("Component limit must be 1-32");
+    if(plan.components.size()>requestedComponentLimit)throw Error("Astra plan exceeds the requested component limit");
     PreparedPlan prepared;prepared.source=std::move(plan);prepared.parts.reserve(prepared.source.components.size());
-    for(const auto& component:prepared.source.components){MeshPart part=BuildMesh(component);ValidateMesh(part);
+    for(const auto& component:prepared.source.components){MeshPart part=BuildMesh(component);RoundToNativePrecision(part);ValidateMesh(part);
         if(prepared.patches+part.faces.size()>requestedPatchLimit)throw Error("Astra plan exceeds the requested patch limit before A:M is modified");
         part.splines=RouteSplines(part);std::size_t records=0;for(auto count:part.splines.occurrences)records+=count;
         if(prepared.controlPointRecords+records>HardMaxControlPointRecords)throw Error("Astra plan exceeds the control-point record limit");

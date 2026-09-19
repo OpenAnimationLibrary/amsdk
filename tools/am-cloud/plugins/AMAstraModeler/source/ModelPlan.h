@@ -132,7 +132,8 @@ struct ApiResult {
 
 std::string SafeName(std::string_view utf8, std::string_view fallback, std::size_t maximum = 64);
 ModelPlan ParseModelPlan(const amjson::Value& root);
-PreparedPlan PreparePlan(ModelPlan plan, std::size_t requestedPatchLimit);
+PreparedPlan PreparePlan(ModelPlan plan, std::size_t requestedPatchLimit,
+                         std::size_t requestedComponentLimit = MaxComponents);
 SplinePlan RouteSplines(const MeshPart& part);
 
 amjson::Value BuildToolSchema(std::size_t componentLimit);

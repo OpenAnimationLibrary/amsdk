@@ -94,6 +94,8 @@ int main() {
                 for (auto count : part.splines.occurrences) Check(count >= 1 && count <= 2, "A point exceeds two spline records");
             }
             Reject([] { amastra::PreparePlan(amastra::ParseModelPlan(amjson::parse(ValidPlan())), 85); }, "Patch budget not enforced");
+            Reject([] { amastra::PreparePlan(amastra::ParseModelPlan(amjson::parse(ValidPlan())), 1000, 5); },
+                   "Component budget not enforced");
         }
         {
             auto malformed = amjson::parse(ValidPlan());
@@ -103,6 +105,12 @@ int main() {
             auto& points = collapsed.as_object().at("components").as_array().back().as_object().at("points").as_array();
             points[1] = points[0];
             Reject([&] { amastra::PreparePlan(amastra::ParseModelPlan(collapsed), 1000); }, "Collapsed grid accepted");
+            auto floatCollapsed = amjson::parse(ValidPlan());
+            auto& nativePoints = floatCollapsed.as_object().at("components").as_array().back().as_object().at("points").as_array();
+            nativePoints[0] = amjson::Value::array({10000.0,0,0});
+            nativePoints[1] = amjson::Value::array({10000.0001,0,0});
+            Reject([&] { amastra::PreparePlan(amastra::ParseModelPlan(floatCollapsed), 1000); },
+                   "A:M float-precision collapse accepted");
             auto unknown = amjson::parse(ValidPlan());
             unknown.as_object().at("components").as_array()[0].as_object().emplace("surprise", true);
             Reject([&] { amastra::ParseModelPlan(unknown); }, "Unknown component field accepted");

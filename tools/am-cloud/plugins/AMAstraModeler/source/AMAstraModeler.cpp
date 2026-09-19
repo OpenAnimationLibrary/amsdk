@@ -138,9 +138,11 @@ protected:
 
 class GenerateDialog final : public CDialog {
 public:
-    GenerateDialog(std::string apiKey, std::string requestBody, std::size_t patchLimit)
+    GenerateDialog(std::string apiKey, std::string requestBody, std::size_t componentLimit,
+                   std::size_t patchLimit)
         : CDialog(IDD_GENERATING, CWnd::FromHandle(GetMainApplicationWnd())),
-          apiKey_(std::move(apiKey)), requestBody_(std::move(requestBody)), patchLimit_(patchLimit) {}
+          apiKey_(std::move(apiKey)), requestBody_(std::move(requestBody)),
+          componentLimit_(componentLimit), patchLimit_(patchLimit) {}
 
     ~GenerateDialog() override {
         cancelRequested_.store(true, std::memory_order_relaxed);
@@ -209,7 +211,7 @@ private:
             }
             api = amastra::ExtractApiResult(response.body, response.requestId);
             const auto root = amjson::parse(api.arguments);
-            plan = amastra::PreparePlan(amastra::ParseModelPlan(root), patchLimit_);
+            plan = amastra::PreparePlan(amastra::ParseModelPlan(root), patchLimit_, componentLimit_);
             if (cancelRequested_.load(std::memory_order_relaxed)) throw amastra::Error("Generation cancelled");
         } catch (const std::exception& failure) {
             error = failure.what();
@@ -222,6 +224,7 @@ private:
 
     std::string apiKey_;
     std::string requestBody_;
+    std::size_t componentLimit_ = 0;
     std::size_t patchLimit_ = 0;
     std::atomic_bool cancelRequested_{false};
     std::thread worker_;
@@ -492,12 +495,13 @@ void VerifyAndMaterial(HModelCache* model, const NativePlan& expected,
 
     model->Update();
     model->FindPatches();
-    const auto count = model->GetPatchCount();
-    if (count > amastra::HardMaxPatches * 2) throw amastra::Error("A:M returned an invalid patch count");
+    const int count = model->GetPatchCount();
+    if (count < 0 || static_cast<std::size_t>(count) > amastra::HardMaxPatches * 2)
+        throw amastra::Error("A:M returned an invalid patch count");
     auto remaining = expected.patches;
     std::size_t unexpected = 0;
-    for (UINT index = 0; index < count; ++index) {
-        const auto found = remaining.find(NativePatchKey(model->GetPatch(index)));
+    for (int index = 0; index < count; ++index) {
+        const auto found = remaining.find(NativePatchKey(model->GetPatch(static_cast<UINT>(index))));
         if (found == remaining.end()) ++unexpected;
         else remaining.erase(found);
     }
@@ -511,8 +515,8 @@ void VerifyAndMaterial(HModelCache* model, const NativePlan& expected,
         message << " Materials were not assigned because topology verification failed.";
         throw amastra::Error(message.str());
     }
-    for (UINT index = 0; index < count; ++index) {
-        auto* patch = model->GetPatch(index);
+    for (int index = 0; index < count; ++index) {
+        auto* patch = model->GetPatch(static_cast<UINT>(index));
         const auto& wanted = expected.patches.at(NativePatchKey(patch));
         Vector normal;
         patch->GetPointNormalOnPatch(.5F, .5F, normal);
@@ -526,8 +530,8 @@ void VerifyAndMaterial(HModelCache* model, const NativePlan& expected,
     if (model->GetPatchCount() != count || model->GetHeadPatch5())
         throw amastra::Error("A:M changed patch topology while assigning materials");
     std::map<PatchKey, HPatch*> patches;
-    for (UINT index = 0; index < count; ++index) {
-        auto* patch = model->GetPatch(index);
+    for (int index = 0; index < count; ++index) {
+        auto* patch = model->GetPatch(static_cast<UINT>(index));
         const auto key = NativePatchKey(patch);
         if (!expected.patches.count(key) || !patches.emplace(key, patch).second)
             throw amastra::Error("A:M changed patch identity while assigning materials");
@@ -598,7 +602,8 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject* object, std::uin
         const std::string request = amastra::BuildRequestJson(promptDialog.prompt,
                                                               promptDialog.componentLimit,
                                                               promptDialog.patchLimit);
-        GenerateDialog generation(std::move(apiKey), request, promptDialog.patchLimit);
+        GenerateDialog generation(std::move(apiKey), request, promptDialog.componentLimit,
+                                  promptDialog.patchLimit);
         amastra::SecureErase(apiKey);
         const auto generationResult = generation.DoModal();
         api = generation.api;
