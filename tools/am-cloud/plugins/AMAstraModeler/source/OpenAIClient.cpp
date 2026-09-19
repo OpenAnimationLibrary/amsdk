@@ -77,6 +77,7 @@ std::string QueryHeader(HINTERNET request, const wchar_t* name) {
     DWORD bytes = 0;
     WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM, name, nullptr, &bytes, WINHTTP_NO_HEADER_INDEX);
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER || bytes < sizeof(wchar_t)) return {};
+    if (bytes > 4096) throw Error("OpenAI returned an oversized response header");
     std::vector<wchar_t> value(bytes / sizeof(wchar_t));
     if (!WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM, name, value.data(), &bytes,
                              WINHTTP_NO_HEADER_INDEX)) return {};

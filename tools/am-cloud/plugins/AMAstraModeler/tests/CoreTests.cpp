@@ -75,7 +75,14 @@ int main() {
             Check(extracted.arguments == arguments, "Function arguments changed");
             Check(extracted.inputTokens == 100 && extracted.outputTokens == 200, "Usage not parsed");
             Reject([] { amastra::ExtractApiResult(R"({"id":"x","status":"incomplete","output":[]})"); }, "Incomplete response accepted");
+            Reject([] { amastra::ExtractApiResult(R"({"id":"x","output":[]})"); }, "Response without status accepted");
             Reject([] { amastra::ExtractApiResult(R"({"error":{"message":"bad request"}})"); }, "API error accepted");
+            Reject([&] {
+                auto unexpected = envelope;
+                unexpected.as_object().at("output").as_array().push_back(amjson::Value::object({
+                    {"type","function_call"},{"name","unexpected"},{"arguments","{}"}}));
+                amastra::ExtractApiResult(amjson::dump(unexpected));
+            }, "Unexpected function call accepted");
         }
         {
             auto plan = amastra::ParseModelPlan(amjson::parse(ValidPlan()));

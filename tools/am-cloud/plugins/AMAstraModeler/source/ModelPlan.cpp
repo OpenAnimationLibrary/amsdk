@@ -694,14 +694,18 @@ ApiResult ExtractApiResult(std::string_view responseJson,std::string requestId) 
     if(responseJson.empty()||responseJson.size()>MaxResponseBytes)throw Error("OpenAI response is empty or exceeds 8 MiB");
     const auto root=amjson::parse(responseJson);
     if(const auto* error=root.find("error");error&&error->is_object()){
-        if(const auto* message=error->find("message");message&&message->is_string())throw Error("OpenAI API: "+message->as_string());
+        if(const auto* message=error->find("message");message&&message->is_string())
+            throw Error("OpenAI API: "+message->as_string().substr(0,2048));
         throw Error("OpenAI API returned an error");}
     ApiResult result;result.requestId=std::move(requestId);
-    if(const auto* id=root.find("id");id&&id->is_string())result.responseId=id->as_string();
-    if(const auto* status=root.find("status");status&&status->is_string()&&status->as_string()!="completed")throw Error("OpenAI response did not complete: "+status->as_string());
+    result.responseId=root.at("id").as_string();
+    if(result.responseId.empty()||result.responseId.size()>256)throw Error("OpenAI response has an invalid ID");
+    const auto& status=root.at("status").as_string();
+    if(status!="completed")throw Error("OpenAI response did not complete: "+status.substr(0,128));
     const auto& output=root.at("output").as_array();std::size_t calls=0;
     for(const auto& item:output){if(!item.is_object())continue;const auto* type=item.find("type");if(!type||!type->is_string()||type->as_string()!="function_call")continue;
-        const auto& name=item.at("name").as_string();if(name!="build_animation_master_model")continue;++calls;result.arguments=item.at("arguments").as_string();}
+        ++calls;const auto& name=item.at("name").as_string();if(name!="build_animation_master_model")throw Error("Astra returned an unexpected function call");
+        result.arguments=item.at("arguments").as_string();}
     if(calls!=1||result.arguments.empty())throw Error("Astra did not return exactly one required model-plan tool call");
     if(result.arguments.size()>1024*1024)throw Error("Astra model plan exceeds 1 MiB");
     if(const auto* usage=root.find("usage");usage&&usage->is_object()){
