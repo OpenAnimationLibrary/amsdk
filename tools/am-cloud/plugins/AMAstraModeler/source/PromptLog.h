@@ -23,6 +23,13 @@ public:
     void Finish(std::string_view status, const ApiResult* api, const PreparedPlan* plan,
                 std::string_view detail = {});
 
+    void BeginReferenceImage(std::string_view operation, std::string_view prompt,
+                             const ReferenceImageMetadata* source = nullptr);
+    void FinishReferenceImage(std::string_view operation, std::string_view status,
+                              const ImageApiResult* api = nullptr,
+                              const ReferenceImageMetadata* result = nullptr,
+                              std::string_view detail = {});
+
     const std::wstring& path() const { return path_; }
     const std::string& attemptId() const { return attemptId_; }
 
@@ -35,6 +42,8 @@ private:
     std::string attemptId_;
     bool begun_ = false;
     bool finished_ = false;
+    bool referenceImageBegun_ = false;
+    std::string referenceImageOperation_;
 };
 
 } // namespace amastra

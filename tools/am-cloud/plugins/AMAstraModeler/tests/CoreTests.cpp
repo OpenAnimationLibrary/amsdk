@@ -105,19 +105,66 @@ int main() {
             Check(amastra::Base64Encode({'M', 'a', 'n'}) == "TWFu", "Three-byte Base64 encoding failed");
             Check(amastra::Base64Encode({0, 1, 2, 0xfd, 0xfe, 0xff}) == "AAEC/f7/",
                   "Binary Base64 encoding failed");
+            Check(amastra::Base64Decode("").empty(), "Empty Base64 decode changed");
+            Check(amastra::Base64Decode("TQ==") == std::vector<unsigned char>{'M'},
+                  "One-byte Base64 decoding failed");
+            Check(amastra::Base64Decode("TWE=") ==
+                      (std::vector<unsigned char>{'M', 'a'}),
+                  "Two-byte Base64 decoding failed");
+            Check(amastra::Base64Decode("TWFu") ==
+                      (std::vector<unsigned char>{'M', 'a', 'n'}),
+                  "Three-byte Base64 decoding failed");
+            Reject([] { amastra::Base64Decode("TQ="); },
+                   "Base64 with a non-multiple-of-four length was accepted");
+            Reject([] { amastra::Base64Decode("TW\n="); },
+                   "Base64 whitespace was accepted");
+            Reject([] { amastra::Base64Decode("TW$="); },
+                   "Invalid Base64 alphabet character was accepted");
+            Reject([] { amastra::Base64Decode("TQ==AAAA"); },
+                   "Base64 padding before the final quartet was accepted");
+            Reject([] { amastra::Base64Decode("TR=="); },
+                   "Non-canonical two-character Base64 was accepted");
+            Reject([] { amastra::Base64Decode("TWF="); },
+                   "Non-canonical three-character Base64 was accepted");
+            Reject([] { amastra::Base64Decode("TWFu", 2); },
+                   "Base64 decoded-size limit was not enforced");
+
+            Check(amastra::Sha256Hex({}) ==
+                      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "Empty SHA-256 test vector failed");
+            Check(amastra::Sha256Hex({'a', 'b', 'c'}) ==
+                      "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+                  "SHA-256 abc test vector failed");
+            Check(amastra::ReferenceImageSourceName(amastra::ReferenceImageSource::File) ==
+                      "file" &&
+                      amastra::ReferenceImageSourceName(
+                          amastra::ReferenceImageSource::Clipboard) == "clipboard" &&
+                      amastra::ReferenceImageSourceName(
+                          amastra::ReferenceImageSource::ApiGenerated) == "api_generated" &&
+                      amastra::ReferenceImageSourceName(
+                          amastra::ReferenceImageSource::ApiRefined) == "api_refined",
+                  "Reference-image source names changed");
 
             const auto png = amastra::PrepareReferenceImage("subject.jpg", PngFixture());
             Check(png.metadata.mimeType == "image/png", "PNG magic was not authoritative");
             Check(png.metadata.fileName == "subject.jpg", "Reference-image basename changed");
             Check(png.metadata.width == 3 && png.metadata.height == 2, "PNG dimensions were not read");
             Check(png.metadata.byteSize == PngFixture().size(), "PNG byte size was not retained");
+            Check(png.metadata.source == amastra::ReferenceImageSource::File,
+                  "Default reference-image source changed");
+            Check(png.metadata.sha256 == amastra::Sha256Hex(PngFixture()) &&
+                      png.metadata.sha256.size() == 64,
+                  "Reference-image SHA-256 was not retained");
             Check(!png.base64.empty() && png.base64.find('\n') == std::string::npos,
                   "PNG Base64 is empty or wrapped");
 
-            const auto jpeg = amastra::PrepareReferenceImage("subject.jpeg", JpegFixture());
+            const auto jpeg = amastra::PrepareReferenceImage(
+                "subject.jpeg", JpegFixture(), amastra::ReferenceImageSource::Clipboard);
             Check(jpeg.metadata.mimeType == "image/jpeg", "JPEG MIME detection failed");
             Check(jpeg.metadata.width == 3 && jpeg.metadata.height == 2,
                   "JPEG dimensions were not read");
+            Check(jpeg.metadata.source == amastra::ReferenceImageSource::Clipboard,
+                  "Explicit reference-image source was not retained");
 
             Reject([] { amastra::PrepareReferenceImage("empty.png", {}); },
                    "Empty reference image accepted");
@@ -144,6 +191,11 @@ int main() {
                    "Unsupported WebP accepted");
             Reject([] { amastra::PrepareReferenceImage("folder/subject.png", PngFixture()); },
                    "Reference-image path accepted as a basename");
+            Reject([] {
+                amastra::PrepareReferenceImage(
+                    "subject.png", PngFixture(),
+                    static_cast<amastra::ReferenceImageSource>(999));
+            }, "Unknown reference-image source was accepted");
             Reject([] {
                 std::vector<unsigned char> oversized(amastra::MaxReferenceImageBytes + 1, 0);
                 amastra::PrepareReferenceImage("large.png", oversized);
@@ -184,9 +236,81 @@ int main() {
                    "Truncated image Base64 accepted by request builder");
         }
         {
+            const auto generatedJson =
+                amastra::BuildImageGenerationRequestJson("Create a clean toy robot reference.");
+            Check(generatedJson.size() <= amastra::MaxRequestBytes,
+                  "Image-generation request exceeds request limit");
+            const auto generated = amjson::parse(generatedJson);
+            Check(generated.as_object().size() == 9,
+                  "Image-generation request contains unexpected fields");
+            Check(generated.at("model").as_string() == amastra::ImageGenerationModel &&
+                      generated.at("prompt").as_string() ==
+                          "Create a clean toy robot reference.",
+                  "Image-generation model or prompt changed");
+            Check(generated.at("n").as_number() == 1 &&
+                      generated.at("size").as_string() == "1024x1024" &&
+                      generated.at("quality").as_string() == "medium" &&
+                      generated.at("background").as_string() == "opaque" &&
+                      generated.at("output_format").as_string() == "jpeg" &&
+                      generated.at("output_compression").as_number() == 85 &&
+                      generated.at("moderation").as_string() == "auto",
+                  "Image-generation request settings changed");
+            Check(generated.find("images") == nullptr &&
+                      generatedJson.find("data:image/") == std::string::npos,
+                  "Image-generation request unexpectedly contains an input image");
+
+            const auto reference = amastra::PrepareReferenceImage(
+                "private-subject-name.jpeg", JpegFixture(),
+                amastra::ReferenceImageSource::Clipboard);
+            const auto editJson =
+                amastra::BuildImageEditRequestJson("Simplify this subject.", reference);
+            Check(editJson.size() <= amastra::MaxRequestBytes,
+                  "Image-edit request exceeds request limit");
+            const auto edit = amjson::parse(editJson);
+            Check(edit.as_object().size() == 11,
+                  "Image-edit request contains unexpected fields");
+            Check(edit.at("model").as_string() == amastra::ImageEditModel &&
+                      edit.at("prompt").as_string() == "Simplify this subject." &&
+                      edit.at("input_fidelity").as_string() == "high",
+                  "Image-edit model, prompt, or fidelity changed");
+            Check(edit.at("n").as_number() == 1 &&
+                      edit.at("size").as_string() == "1024x1024" &&
+                      edit.at("quality").as_string() == "medium" &&
+                      edit.at("background").as_string() == "opaque" &&
+                      edit.at("output_format").as_string() == "jpeg" &&
+                      edit.at("output_compression").as_number() == 85 &&
+                      edit.at("moderation").as_string() == "auto",
+                  "Image-edit request settings changed");
+            const auto& images = edit.at("images").as_array();
+            Check(images.size() == 1 && images[0].as_object().size() == 1,
+                  "Image-edit request did not contain exactly one image reference");
+            Check(images[0].at("image_url").as_string() ==
+                      "data:image/jpeg;base64," + reference.base64,
+                  "Image-edit data URL changed");
+            Check(editJson.find("private-subject-name.jpeg") == std::string::npos,
+                  "Reference-image basename leaked into image-edit request");
+
+            Reject([] { amastra::BuildImageGenerationRequestJson(""); },
+                   "Empty image-generation prompt was accepted");
+            Check(!amastra::BuildImageGenerationRequestJson(
+                       std::string(amastra::MaxImagePromptBytes, 'x')).empty(),
+                  "Maximum-length image-generation prompt was rejected");
+            Reject([] {
+                amastra::BuildImageGenerationRequestJson(
+                    std::string(amastra::MaxImagePromptBytes + 1, 'x'));
+            }, "Oversized image-generation prompt was accepted");
+            Reject([&] { amastra::BuildImageEditRequestJson("", reference); },
+                   "Empty image-edit prompt was accepted");
+            auto alteredHash = reference;
+            alteredHash.metadata.sha256[0] = alteredHash.metadata.sha256[0] == '0' ? '1' : '0';
+            Reject([&] {
+                amastra::BuildImageEditRequestJson("Simplify this subject.", alteredHash);
+            }, "Image edit accepted a mismatched SHA-256");
+        }
+        {
             const std::string encoded(256, 'A');
             const auto sanitized = amastra::SanitizeDiagnostic(
-                "bad data:image/png;base64," + encoded + " and token " + encoded);
+                "bad \"data:image/png;base64," + encoded + "\" and token " + encoded);
             Check(sanitized.find("data:image/") == std::string::npos,
                   "Diagnostic retained an image data URL");
             Check(sanitized.find(encoded) == std::string::npos,
@@ -194,6 +318,33 @@ int main() {
             Check(sanitized.find("[image data omitted]") != std::string::npos &&
                   sanitized.find("[long encoded value omitted]") != std::string::npos,
                   "Diagnostic redaction markers are missing");
+            const std::string wrappedFirst(80, 'B');
+            const std::string wrappedSecond(80, 'C');
+            const auto wrapped = amastra::SanitizeDiagnostic(
+                "prefix \"DATA:IMAGE/jpeg;base64," + wrappedFirst + "\r\n\t" +
+                wrappedSecond + "\" suffix");
+            Check(wrapped.find("DATA:IMAGE/") == std::string::npos &&
+                      wrapped.find(wrappedFirst) == std::string::npos &&
+                      wrapped.find(wrappedSecond) == std::string::npos &&
+                      wrapped.find("[image data omitted]") != std::string::npos &&
+                      wrapped.find("prefix") != std::string::npos &&
+                      wrapped.find("suffix") != std::string::npos,
+                  "Wrapped image data URL was not fully redacted");
+
+            const auto bearer = amastra::SanitizeDiagnostic(
+                "auth bEaReR sk-proj-secret.value, retry normally");
+            Check(bearer == "auth Bearer [token omitted], retry normally",
+                  "Case-insensitive Bearer token was not safely redacted");
+            const auto apiKey = amastra::SanitizeDiagnostic(
+                "key=sk-proj-abc_DEF-123; status denied");
+            Check(apiKey == "key=[API key omitted]; status denied",
+                  "OpenAI API key was not safely redacted");
+            Check(amastra::SanitizeDiagnostic("key=SK-not-lowercase; status denied") ==
+                      "key=SK-not-lowercase; status denied",
+                  "API-key prefix redaction unexpectedly became case-insensitive");
+            Check(amastra::SanitizeDiagnostic("Connection timed out; retry later.") ==
+                      "Connection timed out; retry later.",
+                  "Normal diagnostic text changed during sanitization");
             Check(amastra::SanitizeDiagnostic(std::string(3000, '!')).size() == 2048,
                   "Diagnostic length limit was not enforced");
             try {
@@ -209,6 +360,155 @@ int main() {
                 Check(message.find("data:image/") == std::string::npos &&
                       message.find(encoded) == std::string::npos,
                       "API error exposed image data");
+            }
+        }
+        {
+            const auto encoded = amastra::Base64Encode(JpegFixture());
+            const auto envelope = amjson::Value::object({
+                {"created", 123},
+                {"background", "opaque"},
+                {"data", amjson::Value::array({amjson::Value::object({
+                    {"b64_json", encoded},
+                    {"revised_prompt", "A simplified robot on a plain background."}
+                })})},
+                {"output_format", "jpeg"},
+                {"output_compression", 77},
+                {"quality", "high"},
+                {"size", "3x2"},
+                {"usage", amjson::Value::object({
+                    {"input_tokens", 11},
+                    {"output_tokens", 22},
+                    {"total_tokens", 33},
+                    {"input_tokens_details", amjson::Value::object({
+                        {"text_tokens", 4}, {"image_tokens", 7}
+                    })},
+                    {"output_tokens_details", amjson::Value::object({
+                        {"text_tokens", 2}, {"image_tokens", 20}
+                    })}
+                })}
+            });
+            const auto result = amastra::ExtractImageApiResult(
+                amjson::dump(envelope), "req_image_test");
+            Check(result.requestId == "req_image_test" &&
+                      result.model == amastra::ImageGenerationModel,
+                  "Image API request ID or model was lost");
+            Check(result.image.metadata.source ==
+                          amastra::ReferenceImageSource::ApiGenerated &&
+                      result.image.metadata.fileName == "openai-generated.jpg" &&
+                      result.image.metadata.mimeType == "image/jpeg" &&
+                      result.image.metadata.sha256 == amastra::Sha256Hex(JpegFixture()),
+                  "Generated API image metadata was not prepared correctly");
+            Check(result.revisedPrompt ==
+                          "A simplified robot on a plain background." &&
+                      result.outputFormat == "jpeg" && result.outputCompression == 77 &&
+                      result.hasOutputCompression && result.size == "3x2" &&
+                      result.quality == "high" && result.background == "opaque",
+                  "Image API output settings were not parsed");
+            Check(result.usagePresent && result.inputTokens == 11 && result.outputTokens == 22 &&
+                      result.totalTokens == 33 && result.inputTextTokens == 4 &&
+                      result.inputImageTokens == 7 && result.outputTextTokens == 2 &&
+                      result.outputImageTokens == 20,
+                  "Image API usage was not parsed");
+
+            const auto minimal = amjson::Value::object({
+                {"data", amjson::Value::array({
+                    amjson::Value::object({{"b64_json", encoded}})
+                })}
+            });
+            const auto refined = amastra::ExtractImageApiResult(
+                amjson::dump(minimal), "req_refine", amastra::ReferenceImageSource::ApiRefined);
+            Check(refined.model == amastra::ImageEditModel &&
+                      refined.image.metadata.source ==
+                          amastra::ReferenceImageSource::ApiRefined &&
+                      refined.image.metadata.fileName == "openai-refined.jpg",
+                  "Refined API image source or model was not retained");
+            Check(refined.outputFormat == "jpeg" && refined.size == "3x2" &&
+                      refined.quality.empty() && refined.background.empty() &&
+                      refined.outputCompression == 0 && !refined.hasOutputCompression &&
+                      !refined.usagePresent,
+                  "Omitted image API result settings were populated with request defaults");
+
+            const auto zeroUsage = amjson::Value::object({
+                {"data", amjson::Value::array({
+                    amjson::Value::object({{"b64_json", encoded}})
+                })},
+                {"usage", amjson::Value::object({})}
+            });
+            const auto zeroUsageResult =
+                amastra::ExtractImageApiResult(amjson::dump(zeroUsage));
+            Check(zeroUsageResult.usagePresent && zeroUsageResult.inputTokens == 0 &&
+                      zeroUsageResult.outputTokens == 0 && zeroUsageResult.totalTokens == 0,
+                  "Present all-zero image usage was treated as omitted");
+
+            const auto pngMinimal = amjson::Value::object({
+                {"data", amjson::Value::array({amjson::Value::object({
+                    {"b64_json", amastra::Base64Encode(PngFixture())}
+                })})}
+            });
+            const auto unlabelledPng =
+                amastra::ExtractImageApiResult(amjson::dump(pngMinimal));
+            Check(unlabelledPng.outputFormat == "png" &&
+                      unlabelledPng.size == "3x2" &&
+                      unlabelledPng.image.metadata.mimeType == "image/png" &&
+                      unlabelledPng.image.metadata.fileName == "openai-generated.png",
+                  "Unlabelled PNG output settings were not inferred from validated bytes");
+
+            Reject([&] {
+                auto multiple = envelope;
+                multiple.as_object().at("data").as_array().push_back(
+                    amjson::Value::object({{"b64_json", encoded}}));
+                amastra::ExtractImageApiResult(amjson::dump(multiple));
+            }, "Image API response with multiple images was accepted");
+            Reject([] {
+                amastra::ExtractImageApiResult(R"({"data":[]})");
+            }, "Image API response with no images was accepted");
+            Reject([] {
+                amastra::ExtractImageApiResult(
+                    R"({"data":[{"url":"https://example.invalid/image.jpg"}]})");
+            }, "Image API URL response without b64_json was accepted");
+            Reject([] {
+                amastra::ExtractImageApiResult(R"({"data":[{"b64_json":42}]})");
+            }, "Non-string image API Base64 was accepted");
+            Reject([] {
+                amastra::ExtractImageApiResult(R"({"data":[{"b64_json":"TR=="}]})");
+            }, "Non-canonical image API Base64 was accepted");
+            Reject([&] {
+                auto mismatched = envelope;
+                mismatched.as_object().at("output_format") = "png";
+                amastra::ExtractImageApiResult(amjson::dump(mismatched));
+            }, "Image API output-format mismatch was accepted");
+            Reject([&] {
+                auto mismatched = envelope;
+                mismatched.as_object().at("size") = "1024x1024";
+                amastra::ExtractImageApiResult(amjson::dump(mismatched));
+            }, "Image API output-size mismatch was accepted");
+            Reject([&] {
+                amastra::ExtractImageApiResult(
+                    amjson::dump(minimal), "bad\nrequest");
+            }, "Image API request ID with a control character was accepted");
+            Reject([&] {
+                amastra::ExtractImageApiResult(
+                    amjson::dump(minimal), {}, amastra::ReferenceImageSource::File);
+            }, "Non-API source was accepted for an image API response");
+            Reject([] {
+                amastra::ExtractImageApiResult(
+                    std::string(amastra::MaxResponseBytes + 1, 'x'));
+            }, "Oversized image API response was accepted");
+
+            const std::string secret(256, 'A');
+            try {
+                amastra::ExtractImageApiResult(amjson::dump(amjson::Value::object({
+                    {"error", amjson::Value::object({
+                        {"message", "invalid data:image/jpeg;base64," + secret}
+                    })}
+                })));
+                throw std::runtime_error("Image API error response was accepted");
+            } catch (const amastra::Error& error) {
+                const std::string message = error.what();
+                Check(message.find("data:image/") == std::string::npos &&
+                          message.find(secret) == std::string::npos &&
+                          message.find("[image data omitted]") != std::string::npos,
+                      "Image API error exposed encoded image data");
             }
         }
         {

@@ -1,4 +1,4 @@
-// AMAstraModeler 0.2.0. Developed for Rodney Baker with OpenAI Codex assistance.
+// AMAstraModeler 0.3.0. Developed for Rodney Baker with OpenAI Codex assistance.
 #include "StdAfx.h"
 
 #include "ModelPlan.h"
@@ -38,6 +38,8 @@ namespace {
 
 constexpr ObjectType Contexts[] = {HOT_OBJECTS, HOT_MODEL, HOT_GROUP};
 constexpr UINT GenerationCompleteMessage = WM_APP + 71;
+constexpr UINT ReferenceGenerationCompleteMessage = WM_APP + 72;
+constexpr std::size_t MaxImagePromptBytes = 4000;
 
 bool ContextOK(HTreeObject* object, std::uint32_t index) {
     if (!object || index >= _countof(Contexts) || object->GetObjectType() != Contexts[index]) return false;
@@ -69,7 +71,7 @@ void SetControlText(HWND dialog, int control, const std::wstring& text) {
     if (!item || !SetWindowTextW(item, text.c_str())) throw amastra::Error("Cannot update a dialog control");
 }
 
-void ErrorBox(std::string_view message, const wchar_t* title = L"Astra Modeler 0.2.0") {
+void ErrorBox(std::string_view message, const wchar_t* title = L"Astra Modeler 0.3.0") {
     std::wstring wide;
     try { wide = amastra::WideFromUtf8(message); }
     catch (...) { wide = L"An error occurred, and its UTF-8 message could not be displayed."; }
@@ -102,6 +104,288 @@ std::size_t PositiveInteger(std::wstring_view text, std::size_t minimum, std::si
     return value;
 }
 
+bool HasVisibleText(std::wstring_view text) {
+    for (wchar_t character : text)
+        if (!iswspace(character)) return true;
+    return false;
+}
+
+void ClearBitmapControl(HWND dialog, int control, HBITMAP& owned) noexcept {
+    HBITMAP controlBitmap = nullptr;
+    if (dialog && IsWindow(dialog)) {
+        if (const auto item = GetDlgItem(dialog, control); item && IsWindow(item))
+            controlBitmap = reinterpret_cast<HBITMAP>(
+                SendMessageW(item, STM_SETIMAGE, IMAGE_BITMAP, 0));
+    }
+    if (controlBitmap) DeleteObject(controlBitmap);
+    if (owned && owned != controlBitmap) DeleteObject(owned);
+    owned = nullptr;
+}
+
+void ReplaceBitmapControl(HWND dialog, int control, HBITMAP& owned, HBITMAP replacement) {
+    const HWND item = GetDlgItem(dialog, control);
+    if (!item) {
+        if (replacement) DeleteObject(replacement);
+        throw amastra::Error("A required image-preview control is missing");
+    }
+    const HBITMAP previousControl = reinterpret_cast<HBITMAP>(
+        SendMessageW(item, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(replacement)));
+    const HBITMAP previousOwned = owned;
+    owned = replacement;
+    if (previousControl) DeleteObject(previousControl);
+    if (previousOwned && previousOwned != previousControl) DeleteObject(previousOwned);
+}
+
+HBITMAP PreviewBitmapForControl(HWND dialog, int control,
+                                const amastra::ReferenceImage& image) {
+    const HWND item = GetDlgItem(dialog, control);
+    if (!item) throw amastra::Error("A required image-preview control is missing");
+    RECT bounds{};
+    if (!GetClientRect(item, &bounds) || bounds.right <= bounds.left || bounds.bottom <= bounds.top)
+        throw amastra::Error("Cannot measure an image-preview control");
+    return amastra::CreateReferenceImagePreviewBitmap(
+        image, static_cast<unsigned>(bounds.right - bounds.left),
+        static_cast<unsigned>(bounds.bottom - bounds.top));
+}
+
+std::wstring ReferenceImageSummary(const amastra::ReferenceImage& image) {
+    std::wostringstream summary;
+    const auto sourceName = amastra::ReferenceImageSourceName(image.metadata.source);
+    if (sourceName == "file") summary << L"File";
+    else if (sourceName == "clipboard") summary << L"Clipboard";
+    else if (sourceName == "api_generated") summary << L"OpenAI-created";
+    else if (sourceName == "api_refined") summary << L"OpenAI-refined";
+    else summary << amastra::WideFromUtf8(sourceName);
+    if (!image.metadata.fileName.empty())
+        summary << L" - " << amastra::WideFromUtf8(image.metadata.fileName);
+    summary << L"\r\n" << image.metadata.width << L" x " << image.metadata.height << L"; "
+            << amastra::WideFromUtf8(image.metadata.mimeType) << L"; "
+            << ((image.metadata.byteSize + 1023) / 1024) << L" KiB";
+    return summary.str();
+}
+
+class ImagePromptDialog final : public CDialog {
+public:
+    ImagePromptDialog(CWnd* parent, bool refine)
+        : CDialog(IDD_IMAGE_PROMPT, parent), refine_(refine) {}
+
+    std::string prompt;
+
+protected:
+    BOOL OnInitDialog() override {
+        CDialog::OnInitDialog();
+        try {
+            ::SetWindowTextW(m_hWnd, refine_ ? L"Astra Modeler 0.3.0 - Refine Reference"
+                                             : L"Astra Modeler 0.3.0 - Create Reference");
+            SetControlText(m_hWnd, IDC_IMAGE_PROMPT_LABEL,
+                refine_ ? L"Describe how OpenAI should simplify or adjust the current reference:"
+                        : L"Describe the modeling reference image to create:");
+            SetControlText(m_hWnd, IDC_IMAGE_PROMPT_ACTION,
+                           refine_ ? L"Refine Image" : L"Create Image");
+            SendDlgItemMessage(IDC_IMAGE_PROMPT, EM_SETLIMITTEXT, 4000, 0);
+        } catch (const std::exception& error) {
+            ErrorBox(error.what(), L"Reference image prompt");
+            EndDialog(IDABORT);
+        }
+        return TRUE;
+    }
+
+    BOOL OnCommand(WPARAM wParam, LPARAM lParam) override {
+        if (HIWORD(wParam) == BN_CLICKED && LOWORD(wParam) == IDC_IMAGE_PROMPT_ACTION) {
+            Accept();
+            return TRUE;
+        }
+        return CDialog::OnCommand(wParam, lParam);
+    }
+
+    void OnOK() override { Accept(); }
+
+private:
+    void Accept() {
+        try {
+            const auto widePrompt = ControlText(m_hWnd, IDC_IMAGE_PROMPT);
+            if (!HasVisibleText(widePrompt)) throw amastra::Error("Enter a short image prompt");
+            auto utf8 = amastra::Utf8FromWide(widePrompt);
+            if (utf8.size() > MaxImagePromptBytes)
+                throw amastra::Error("The UTF-8 image prompt exceeds the 4,000-byte limit");
+            prompt = std::move(utf8);
+            EndDialog(IDOK);
+        } catch (const std::exception& error) {
+            ErrorBox(error.what(), L"Check reference image prompt");
+        }
+    }
+
+    bool refine_ = false;
+};
+
+class ReferenceGenerationDialog final : public CDialog {
+public:
+    ReferenceGenerationDialog(CWnd* parent, bool edit, std::string apiKey,
+                              std::string requestBody)
+        : CDialog(IDD_IMAGE_GENERATING, parent), edit_(edit), apiKey_(std::move(apiKey)),
+          requestBody_(std::move(requestBody)) {}
+
+    ~ReferenceGenerationDialog() override {
+        cancelRequested_.store(true, std::memory_order_relaxed);
+        if (worker_.joinable()) worker_.join();
+        amastra::SecureErase(apiKey_);
+        amastra::SecureErase(requestBody_);
+        amastra::SecureErase(api.image.base64);
+    }
+
+    amastra::ImageApiResult api;
+    std::string error;
+
+protected:
+    BOOL OnInitDialog() override {
+        CDialog::OnInitDialog();
+        try {
+            ::SetWindowTextW(m_hWnd, edit_ ? L"Astra Modeler 0.3.0 - Refining Reference"
+                                           : L"Astra Modeler 0.3.0 - Creating Reference");
+            SetControlText(m_hWnd, IDC_IMAGE_GENERATION_STATUS,
+                edit_ ? L"OpenAI is refining the current reference image. This is a separate, "
+                        L"chargeable API request and can take several minutes."
+                      : L"OpenAI is creating the reference image. This is a separate, chargeable "
+                        L"API request and can take several minutes.");
+            worker_ = std::thread([this] { Run(); });
+        } catch (const std::exception& failure) {
+            error = std::string("Cannot start the reference-image worker: ") + failure.what();
+            PostMessage(ReferenceGenerationCompleteMessage);
+        }
+        return TRUE;
+    }
+
+    BOOL OnCommand(WPARAM wParam, LPARAM lParam) override {
+        if (LOWORD(wParam) == IDCANCEL) {
+            RequestCancel();
+            return TRUE;
+        }
+        return CDialog::OnCommand(wParam, lParam);
+    }
+
+    void OnCancel() override { RequestCancel(); }
+    void OnOK() override {}
+
+    afx_msg LRESULT OnGenerationComplete(WPARAM, LPARAM) {
+        if (worker_.joinable()) worker_.join();
+        if (cancelRequested_.load(std::memory_order_relaxed)) EndDialog(IDCANCEL);
+        else if (!error.empty()) EndDialog(IDABORT);
+        else EndDialog(IDOK);
+        return 0;
+    }
+
+    DECLARE_MESSAGE_MAP()
+
+private:
+    void RequestCancel() noexcept {
+        if (cancelRequested_.exchange(true, std::memory_order_relaxed)) return;
+        if (auto* cancel = GetDlgItem(IDCANCEL)) cancel->EnableWindow(FALSE);
+        try {
+            SetControlText(m_hWnd, IDC_IMAGE_GENERATION_STATUS,
+                           L"Cancelling... The active HTTPS operation may take a moment to return.");
+        } catch (...) {}
+    }
+
+    void Run() noexcept {
+        try {
+            auto response = amastra::PostImageRequest(apiKey_, edit_, requestBody_, cancelRequested_);
+            EraseString eraseResponse(response.body);
+            amastra::SecureErase(requestBody_);
+            api.requestId = response.requestId;
+            const auto source = edit_ ? amastra::ReferenceImageSource::ApiRefined
+                                      : amastra::ReferenceImageSource::ApiGenerated;
+            if (response.status < 200 || response.status >= 300) {
+                try {
+                    api = amastra::ExtractImageApiResult(response.body, response.requestId, source);
+                } catch (const std::exception& failure) {
+                    std::ostringstream message;
+                    message << failure.what() << " (HTTP " << response.status;
+                    if (!response.requestId.empty()) message << ", request " << response.requestId;
+                    message << ')';
+                    throw amastra::Error(message.str());
+                }
+                throw amastra::Error("OpenAI Image API returned HTTP " +
+                                     std::to_string(response.status));
+            }
+            api = amastra::ExtractImageApiResult(response.body, response.requestId, source);
+            if (cancelRequested_.load(std::memory_order_relaxed))
+                throw amastra::Error("Reference-image request cancelled");
+        } catch (const std::exception& failure) {
+            error = failure.what();
+        } catch (...) {
+            error = "Unexpected reference-image generation error";
+        }
+        amastra::SecureErase(apiKey_);
+        amastra::SecureErase(requestBody_);
+        if (GetSafeHwnd()) PostMessage(ReferenceGenerationCompleteMessage);
+    }
+
+    bool edit_ = false;
+    std::string apiKey_;
+    std::string requestBody_;
+    std::atomic_bool cancelRequested_{false};
+    std::thread worker_;
+};
+
+BEGIN_MESSAGE_MAP(ReferenceGenerationDialog, CDialog)
+    ON_MESSAGE(ReferenceGenerationCompleteMessage, &ReferenceGenerationDialog::OnGenerationComplete)
+END_MESSAGE_MAP()
+
+class ReferencePreviewDialog final : public CDialog {
+public:
+    ReferencePreviewDialog(CWnd* parent, const amastra::ImageApiResult& api, bool refined)
+        : CDialog(IDD_IMAGE_PREVIEW, parent), api_(api), refined_(refined) {}
+
+    ~ReferencePreviewDialog() override {
+        ClearBitmapControl(GetSafeHwnd(), IDC_IMAGE_PREVIEW_BITMAP, bitmap_);
+    }
+
+    std::string error;
+
+protected:
+    BOOL OnInitDialog() override {
+        CDialog::OnInitDialog();
+        try {
+            ::SetWindowTextW(m_hWnd,
+                             refined_ ? L"Astra Modeler 0.3.0 - Refined Reference Preview"
+                                      : L"Astra Modeler 0.3.0 - Created Reference Preview");
+            HBITMAP bitmap = PreviewBitmapForControl(m_hWnd, IDC_IMAGE_PREVIEW_BITMAP, api_.image);
+            ReplaceBitmapControl(m_hWnd, IDC_IMAGE_PREVIEW_BITMAP, bitmap_, bitmap);
+            std::wostringstream summary;
+            summary << ReferenceImageSummary(api_.image);
+            if (!api_.model.empty())
+                summary << L"\r\nModel: " << amastra::WideFromUtf8(api_.model);
+            if (!api_.requestId.empty())
+                summary << L"; request: " << amastra::WideFromUtf8(api_.requestId);
+            if (!api_.revisedPrompt.empty()) {
+                const auto safePrompt = amastra::SanitizeDiagnostic(api_.revisedPrompt);
+                summary << L"\r\nRevised prompt: " << amastra::WideFromUtf8(safePrompt);
+            }
+            SetControlText(m_hWnd, IDC_IMAGE_PREVIEW_STATUS, summary.str());
+        } catch (const std::exception& failure) {
+            error = failure.what();
+            ClearBitmapControl(GetSafeHwnd(), IDC_IMAGE_PREVIEW_BITMAP, bitmap_);
+            EndDialog(IDABORT);
+        }
+        return TRUE;
+    }
+
+    void OnOK() override {
+        ClearBitmapControl(GetSafeHwnd(), IDC_IMAGE_PREVIEW_BITMAP, bitmap_);
+        CDialog::OnOK();
+    }
+
+    void OnCancel() override {
+        ClearBitmapControl(GetSafeHwnd(), IDC_IMAGE_PREVIEW_BITMAP, bitmap_);
+        CDialog::OnCancel();
+    }
+
+private:
+    const amastra::ImageApiResult& api_;
+    bool refined_ = false;
+    HBITMAP bitmap_ = nullptr;
+};
+
 class PromptDialog final : public CDialog {
 public:
     std::string prompt;
@@ -109,8 +393,12 @@ public:
     std::size_t patchLimit = 2000;
     amastra::ReferenceImage referenceImage;
 
-    PromptDialog() : CDialog(IDD_PROMPT, CWnd::FromHandle(GetMainApplicationWnd())) {}
-    ~PromptDialog() override { amastra::SecureErase(referenceImage.base64); }
+    explicit PromptDialog(amastra::PromptLog& log)
+        : CDialog(IDD_PROMPT, CWnd::FromHandle(GetMainApplicationWnd())), log_(log) {}
+    ~PromptDialog() override {
+        ClearBitmapControl(GetSafeHwnd(), IDC_REFERENCE_IMAGE_THUMBNAIL, thumbnail_);
+        amastra::SecureErase(referenceImage.base64);
+    }
 
 protected:
     BOOL OnInitDialog() override {
@@ -118,8 +406,10 @@ protected:
         try {
             SetControlText(m_hWnd, IDC_COMPONENT_LIMIT, L"100");
             SetControlText(m_hWnd, IDC_PATCH_LIMIT, L"2000");
-            SetControlText(m_hWnd, IDC_REFERENCE_IMAGE_PATH, L"No image selected");
+            SetControlText(m_hWnd, IDC_REFERENCE_IMAGE_STATUS,
+                           L"No image selected. Browse, paste, or create one with OpenAI.");
             if (auto* clear = GetDlgItem(IDC_CLEAR_IMAGE)) clear->EnableWindow(FALSE);
+            if (auto* refine = GetDlgItem(IDC_REFINE_REFERENCE_IMAGE)) refine->EnableWindow(FALSE);
             const auto directory = amastra::ProgramDirectory();
             SetControlText(m_hWnd, IDC_PATH_NOTE,
                 L"API key: " + directory + L"\\api_key.txt\r\n"
@@ -133,16 +423,26 @@ protected:
     }
 
     BOOL OnCommand(WPARAM wParam, LPARAM lParam) override {
-        if (HIWORD(wParam) == BN_CLICKED && LOWORD(wParam) == IDC_BROWSE_IMAGE) {
-            try { BrowseImage(); }
-            catch (const std::exception& error) { ErrorBox(error.what(), L"Select reference image"); }
-            return TRUE;
-        }
-        if (HIWORD(wParam) == BN_CLICKED && LOWORD(wParam) == IDC_CLEAR_IMAGE) {
-            referenceImagePath_.clear();
-            SetControlText(m_hWnd, IDC_REFERENCE_IMAGE_PATH, L"No image selected");
-            if (auto* clear = GetDlgItem(IDC_CLEAR_IMAGE)) clear->EnableWindow(FALSE);
-            return TRUE;
+        if (HIWORD(wParam) == BN_CLICKED) {
+            const auto command = LOWORD(wParam);
+            try {
+                switch (command) {
+                case IDC_BROWSE_IMAGE: BrowseImage(); return TRUE;
+                case IDC_PASTE_IMAGE: PasteImage(); return TRUE;
+                case IDC_CREATE_REFERENCE_IMAGE: RunImageOperation(false); return TRUE;
+                case IDC_REFINE_REFERENCE_IMAGE: RunImageOperation(true); return TRUE;
+                case IDC_CLEAR_IMAGE: ClearImage(); return TRUE;
+                default: break;
+                }
+            } catch (const std::exception& error) {
+                const wchar_t* title = L"Reference image";
+                if (command == IDC_BROWSE_IMAGE) title = L"Select reference image";
+                else if (command == IDC_PASTE_IMAGE) title = L"Paste reference image";
+                else if (command == IDC_CREATE_REFERENCE_IMAGE) title = L"Create reference image";
+                else if (command == IDC_REFINE_REFERENCE_IMAGE) title = L"Refine reference image";
+                ErrorBox(error.what(), title);
+                return TRUE;
+            }
         }
         return CDialog::OnCommand(wParam, lParam);
     }
@@ -150,9 +450,7 @@ protected:
     void OnOK() override {
         try {
             const auto widePrompt = ControlText(m_hWnd, IDC_PROMPT);
-            bool content = false;
-            for (wchar_t c : widePrompt) if (!iswspace(c)) { content = true; break; }
-            if (!content) throw amastra::Error("Enter a model prompt");
+            if (!HasVisibleText(widePrompt)) throw amastra::Error("Enter a model prompt");
             prompt = amastra::Utf8FromWide(widePrompt);
             if (prompt.size() > amastra::MaxPromptBytes)
                 throw amastra::Error("The UTF-8 prompt exceeds the 16,000-byte limit");
@@ -160,12 +458,16 @@ protected:
                                              amastra::MaxComponents, "Component limit");
             patchLimit = PositiveInteger(ControlText(m_hWnd, IDC_PATCH_LIMIT), 1,
                                          amastra::HardMaxPatches, "Patch limit");
-            if (!referenceImagePath_.empty())
-                referenceImage = amastra::LoadReferenceImage(referenceImagePath_);
+            ClearBitmapControl(GetSafeHwnd(), IDC_REFERENCE_IMAGE_THUMBNAIL, thumbnail_);
             CDialog::OnOK();
         } catch (const std::exception& error) {
             ErrorBox(error.what(), L"Check Astra Modeler prompt");
         }
+    }
+
+    void OnCancel() override {
+        ClearBitmapControl(GetSafeHwnd(), IDC_REFERENCE_IMAGE_THUMBNAIL, thumbnail_);
+        CDialog::OnCancel();
     }
 
 private:
@@ -192,12 +494,129 @@ private:
                                             std::to_string(error) + ")");
             return;
         }
-        referenceImagePath_.assign(path.data());
-        SetControlText(m_hWnd, IDC_REFERENCE_IMAGE_PATH, referenceImagePath_);
-        if (auto* clear = GetDlgItem(IDC_CLEAR_IMAGE)) clear->EnableWindow(TRUE);
+        auto candidate = amastra::LoadReferenceImage(path.data());
+        EraseString eraseCandidate(candidate.base64);
+        ActivateImage(std::move(candidate));
     }
 
-    std::wstring referenceImagePath_;
+    void PasteImage() {
+        auto candidate = amastra::LoadReferenceImageFromClipboard();
+        EraseString eraseCandidate(candidate.base64);
+        ActivateImage(std::move(candidate));
+    }
+
+    void ActivateImage(amastra::ReferenceImage&& candidate) {
+        const auto status = ReferenceImageSummary(candidate);
+        HBITMAP nextBitmap = PreviewBitmapForControl(m_hWnd, IDC_REFERENCE_IMAGE_THUMBNAIL,
+                                                     candidate);
+        const HWND preview = ::GetDlgItem(m_hWnd, IDC_REFERENCE_IMAGE_THUMBNAIL);
+        const HWND statusControl = ::GetDlgItem(m_hWnd, IDC_REFERENCE_IMAGE_STATUS);
+        if (!preview || !statusControl) {
+            DeleteObject(nextBitmap);
+            throw amastra::Error("A required reference-image control is missing");
+        }
+
+        auto previous = std::move(referenceImage);
+        referenceImage = std::move(candidate);
+        ReplaceBitmapControl(m_hWnd, IDC_REFERENCE_IMAGE_THUMBNAIL, thumbnail_, nextBitmap);
+        ::SetWindowTextW(statusControl, status.c_str());
+        if (auto* clear = GetDlgItem(IDC_CLEAR_IMAGE)) clear->EnableWindow(TRUE);
+        if (auto* refine = GetDlgItem(IDC_REFINE_REFERENCE_IMAGE)) refine->EnableWindow(TRUE);
+        amastra::SecureErase(previous.base64);
+    }
+
+    void ClearImage() noexcept {
+        ClearBitmapControl(GetSafeHwnd(), IDC_REFERENCE_IMAGE_THUMBNAIL, thumbnail_);
+        amastra::SecureErase(referenceImage.base64);
+        referenceImage = {};
+        if (const HWND status = ::GetDlgItem(m_hWnd, IDC_REFERENCE_IMAGE_STATUS))
+            ::SetWindowTextW(status,
+                             L"No image selected. Browse, paste, or create one with OpenAI.");
+        if (auto* clear = GetDlgItem(IDC_CLEAR_IMAGE)) clear->EnableWindow(FALSE);
+        if (auto* refine = GetDlgItem(IDC_REFINE_REFERENCE_IMAGE)) refine->EnableWindow(FALSE);
+    }
+
+    void RunImageOperation(bool refine) {
+        if (refine && referenceImage.base64.empty())
+            throw amastra::Error("Select, paste, or create a reference image before refining it");
+
+        ImagePromptDialog promptDialog(this, refine);
+        const auto promptResult = promptDialog.DoModal();
+        if (promptResult == IDCANCEL) return;
+        if (promptResult != IDOK) throw amastra::Error("Cannot open the reference-image prompt");
+
+        std::string request = refine
+            ? amastra::BuildImageEditRequestJson(promptDialog.prompt, referenceImage)
+            : amastra::BuildImageGenerationRequestJson(promptDialog.prompt);
+        EraseString eraseRequest(request);
+        const std::string_view operation = refine ? "refine" : "create";
+        log_.BeginReferenceImage(operation, promptDialog.prompt,
+                                 refine ? &referenceImage.metadata : nullptr);
+
+        bool logOpen = true;
+        std::string apiKey;
+        EraseString eraseApiKey(apiKey);
+        amastra::ImageApiResult api;
+        EraseString eraseImage(api.image.base64);
+        try {
+            apiKey = amastra::LoadApiKey();
+            ReferenceGenerationDialog generation(this, refine, std::move(apiKey),
+                                                 std::move(request));
+            const auto generationResult = generation.DoModal();
+            api = std::move(generation.api);
+            if (generationResult == IDCANCEL) {
+                log_.FinishReferenceImage(operation, "cancelled", &api, nullptr,
+                                          "User cancelled the chargeable image request");
+                logOpen = false;
+                return;
+            }
+            if (generationResult != IDOK) {
+                const auto detail = generation.error.empty()
+                    ? std::string("Cannot complete the reference-image request")
+                    : generation.error;
+                log_.FinishReferenceImage(operation, "failed", &api, nullptr, detail);
+                logOpen = false;
+                throw amastra::Error(detail);
+            }
+
+            ReferencePreviewDialog preview(this, api, refine);
+            const auto previewResult = preview.DoModal();
+            if (previewResult == IDCANCEL) {
+                log_.FinishReferenceImage(operation, "success", &api, &api.image.metadata,
+                                          "API image succeeded; user discarded the preview");
+                logOpen = false;
+                return;
+            }
+            if (previewResult != IDOK) {
+                const auto detail = preview.error.empty()
+                    ? std::string("Cannot display the returned reference image")
+                    : preview.error;
+                log_.FinishReferenceImage(operation, "failed", &api, &api.image.metadata, detail);
+                logOpen = false;
+                throw amastra::Error(detail);
+            }
+
+            const auto resultMetadata = api.image.metadata;
+            log_.FinishReferenceImage(operation, "success", &api, &resultMetadata,
+                                      "User accepted the exact API image as the active reference");
+            logOpen = false;
+            ActivateImage(std::move(api.image));
+        } catch (const std::exception& failure) {
+            std::string detail = failure.what();
+            if (logOpen) {
+                try {
+                    log_.FinishReferenceImage(operation, "failed", &api, nullptr, detail);
+                } catch (const std::exception& loggingFailure) {
+                    detail += std::string("\n\nThe reference-image log also failed: ") +
+                              loggingFailure.what();
+                }
+            }
+            throw amastra::Error(detail);
+        }
+    }
+
+    amastra::PromptLog& log_;
+    HBITMAP thumbnail_ = nullptr;
 };
 
 class GenerateDialog final : public CDialog {
@@ -263,7 +682,8 @@ private:
 
     void Run() noexcept {
         try {
-            const auto response = amastra::PostResponses(apiKey_, requestBody_, cancelRequested_);
+            auto response = amastra::PostResponses(apiKey_, requestBody_, cancelRequested_);
+            EraseString eraseResponse(response.body);
             amastra::SecureErase(requestBody_);
             api.requestId = response.requestId;
             try {
@@ -668,10 +1088,12 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject* object, std::uin
     amastra::PreparedPlan plan;
     HModelCache* created = nullptr;
     bool modelComplete = false;
+    bool modelLogOpen = false;
     std::string failure;
     try {
         if (!ContextOK(object, index)) return FALSE;
-        PromptDialog promptDialog;
+        log = std::make_unique<amastra::PromptLog>();
+        PromptDialog promptDialog(*log);
         const auto promptResult = promptDialog.DoModal();
         if (promptResult == IDCANCEL) return TRUE;
         if (promptResult != IDOK) throw amastra::Error("Cannot open the Astra prompt dialog");
@@ -680,9 +1102,9 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject* object, std::uin
             promptDialog.referenceImage.base64.empty() ? nullptr : &promptDialog.referenceImage;
         const std::string referenceImageName = referenceImage
             ? referenceImage->metadata.fileName : std::string{};
-        log = std::make_unique<amastra::PromptLog>();
         log->Begin(promptDialog.prompt, promptDialog.componentLimit, promptDialog.patchLimit,
                    referenceImage ? &referenceImage->metadata : nullptr);
+        modelLogOpen = true;
         std::string request = amastra::BuildRequestJson(promptDialog.prompt,
                                                         promptDialog.componentLimit,
                                                         promptDialog.patchLimit,
@@ -697,6 +1119,7 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject* object, std::uin
         api = generation.api;
         if (generationResult == IDCANCEL) {
             log->Finish("cancelled_during_generation", &api, nullptr, "User cancelled generation");
+            modelLogOpen = false;
             return TRUE;
         }
         if (generationResult != IDOK) {
@@ -709,6 +1132,7 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject* object, std::uin
         const auto previewResult = preview.DoModal();
         if (previewResult == IDCANCEL) {
             log->Finish("cancelled_at_preview", &api, &plan, "Validated plan was not created");
+            modelLogOpen = false;
             return TRUE;
         }
         if (previewResult != IDOK) throw amastra::Error("Cannot open the Astra plan preview");
@@ -728,6 +1152,7 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject* object, std::uin
         RefreshAllTrees();
         modelComplete = true;
         log->Finish("success", &api, &plan, "Native A:M topology and group coverage verified");
+        modelLogOpen = false;
 
         std::wostringstream message;
         message << L"Created '" << amastra::WideFromUtf8(plan.source.name) << L"' as "
@@ -735,7 +1160,7 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject* object, std::uin
                 << L" four-point patches.\r\n\r\n"
                 << L"Inspect the result in shaded and wireframe views, then save it as an A:M model.\r\n\r\n"
                 << L"Prompt log: " << log->path();
-        MessageBoxW(GetMainApplicationWnd(), message.str().c_str(), L"Astra Modeler 0.2.0",
+        MessageBoxW(GetMainApplicationWnd(), message.str().c_str(), L"Astra Modeler 0.3.0",
                     MB_OK | MB_ICONINFORMATION);
         return TRUE;
     } catch (CException* error) {
@@ -749,9 +1174,10 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject* object, std::uin
         failure = "Unexpected Astra Modeler error";
     }
 
-    if (log) {
+    if (log && modelLogOpen) {
         try { log->Finish("failure", api.responseId.empty() && api.requestId.empty() ? nullptr : &api,
-                          plan.parts.empty() ? nullptr : &plan, failure); }
+                          plan.parts.empty() ? nullptr : &plan, failure);
+              modelLogOpen = false; }
         catch (const std::exception& loggingError) {
             failure += std::string("\n\nThe final prompt-log record also failed: ") + loggingError.what();
         }
@@ -770,6 +1196,6 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject* object, std::uin
     } else if (created && modelComplete) {
         failure += "\n\nThe model was created and verified, but a later completion step failed.";
     }
-    ErrorBox("Astra Modeler 0.2.0\n\n" + failure);
+    ErrorBox("Astra Modeler 0.3.0\n\n" + failure);
     return FALSE;
 }

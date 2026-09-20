@@ -3,31 +3,36 @@
 
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
-IDD_PROMPT DIALOGEX 0, 0, 430, 326
+IDD_PROMPT DIALOGEX 0, 0, 490, 397
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Astra Modeler 0.2.0 - Prompt"
+CAPTION "Astra Modeler 0.3.0 - Prompt"
 FONT 9, "Segoe UI"
 BEGIN
     LTEXT "Describe the model to create:", -1, 10, 10, 190, 12
-    EDITTEXT IDC_PROMPT, 10, 26, 410, 118, ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP
-    LTEXT "Reference image (optional):", -1, 10, 153, 130, 12
-    EDITTEXT IDC_REFERENCE_IMAGE_PATH, 10, 168, 297, 15, ES_READONLY | ES_AUTOHSCROLL | WS_TABSTOP
-    PUSHBUTTON "&Browse...", IDC_BROWSE_IMAGE, 313, 168, 57, 15
-    PUSHBUTTON "C&lear", IDC_CLEAR_IMAGE, 376, 168, 44, 15, WS_DISABLED
-    LTEXT "PNG or JPEG; 4 MiB and 64 megapixels maximum. The selected image is sent to OpenAI.", -1, 10, 188, 410, 20
-    LTEXT "Maximum components:", -1, 10, 216, 102, 12
-    EDITTEXT IDC_COMPONENT_LIMIT, 116, 213, 48, 15, ES_AUTOHSCROLL | ES_NUMBER | WS_TABSTOP
-    LTEXT "Maximum patches:", -1, 187, 216, 90, 12
-    EDITTEXT IDC_PATCH_LIMIT, 281, 213, 58, 15, ES_AUTOHSCROLL | ES_NUMBER | WS_TABSTOP
-    LTEXT "A new embedded model is created only after you approve a validated preview. Existing model geometry is not edited.", -1, 10, 237, 410, 20
-    LTEXT "", IDC_PATH_NOTE, 10, 262, 410, 30
-    DEFPUSHBUTTON "Generate Plan", IDOK, 303, 304, 72, 14
-    PUSHBUTTON "Cancel", IDCANCEL, 381, 304, 39, 14
+    EDITTEXT IDC_PROMPT, 10, 26, 470, 96, ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX "Reference Image (optional)", -1, 10, 131, 470, 132
+    CONTROL "", IDC_REFERENCE_IMAGE_THUMBNAIL, "Static", SS_BITMAP | SS_CENTERIMAGE | WS_BORDER, 20, 148, 120, 88
+    EDITTEXT IDC_REFERENCE_IMAGE_STATUS, 150, 148, 320, 37, ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON "&Browse...", IDC_BROWSE_IMAGE, 150, 193, 56, 16
+    PUSHBUTTON "Paste &Image", IDC_PASTE_IMAGE, 211, 193, 60, 16
+    PUSHBUTTON "Create with &OpenAI...", IDC_CREATE_REFERENCE_IMAGE, 276, 193, 92, 16
+    PUSHBUTTON "&Refine...", IDC_REFINE_REFERENCE_IMAGE, 373, 193, 49, 16, WS_DISABLED
+    PUSHBUTTON "C&lear", IDC_CLEAR_IMAGE, 427, 193, 43, 16, WS_DISABLED
+    LTEXT "Browse accepts PNG/JPEG. Paste uses image pixels on the Windows clipboard. OpenAI results are previewed before use.", -1, 150, 216, 320, 30
+    LTEXT "4 MiB and 64 megapixels maximum. The active image is sent with Generate Plan.", -1, 20, 241, 450, 12
+    LTEXT "Maximum components:", -1, 10, 276, 102, 12
+    EDITTEXT IDC_COMPONENT_LIMIT, 116, 273, 48, 15, ES_AUTOHSCROLL | ES_NUMBER | WS_TABSTOP
+    LTEXT "Maximum patches:", -1, 187, 276, 90, 12
+    EDITTEXT IDC_PATCH_LIMIT, 281, 273, 58, 15, ES_AUTOHSCROLL | ES_NUMBER | WS_TABSTOP
+    LTEXT "A new embedded model is created only after you approve a validated preview. Existing model geometry is not edited.", -1, 10, 298, 470, 20
+    LTEXT "", IDC_PATH_NOTE, 10, 324, 470, 34
+    DEFPUSHBUTTON "Generate Plan", IDOK, 353, 375, 76, 14
+    PUSHBUTTON "Cancel", IDCANCEL, 435, 375, 45, 14
 END
 
 IDD_GENERATING DIALOGEX 0, 0, 330, 92
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Astra Modeler 0.2.0 - Generating"
+CAPTION "Astra Modeler 0.3.0 - Generating"
 FONT 9, "Segoe UI"
 BEGIN
     LTEXT "Astra is using the prompt and any selected reference image to create a bounded A:M patch plan. This can take several minutes.", IDC_GENERATION_STATUS, 12, 13, 306, 32
@@ -37,7 +42,7 @@ END
 
 IDD_PREVIEW DIALOGEX 0, 0, 445, 320
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Astra Modeler 0.2.0 - Validated Plan"
+CAPTION "Astra Modeler 0.3.0 - Validated Plan"
 FONT 9, "Segoe UI"
 BEGIN
     EDITTEXT IDC_PREVIEW_SUMMARY, 10, 10, 425, 277, ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL | WS_VSCROLL | WS_TABSTOP
@@ -45,9 +50,43 @@ BEGIN
     PUSHBUTTON "Cancel", IDCANCEL, 400, 298, 35, 14
 END
 
+IDD_IMAGE_PROMPT DIALOGEX 0, 0, 420, 151
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Astra Modeler 0.3.0 - Reference Image"
+FONT 9, "Segoe UI"
+BEGIN
+    LTEXT "Describe the reference image:", IDC_IMAGE_PROMPT_LABEL, 10, 10, 400, 12
+    EDITTEXT IDC_IMAGE_PROMPT, 10, 27, 400, 76, ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP
+    LTEXT "Keep this prompt short and visual. The request creates an image only; it does not generate an A:M model.", -1, 10, 109, 400, 22
+    DEFPUSHBUTTON "Create Image", IDC_IMAGE_PROMPT_ACTION, 303, 133, 68, 14
+    PUSHBUTTON "Cancel", IDCANCEL, 377, 133, 33, 14
+END
+
+IDD_IMAGE_GENERATING DIALOGEX 0, 0, 345, 94
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Astra Modeler 0.3.0 - Creating Reference"
+FONT 9, "Segoe UI"
+BEGIN
+    LTEXT "OpenAI is creating the reference image. This is a separate, chargeable API request and can take several minutes.", IDC_IMAGE_GENERATION_STATUS, 12, 13, 321, 34
+    LTEXT "The active reference and A:M project have not been changed.", -1, 12, 52, 268, 12
+    PUSHBUTTON "Cancel", IDCANCEL, 282, 70, 51, 14
+END
+
+IDD_IMAGE_PREVIEW DIALOGEX 0, 0, 420, 326
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Astra Modeler 0.3.0 - Reference Preview"
+FONT 9, "Segoe UI"
+BEGIN
+    CONTROL "", IDC_IMAGE_PREVIEW_BITMAP, "Static", SS_BITMAP | SS_CENTERIMAGE | WS_BORDER, 10, 10, 400, 238
+    EDITTEXT IDC_IMAGE_PREVIEW_STATUS, 10, 255, 400, 39, ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL | WS_VSCROLL | WS_TABSTOP
+    LTEXT "The current reference remains unchanged unless you choose Use as Reference.", -1, 10, 299, 275, 18
+    DEFPUSHBUTTON "Use as Reference", IDOK, 298, 304, 75, 14
+    PUSHBUTTON "Discard", IDCANCEL, 379, 304, 31, 14
+END
+
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,2,0,0
- PRODUCTVERSION 0,2,0,0
+ FILEVERSION 0,3,0,0
+ PRODUCTVERSION 0,3,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -64,11 +103,11 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "OpenAnimationLibrary"
             VALUE "FileDescription", "Animation:Master Astra Modeler HXT"
-            VALUE "FileVersion", "0.2.0"
+            VALUE "FileVersion", "0.3.0"
             VALUE "InternalName", "AMAstraModeler"
             VALUE "OriginalFilename", "AMAstraModeler_64.hxt"
             VALUE "ProductName", "Astra Modeler for Animation:Master"
-            VALUE "ProductVersion", "0.2.0"
+            VALUE "ProductVersion", "0.3.0"
         END
     END
     BLOCK "VarFileInfo"

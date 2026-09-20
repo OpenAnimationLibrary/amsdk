@@ -1,4 +1,4 @@
-# AMAstraModeler 0.2.0 host acceptance — Animation:Master 19.5 x64
+# AMAstraModeler 0.3.0 host acceptance — Animation:Master 19.5 x64
 
 Record the exact Release HXT SHA-256 and build receipt before testing. CI cannot
 launch or inspect Animation:Master, so every item below remains pending until a
@@ -39,9 +39,12 @@ tester records it against that exact binary.
 
 ## Reference image checks
 
+- Confirm the reference area initially reports no image, **Refine...** and
+  **Clear** are disabled, and no stale thumbnail is visible.
 - Click **Browse...**, cancel the Windows picker, and confirm the prompt dialog is
-  unchanged. Select a small PNG and confirm its path appears. Click **Clear** and
-  confirm the field returns to `No image selected` and the request is text-only.
+  unchanged. Select a small PNG and confirm its status and exact aspect-fit
+  thumbnail appear. Click **Clear** and confirm the image/status disappear,
+  **Refine...** is disabled, and the eventual request is text-only.
 - Select known-good PNG and JPEG examples in turn. For each,
   submit a short prompt such as `Make a stylized model of this vehicle.` with the
   100-component/2,000-patch defaults. Confirm the validated preview names the
@@ -54,10 +57,66 @@ tester records it against that exact binary.
   Signature-valid renamed input must use its actual media type; every invalid or
   oversized input must fail before reading the API key or sending a request.
 - Select an image, then delete or replace it before pressing **Generate Plan**.
-  Confirm the plugin reopens and revalidates the current file rather than using a
-  stale selection.
+  Confirm the already validated in-memory snapshot remains the active reference;
+  the changed file must not silently replace it.
 - Compare the same short prompt with and without a simple reference image. Record
   both attempt IDs, previews, token counts, topology totals, and screenshots.
+
+## Clipboard image checks
+
+- In ChatGPT, copy the pixels of a generated image to the Windows clipboard.
+  Press **Paste Image**; confirm the image activates immediately and the thumbnail
+  matches the copied pixels. No download or temporary image file should be
+  required.
+- Exercise clipboard PNG, DIBV5/DIB, and bitmap data where available. Confirm the
+  resulting active reference is valid PNG or JPEG data and preserves the source's
+  visible aspect ratio. If a large clipboard image must be recompressed or
+  proportionally reduced to meet the 4 MiB limit, record the resulting dimensions.
+- Copy only text, HTML, an image URL, and a file path in turn. **Paste Image** must
+  not read or fetch any of them. Each failure must leave the previous active image
+  and thumbnail unchanged.
+- Put invalid or over-limit pixel data on the clipboard if a controlled test tool
+  is available. Confirm rejection occurs before any API request and the existing
+  reference remains active.
+- With a pasted ChatGPT image active, generate and approve an Astra plan. Confirm
+  the plan preview identifies a clipboard-derived reference, then create and
+  inspect the model as in the normal geometry checks. The plugin must not claim
+  access to the originating ChatGPT chat, account, prompt, or history.
+
+## OpenAI reference creation and refinement checks
+
+- Keep a known browsed or pasted reference active. Press **Create with OpenAI...**,
+  enter a short image prompt, then cancel before submission. Confirm no image API
+  request is made and the active reference is unchanged.
+- Submit `Red toy robot, full body, three-quarter view, plain background.` Confirm
+  a cancellable operation runs and an exact returned-image preview appears. Press
+  **Discard** and verify that the previous reference remains active; no Astra plan
+  or A:M model should be created.
+- Repeat Create and press **Use as Reference**. Confirm the returned image becomes
+  the active thumbnail only after approval, is a signature-valid 1024×1024 PNG or
+  JPEG within the 4 MiB reference limit, and Generate Plan has not started
+  automatically. Record any PNG result because the request asks for JPEG.
+- With no active image, confirm **Refine...** is disabled. Activate an image, press
+  **Refine...**, and submit `Keep the same proportions; simplify the background.`
+  Confirm a distinct candidate preview appears. Discard it once, then repeat and
+  use it; each time, verify that only **Use as Reference** replaces the active
+  image.
+- Cancel Create and Refine during their network progress dialogs. Also exercise a
+  revoked test key, offline network, and an API failure. Every path must preserve
+  the prior active reference, keep the prompt dialog usable, create no model, and
+  write a matching completion record after a started request.
+- With an accepted generated or refined reference, press **Generate Plan**. Treat
+  this as a second, separate potentially billable API request. Cancel the model
+  preview once and confirm no model is created; repeat, approve **Create Model**,
+  and verify the resulting embedded model, groups, materials, topology totals,
+  thumbnail-guided silhouette, save/reload behavior, and unchanged source model.
+- Record the image-operation model/settings: Create uses
+  `gpt-image-2.5-flare`; Refine uses `gpt-image-2.5-sunburst` with high input
+  fidelity; both request one opaque 1024×1024 JPEG at medium quality,
+  compression 85, with automatic moderation. Confirm prompt entry stops at 4,000
+  UTF-16 code units, a valid 4,000-byte UTF-8 prompt passes local length
+  validation, and a multibyte prompt of 4,001 UTF-8 bytes is rejected locally
+  before an API request.
 
 ## Isolation, limits, and failure paths
 
@@ -86,8 +145,8 @@ tester records it against that exact binary.
   Each must request cancellation and keep the modal window open until the worker
   finishes; A:M must not crash or expose a partial preview.
 - At Windows display scaling of 100%, 150%, and 200%, confirm the prompt field,
-  image path, Browse/Clear controls, limits, disclosure, and Generate/Cancel
-  buttons remain visible and keyboard reachable.
+  reference status/thumbnail, Browse/Paste/Create/Refine/Clear controls, limits,
+  disclosure, and Generate/Cancel buttons remain visible and keyboard reachable.
 - Force a native failure only in a disposable project if a reproducible case is
   available. Confirm any partial model retains the `ASTRA INCOMPLETE -` prefix,
   existing models are unchanged, and the log reports failure.
@@ -97,17 +156,32 @@ tester records it against that exact binary.
 - Open `astra_modeler.log` as UTF-8 JSON Lines. Parse every line independently.
 - Confirm the exact prompt—including punctuation and line breaks—is present in the
   matching `attempt_started` record.
-- For image attempts, confirm `reference_image` contains only basename, canonical
-  media type, byte size, dimensions, and `detail: "high"`. For text-only attempts,
-  confirm it is `null`.
+- For model attempts, confirm `reference_image` contains only source type,
+  basename-only name, canonical media type, byte size, dimensions, SHA-256, and
+  `detail: "high"`. Exercise and verify the source labels `file`, `clipboard`,
+  `api_generated`, and `api_refined`. For text-only attempts, confirm it is
+  `null`.
 - Confirm the finish record has the same attempt ID, UTC time, `gpt-6-astra`, final
   status, IDs/tokens when supplied, and validated component/patch summary.
+- For both Create and Refine, confirm `reference_image_started` precedes the API
+  result and contains the same attempt ID as its `reference_image_finished`
+  record. Verify the exact image prompt, operation, requested model/settings, and
+  Refine source-image metadata. Verify the finish record's status and result-image
+  metadata plus returned model, request ID, revised prompt, usage, and output
+  settings when the API supplies them. When usage is present, verify total,
+  input/output, and text/image token-detail fields parse as numbers.
+- Confirm Create logs `gpt-image-2.5-flare` and Refine logs
+  `gpt-image-2.5-sunburst`, including the documented size, quality, background,
+  format, compression, moderation, and Refine input-fidelity settings. Confirm
+  Generate Plan is recorded separately rather than merged into the image attempt.
 - Search the log, popup screenshots, build diagnostics, and model names for the
   full key. The search must return no matches.
 - Confirm the log contains no raw API response, function-call argument payload,
-  absolute image path, `data:image/` URL, or recognizable Base64 image fragment.
-- Exercise an API error after selecting an image and confirm the popup and log
-  show redaction markers rather than an echoed data URL or long encoded value.
+  supplied absolute image path, clipboard pixels, image bytes, `data:image/` URL,
+  or recognizable Base64 image fragment.
+- Exercise API errors during Create, Refine, and Generate Plan. Confirm popups and
+  log details are useful but sanitized, showing redaction markers rather than the
+  API key, Authorization header, data URL, or long encoded value.
 
 ## Acceptance record
 

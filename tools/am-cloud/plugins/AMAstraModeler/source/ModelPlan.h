@@ -15,6 +15,7 @@ namespace amastra {
 constexpr std::size_t MaxResponseBytes = 8 * 1024 * 1024;
 constexpr std::size_t MaxRequestBytes = 8 * 1024 * 1024;
 constexpr std::size_t MaxPromptBytes = 16000;
+constexpr std::size_t MaxImagePromptBytes = 4000;
 constexpr std::size_t MaxReferenceImageBytes = 4 * 1024 * 1024;
 constexpr std::size_t MaxReferenceImageDimension = 65535;
 constexpr std::size_t MaxReferenceImagePixels = 64 * 1024 * 1024;
@@ -22,10 +23,14 @@ constexpr std::size_t MaxMaterials = 16;
 constexpr std::size_t MaxComponents = 100;
 constexpr std::size_t HardMaxPatches = 20000;
 constexpr std::size_t HardMaxControlPointRecords = 100000;
+inline constexpr std::string_view ImageGenerationModel = "gpt-image-2.5-flare";
+inline constexpr std::string_view ImageEditModel = "gpt-image-2.5-sunburst";
 
 struct Error : std::runtime_error {
     using std::runtime_error::runtime_error;
 };
+
+enum class ReferenceImageSource { File, Clipboard, ApiGenerated, ApiRefined };
 
 struct ReferenceImageMetadata {
     std::string fileName;
@@ -33,6 +38,8 @@ struct ReferenceImageMetadata {
     std::size_t byteSize = 0;
     std::size_t width = 0;
     std::size_t height = 0;
+    ReferenceImageSource source = ReferenceImageSource::File;
+    std::string sha256;
 };
 
 struct ReferenceImage {
@@ -147,6 +154,27 @@ struct ApiResult {
     std::size_t outputTokens = 0;
 };
 
+struct ImageApiResult {
+    ReferenceImage image;
+    std::string requestId;
+    std::string model;
+    std::string revisedPrompt;
+    std::string outputFormat;
+    std::string size;
+    std::string quality;
+    std::string background;
+    std::size_t outputCompression = 0;
+    bool hasOutputCompression = false;
+    bool usagePresent = false;
+    std::size_t inputTokens = 0;
+    std::size_t outputTokens = 0;
+    std::size_t totalTokens = 0;
+    std::size_t inputTextTokens = 0;
+    std::size_t inputImageTokens = 0;
+    std::size_t outputTextTokens = 0;
+    std::size_t outputImageTokens = 0;
+};
+
 std::string SafeName(std::string_view utf8, std::string_view fallback, std::size_t maximum = 64);
 ModelPlan ParseModelPlan(const amjson::Value& root);
 PreparedPlan PreparePlan(ModelPlan plan, std::size_t requestedPatchLimit,
@@ -154,12 +182,22 @@ PreparedPlan PreparePlan(ModelPlan plan, std::size_t requestedPatchLimit,
 SplinePlan RouteSplines(const MeshPart& part);
 
 amjson::Value BuildToolSchema(std::size_t componentLimit);
+std::string_view ReferenceImageSourceName(ReferenceImageSource source);
 std::string Base64Encode(const std::vector<unsigned char>& bytes);
+std::vector<unsigned char> Base64Decode(
+    std::string_view encoded, std::size_t maximumBytes = MaxReferenceImageBytes);
+std::string Sha256Hex(const std::vector<unsigned char>& bytes);
 ReferenceImage PrepareReferenceImage(std::string fileName,
-                                     const std::vector<unsigned char>& bytes);
+                                     const std::vector<unsigned char>& bytes,
+                                     ReferenceImageSource source = ReferenceImageSource::File);
 std::string BuildRequestJson(std::string_view prompt, std::size_t componentLimit,
                              std::size_t patchLimit, const ReferenceImage* image = nullptr);
+std::string BuildImageGenerationRequestJson(std::string_view prompt);
+std::string BuildImageEditRequestJson(std::string_view prompt, const ReferenceImage& image);
 ApiResult ExtractApiResult(std::string_view responseJson, std::string requestId = {});
+ImageApiResult ExtractImageApiResult(
+    std::string_view responseJson, std::string requestId = {},
+    ReferenceImageSource source = ReferenceImageSource::ApiGenerated);
 std::string SanitizeDiagnostic(std::string_view detail);
 
 std::string KindName(Component::Kind kind);

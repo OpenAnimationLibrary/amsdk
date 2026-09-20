@@ -11,7 +11,7 @@ from build_support import archive_name, sha256, verify_hash
 
 HERE = Path(__file__).resolve().parent
 REPOSITORY = HERE.parent.parent
-VERSION = '0.2.0'
+VERSION = '0.3.0'
 
 
 def package(native_zip: Path, output: Path) -> Path:
