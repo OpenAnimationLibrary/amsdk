@@ -1,0 +1,1307 @@
+#include "ModelPlan.h"
+
+#include <algorithm>
+#include <cmath>
+#include <iterator>
+#include <limits>
+#include <map>
+#include <set>
+#include <sstream>
+#include <tuple>
+
+namespace amastra {
+namespace {
+
+constexpr double Pi = 3.1415926535897932384626433832795;
+
+using Object = amjson::Value::Object;
+using Array = amjson::Value::Array;
+
+void Fields(const amjson::Value& value, std::initializer_list<std::string_view> allowed,
+            std::string_view context) {
+    const auto& object = value.as_object();
+    std::set<std::string_view> names(allowed.begin(), allowed.end());
+    for (const auto& item : object) {
+        if (!names.erase(item.first)) throw Error(std::string(context) + " has an unknown or duplicate field: " + item.first);
+    }
+    if (!names.empty()) throw Error(std::string(context) + " is missing field: " + std::string(*names.begin()));
+}
+
+double Number(const amjson::Value& value, double minimum, double maximum, std::string_view field) {
+    const double result = value.as_number();
+    if (!std::isfinite(result) || result < minimum || result > maximum)
+        throw Error(std::string(field) + " is outside the supported range");
+    return result;
+}
+
+std::size_t Integer(const amjson::Value& value, std::size_t minimum, std::size_t maximum,
+                    std::string_view field) {
+    const double number = value.as_number();
+    if (!std::isfinite(number) || number < static_cast<double>(minimum) ||
+        number > static_cast<double>(maximum) || std::floor(number) != number)
+        throw Error(std::string(field) + " must be a supported integer");
+    return static_cast<std::size_t>(number);
+}
+
+std::string Text(const amjson::Value& value, std::size_t maximum, std::string_view field) {
+    const auto& result = value.as_string();
+    if (result.empty() || result.size() > maximum) throw Error(std::string(field) + " is empty or too long");
+    return result;
+}
+
+Vec3 Vector3(const amjson::Value& value, double minimum, double maximum, std::string_view field) {
+    const auto& array = value.as_array();
+    if (array.size() != 3) throw Error(std::string(field) + " must contain exactly three numbers");
+    return {Number(array[0], minimum, maximum, field), Number(array[1], minimum, maximum, field),
+            Number(array[2], minimum, maximum, field)};
+}
+
+std::size_t SizeValue(const amjson::Value& value, std::string_view field) {
+    return Integer(value, 0, std::numeric_limits<std::uint32_t>::max(), field);
+}
+
+Material::Finish ParseFinish(std::string_view value) {
+    if (value == "matte") return Material::Finish::Matte;
+    if (value == "satin") return Material::Finish::Satin;
+    if (value == "glossy") return Material::Finish::Glossy;
+    if (value == "metallic") return Material::Finish::Metallic;
+    if (value == "glass") return Material::Finish::Glass;
+    throw Error("Unknown material finish");
+}
+
+Vec3 Rotate(Vec3 point, Vec3 degrees) {
+    const double x = degrees.x * Pi / 180.0;
+    const double y = degrees.y * Pi / 180.0;
+    const double z = degrees.z * Pi / 180.0;
+    const double cx = std::cos(x), sx = std::sin(x);
+    const double cy = std::cos(y), sy = std::sin(y);
+    const double cz = std::cos(z), sz = std::sin(z);
+    point = {point.x, point.y * cx - point.z * sx, point.y * sx + point.z * cx};
+    point = {point.x * cy + point.z * sy, point.y, -point.x * sy + point.z * cy};
+    return {point.x * cz - point.y * sz, point.x * sz + point.y * cz, point.z};
+}
+
+void Transform(MeshPart& part, Vec3 center, Vec3 rotation) {
+    for (auto& point : part.vertices) point = Rotate(point, rotation) + center;
+}
+
+void Reverse(Quad& face) { std::swap(face.vertex[1], face.vertex[3]); }
+
+Vec3 FaceNormal(const MeshPart& part, const Quad& face) {
+    const Vec3 a = part.vertices[face.vertex[0]];
+    const Vec3 b = part.vertices[face.vertex[1]];
+    const Vec3 c = part.vertices[face.vertex[2]];
+    const Vec3 d = part.vertices[face.vertex[3]];
+    return Cross(b - a, c - a) + Cross(c - a, d - a);
+}
+
+Vec3 FaceCenter(const MeshPart& part, const Quad& face) {
+    Vec3 result{};
+    for (auto index : face.vertex) result = result + part.vertices[index];
+    return result * .25;
+}
+
+void OrientFromOrigin(MeshPart& part) {
+    for (auto& face : part.faces) if (Dot(FaceNormal(part, face), FaceCenter(part, face)) < 0) Reverse(face);
+}
+
+MeshPart Box(const Component& component) {
+    MeshPart part;
+    part.name = component.name;
+    part.material = component.material;
+    part.smooth = false;
+    const Vec3 half = component.size * .5;
+    part.vertices = {{-half.x,-half.y,-half.z},{half.x,-half.y,-half.z},{half.x,half.y,-half.z},{-half.x,half.y,-half.z},
+                     {-half.x,-half.y,half.z},{half.x,-half.y,half.z},{half.x,half.y,half.z},{-half.x,half.y,half.z}};
+    part.faces = {{{{0,1,2,3}}},{{{4,5,6,7}}},{{{0,4,5,1}}},{{{1,5,6,2}}},{{{2,6,7,3}}},{{{3,7,4,0}}}};
+    OrientFromOrigin(part);
+    Transform(part, component.center, component.rotation);
+    return part;
+}
+
+MeshPart Ellipsoid(const Component& component) {
+    MeshPart part;
+    part.name = component.name;
+    part.material = component.material;
+    part.smooth = true;
+    const int resolution = static_cast<int>(component.detail * 2);
+    std::map<std::array<int,3>, std::uint32_t> indices;
+    const auto index = [&](std::array<int,3> key) -> std::uint32_t {
+        const auto found = indices.find(key);
+        if (found != indices.end()) return found->second;
+        Vec3 value{static_cast<double>(key[0]), static_cast<double>(key[1]), static_cast<double>(key[2])};
+        value = Unit(value);
+        value = {value.x * component.radii.x, value.y * component.radii.y, value.z * component.radii.z};
+        const auto result = static_cast<std::uint32_t>(part.vertices.size());
+        part.vertices.push_back(value);
+        indices.emplace(key, result);
+        return result;
+    };
+    for (int axis = 0; axis < 3; ++axis) for (int sign : {-1, 1}) {
+        for (int row = 0; row < resolution; ++row) for (int column = 0; column < resolution; ++column) {
+            const int a0 = -resolution + row * 2;
+            const int a1 = a0 + 2;
+            const int b0 = -resolution + column * 2;
+            const int b1 = b0 + 2;
+            const auto key = [&](int a, int b) {
+                std::array<int,3> result{};
+                result[axis] = sign * resolution;
+                result[(axis + 1) % 3] = a;
+                result[(axis + 2) % 3] = b;
+                return result;
+            };
+            part.faces.push_back({{index(key(a0,b0)), index(key(a1,b0)), index(key(a1,b1)), index(key(a0,b1))}});
+        }
+    }
+    OrientFromOrigin(part);
+    Transform(part, component.center, component.rotation);
+    return part;
+}
+
+MeshPart Torus(const Component& component) {
+    MeshPart part;
+    part.name = component.name;
+    part.material = component.material;
+    part.smooth = true;
+    const auto major = component.majorSegments;
+    const auto minor = component.minorSegments;
+    part.vertices.reserve(major * minor);
+    for (std::size_t i = 0; i < major; ++i) {
+        const double u = 2 * Pi * static_cast<double>(i) / static_cast<double>(major);
+        for (std::size_t j = 0; j < minor; ++j) {
+            const double v = 2 * Pi * static_cast<double>(j) / static_cast<double>(minor);
+            const double radial = component.majorRadius + component.minorRadius * std::cos(v);
+            part.vertices.push_back({radial * std::cos(u), component.minorRadius * std::sin(v), radial * std::sin(u)});
+        }
+    }
+    const auto at = [minor](std::size_t i, std::size_t j) {
+        return static_cast<std::uint32_t>(i * minor + j);
+    };
+    for (std::size_t i = 0; i < major; ++i) for (std::size_t j = 0; j < minor; ++j) {
+        const auto nextI = (i + 1) % major, nextJ = (j + 1) % minor;
+        Quad face{{at(i,j), at(nextI,j), at(nextI,nextJ), at(i,nextJ)}};
+        const Vec3 center = FaceCenter(part, face);
+        const double angle = std::atan2(center.z, center.x);
+        const Vec3 ring{component.majorRadius * std::cos(angle), 0, component.majorRadius * std::sin(angle)};
+        if (Dot(FaceNormal(part, face), center - ring) < 0) Reverse(face);
+        part.faces.push_back(face);
+    }
+    Transform(part, component.center, component.rotation);
+    return part;
+}
+
+MeshPart Tube(const Component& component) {
+    MeshPart part;
+    part.name = component.name;
+    part.material = component.material;
+    part.smooth = true;
+    const Vec3 direction = component.end - component.start;
+    const Vec3 axis = Unit(direction);
+    const Vec3 helper = std::abs(axis.y) < .9 ? Vec3{0,1,0} : Vec3{1,0,0};
+    const Vec3 one = Unit(Cross(axis, helper));
+    const Vec3 two = Unit(Cross(axis, one));
+    part.vertices.reserve(component.sides * 2);
+    for (std::size_t ring = 0; ring < 2; ++ring) {
+        const Vec3 center = ring ? component.end : component.start;
+        const double radius = ring ? component.radiusEnd : component.radiusStart;
+        for (std::size_t i = 0; i < component.sides; ++i) {
+            const double angle = 2 * Pi * static_cast<double>(i) / static_cast<double>(component.sides);
+            part.vertices.push_back(center + one * (radius * std::cos(angle)) + two * (radius * std::sin(angle)));
+        }
+    }
+    for (std::size_t i = 0; i < component.sides; ++i) {
+        const auto next = (i + 1) % component.sides;
+        Quad face{{static_cast<std::uint32_t>(i), static_cast<std::uint32_t>(next),
+                   static_cast<std::uint32_t>(component.sides + next),
+                   static_cast<std::uint32_t>(component.sides + i)}};
+        const Vec3 center = FaceCenter(part, face);
+        const double along = Dot(center - component.start, axis);
+        const Vec3 onAxis = component.start + axis * along;
+        if (Dot(FaceNormal(part, face), center - onAxis) < 0) Reverse(face);
+        part.faces.push_back(face);
+    }
+    return part;
+}
+
+MeshPart Lathe(const Component& component) {
+    MeshPart part;
+    part.name = component.name;
+    part.material = component.material;
+    part.smooth = true;
+    part.vertices.reserve(component.profile.size() * component.segments);
+    for (const auto& point : component.profile) {
+        for (std::size_t i = 0; i < component.segments; ++i) {
+            const double angle = 2 * Pi * static_cast<double>(i) / static_cast<double>(component.segments);
+            part.vertices.push_back({point[0] * std::cos(angle), point[1], point[0] * std::sin(angle)});
+        }
+    }
+    const auto at = [&](std::size_t row, std::size_t column) {
+        return static_cast<std::uint32_t>(row * component.segments + column);
+    };
+    for (std::size_t row = 0; row + 1 < component.profile.size(); ++row) {
+        for (std::size_t column = 0; column < component.segments; ++column) {
+            const auto next = (column + 1) % component.segments;
+            Quad face{{at(row,column), at(row + 1,column), at(row + 1,next), at(row,next)}};
+            const Vec3 center = FaceCenter(part, face);
+            if (Dot(FaceNormal(part, face), Vec3{center.x,0,center.z}) < 0) Reverse(face);
+            part.faces.push_back(face);
+        }
+    }
+    Transform(part, component.center, component.rotation);
+    return part;
+}
+
+MeshPart PatchGrid(const Component& component) {
+    MeshPart part;
+    part.name = component.name;
+    part.material = component.material;
+    part.smooth = component.smooth;
+    part.vertices = component.points;
+    const auto at = [&](std::size_t row, std::size_t column) {
+        return static_cast<std::uint32_t>(row * component.columns + column);
+    };
+    for (std::size_t row = 0; row + 1 < component.rows; ++row)
+        for (std::size_t column = 0; column + 1 < component.columns; ++column)
+            part.faces.push_back({{at(row,column), at(row + 1,column), at(row + 1,column + 1), at(row,column + 1)}});
+    return part;
+}
+
+void ValidateMesh(const MeshPart& part) {
+    if (part.vertices.empty() || part.faces.empty()) throw Error("Component '" + part.name + "' produced no surface");
+    std::vector<bool> used(part.vertices.size());
+    std::set<std::array<std::uint32_t,4>> faces;
+    std::map<std::pair<std::uint32_t,std::uint32_t>, unsigned> edges;
+    for (const auto& face : part.faces) {
+        auto key = face.vertex;
+        std::sort(key.begin(), key.end());
+        if (std::adjacent_find(key.begin(), key.end()) != key.end()) throw Error("Component '" + part.name + "' has a repeated quad corner");
+        if (!faces.insert(key).second) throw Error("Component '" + part.name + "' has a duplicate quad");
+        for (std::size_t i = 0; i < 4; ++i) {
+            const auto a = face.vertex[i], b = face.vertex[(i + 1) % 4];
+            if (a >= part.vertices.size() || b >= part.vertices.size()) throw Error("Component '" + part.name + "' has an invalid point index");
+            used[a] = true;
+            if (++edges[std::minmax(a,b)] > 2) throw Error("Component '" + part.name + "' has a non-manifold edge");
+        }
+        if (Length(FaceNormal(part, face)) < 1e-8) throw Error("Component '" + part.name + "' has a zero-area patch");
+    }
+    for (std::size_t i = 0; i < part.vertices.size(); ++i) {
+        const auto point = part.vertices[i];
+        if (!Finite(point) || std::abs(point.x) > 100000 || std::abs(point.y) > 100000 || std::abs(point.z) > 100000)
+            throw Error("Component '" + part.name + "' exceeds the finite +/-100000 cm coordinate limit");
+        if (!used[i]) throw Error("Component '" + part.name + "' has an unused point");
+        for (std::size_t j = 0; j < i; ++j)
+            if (Length(point - part.vertices[j]) < 1e-7)
+                throw Error("Component '" + part.name + "' collapses two points to the same position");
+    }
+}
+
+void RoundToNativePrecision(MeshPart& part) {
+    std::set<std::array<float, 3>> positions;
+    for (auto& point : part.vertices) {
+        const std::array<float, 3> native{static_cast<float>(point.x), static_cast<float>(point.y),
+                                          static_cast<float>(point.z)};
+        if (!positions.insert(native).second)
+            throw Error("Component '" + part.name + "' collapses distinct points at A:M float precision");
+        point = {native[0], native[1], native[2]};
+    }
+}
+
+MeshPart BuildMesh(const Component& component) {
+    switch (component.kind) {
+    case Component::Kind::Box: return Box(component);
+    case Component::Kind::Ellipsoid: return Ellipsoid(component);
+    case Component::Kind::Torus: return Torus(component);
+    case Component::Kind::Tube: return Tube(component);
+    case Component::Kind::Lathe: return Lathe(component);
+    case Component::Kind::PatchGrid: return PatchGrid(component);
+    }
+    throw Error("Unknown component kind");
+}
+
+amjson::Value Type(std::string name) { return amjson::Value::object({{"type", std::move(name)}}); }
+
+amjson::Value NumberSchema(double minimum, double maximum) {
+    return amjson::Value::object({{"type","number"},{"minimum",minimum},{"maximum",maximum}});
+}
+
+amjson::Value IntegerSchema(std::size_t minimum, std::size_t maximum) {
+    return amjson::Value::object({{"type","integer"},{"minimum",minimum},{"maximum",maximum}});
+}
+
+amjson::Value StringSchema(std::string description) {
+    return amjson::Value::object({{"type","string"},{"description",std::move(description)}});
+}
+
+amjson::Value EnumSchema(std::initializer_list<const char*> values) {
+    Array list;
+    for (const char* value : values) list.emplace_back(value);
+    return amjson::Value::object({{"type","string"},{"enum",std::move(list)}});
+}
+
+amjson::Value VectorSchema(double minimum, double maximum, std::string description) {
+    return amjson::Value::object({{"type","array"},{"description",std::move(description)},
+        {"items",NumberSchema(minimum,maximum)},{"minItems",3},{"maxItems",3}});
+}
+
+amjson::Value ObjectSchema(Object properties, std::vector<std::string> required) {
+    Array names;
+    for (auto& name : required) names.emplace_back(std::move(name));
+    return amjson::Value::object({{"type","object"},{"properties",std::move(properties)},
+                                 {"required",std::move(names)},{"additionalProperties",false}});
+}
+
+Object CommonProperties(const char* kind) {
+    return {{"kind",amjson::Value::object({{"type","string"},{"enum",amjson::Value::array({kind})}})},
+            {"name",StringSchema("Short ASCII component/group name")},
+            {"material",IntegerSchema(0,MaxMaterials-1)}};
+}
+
+std::vector<std::string> CommonRequired() { return {"kind","name","material"}; }
+
+amjson::Value ComponentSchema() {
+    Array alternatives;
+    {
+        auto p = CommonProperties("box");
+        p.emplace("center",VectorSchema(-100000,100000,"Center in centimeters"));
+        p.emplace("rotation",VectorSchema(-3600,3600,"XYZ Euler degrees, applied X then Y then Z"));
+        p.emplace("size",VectorSchema(.01,100000,"Positive X/Y/Z size in centimeters"));
+        auto r=CommonRequired();r.insert(r.end(),{"center","rotation","size"});
+        alternatives.push_back(ObjectSchema(std::move(p),std::move(r)));
+    }
+    {
+        auto p = CommonProperties("ellipsoid");
+        p.emplace("center",VectorSchema(-100000,100000,"Center in centimeters"));
+        p.emplace("rotation",VectorSchema(-3600,3600,"XYZ Euler degrees"));
+        p.emplace("radii",VectorSchema(.01,50000,"Positive X/Y/Z radii in centimeters"));
+        p.emplace("detail",IntegerSchema(1,4));
+        auto r=CommonRequired();r.insert(r.end(),{"center","rotation","radii","detail"});
+        alternatives.push_back(ObjectSchema(std::move(p),std::move(r)));
+    }
+    {
+        auto p = CommonProperties("torus");
+        p.emplace("center",VectorSchema(-100000,100000,"Center in centimeters"));
+        p.emplace("rotation",VectorSchema(-3600,3600,"XYZ Euler degrees"));
+        p.emplace("major_radius",NumberSchema(.02,50000));
+        p.emplace("minor_radius",NumberSchema(.01,25000));
+        p.emplace("major_segments",IntegerSchema(4,32));
+        p.emplace("minor_segments",IntegerSchema(4,16));
+        auto r=CommonRequired();r.insert(r.end(),{"center","rotation","major_radius","minor_radius","major_segments","minor_segments"});
+        alternatives.push_back(ObjectSchema(std::move(p),std::move(r)));
+    }
+    {
+        auto p = CommonProperties("tube");
+        p.emplace("start",VectorSchema(-100000,100000,"Start point in centimeters"));
+        p.emplace("end",VectorSchema(-100000,100000,"End point in centimeters"));
+        p.emplace("radius_start",NumberSchema(.01,25000));
+        p.emplace("radius_end",NumberSchema(.01,25000));
+        p.emplace("sides",IntegerSchema(4,24));
+        auto r=CommonRequired();r.insert(r.end(),{"start","end","radius_start","radius_end","sides"});
+        alternatives.push_back(ObjectSchema(std::move(p),std::move(r)));
+    }
+    {
+        auto p = CommonProperties("lathe");
+        p.emplace("center",VectorSchema(-100000,100000,"Center in centimeters"));
+        p.emplace("rotation",VectorSchema(-3600,3600,"XYZ Euler degrees"));
+        p.emplace("segments",IntegerSchema(4,32));
+        p.emplace("profile",amjson::Value::object({{"type","array"},{"description","Bottom-to-top [radius,height] pairs; radii stay positive"},
+            {"items",amjson::Value::object({{"type","array"},{"items",NumberSchema(-100000,100000)},{"minItems",2},{"maxItems",2}})},
+            {"minItems",2},{"maxItems",16}}));
+        auto r=CommonRequired();r.insert(r.end(),{"center","rotation","segments","profile"});
+        alternatives.push_back(ObjectSchema(std::move(p),std::move(r)));
+    }
+    {
+        auto p = CommonProperties("patch_grid");
+        p.emplace("rows",IntegerSchema(2,12));
+        p.emplace("columns",IntegerSchema(2,12));
+        p.emplace("smooth",Type("boolean"));
+        p.emplace("points",amjson::Value::object({{"type","array"},{"description","Row-major points; count must equal rows times columns"},
+            {"items",VectorSchema(-100000,100000,"Point in centimeters")},{"minItems",4},{"maxItems",144}}));
+        auto r=CommonRequired();r.insert(r.end(),{"rows","columns","smooth","points"});
+        alternatives.push_back(ObjectSchema(std::move(p),std::move(r)));
+    }
+    return amjson::Value::object({{"anyOf",std::move(alternatives)}});
+}
+
+} // namespace
+
+double Dot(Vec3 a, Vec3 b) { return a.x*b.x+a.y*b.y+a.z*b.z; }
+Vec3 Cross(Vec3 a, Vec3 b) { return {a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x}; }
+double Length(Vec3 value) { return std::sqrt(Dot(value,value)); }
+Vec3 Unit(Vec3 value) {
+    const double length=Length(value);
+    if (!std::isfinite(length) || length < 1e-12) throw Error("Cannot normalize a zero-length vector");
+    return value*(1.0/length);
+}
+bool Finite(Vec3 value) { return std::isfinite(value.x)&&std::isfinite(value.y)&&std::isfinite(value.z); }
+
+std::string SafeName(std::string_view utf8, std::string_view fallback, std::size_t maximum) {
+    std::string result;
+    result.reserve(std::min(utf8.size(), maximum));
+    bool space = false;
+    for (unsigned char c : utf8) {
+        const bool allowed = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+                             (c >= '0' && c <= '9') || c == '_' || c == '-' || c == '.';
+        if (allowed) {
+            if (space && !result.empty() && result.size() < maximum) result.push_back(' ');
+            space = false;
+            if (result.size() < maximum) result.push_back(static_cast<char>(c));
+        } else if (c == ' ' || c == '\t' || c >= 0x80) {
+            space = true;
+        }
+        if (result.size() >= maximum) break;
+    }
+    while (!result.empty() && (result.back() == ' ' || result.back() == '.')) result.pop_back();
+    if (result.empty()) result.assign(fallback.substr(0, maximum));
+    return result;
+}
+
+std::string KindName(Component::Kind kind) {
+    switch (kind) {
+    case Component::Kind::Box: return "box";
+    case Component::Kind::Ellipsoid: return "ellipsoid";
+    case Component::Kind::Torus: return "torus";
+    case Component::Kind::Tube: return "tube";
+    case Component::Kind::Lathe: return "lathe";
+    case Component::Kind::PatchGrid: return "patch grid";
+    }
+    return "unknown";
+}
+
+std::string FinishName(Material::Finish finish) {
+    switch (finish) {
+    case Material::Finish::Matte: return "matte";
+    case Material::Finish::Satin: return "satin";
+    case Material::Finish::Glossy: return "glossy";
+    case Material::Finish::Metallic: return "metallic";
+    case Material::Finish::Glass: return "glass";
+    }
+    return "unknown";
+}
+
+SurfaceFractions SurfaceForMaterial(const Material& material) {
+    SurfaceFractions surface;
+    surface.transparency = 1 - material.opacity;
+    switch (material.finish) {
+    case Material::Finish::Matte:
+        surface.specularSize = .12; surface.specularIntensity = .12; break;
+    case Material::Finish::Satin:
+        surface.specularSize = .32; surface.specularIntensity = .3; surface.reflectivity = .03; break;
+    case Material::Finish::Glossy:
+        surface.specularSize = .72; surface.specularIntensity = .68; surface.reflectivity = .09; break;
+    case Material::Finish::Metallic:
+        surface.specularSize = .58; surface.specularIntensity = .82; surface.reflectivity = .55; break;
+    case Material::Finish::Glass:
+        surface.specularSize = .9; surface.specularIntensity = .9; surface.reflectivity = .18;
+        surface.refraction = 1.5; break;
+    }
+    return surface;
+}
+
+ModelPlan ParseModelPlan(const amjson::Value& root) {
+    Fields(root,{"name","description","materials","components"},"model plan");
+    ModelPlan plan;
+    plan.name = SafeName(Text(root.at("name"),128,"name"),"Astra Model");
+    plan.description = root.at("description").as_string();
+    if (plan.description.size() > 2000) throw Error("description is too long");
+    const auto& materials = root.at("materials").as_array();
+    if (materials.empty() || materials.size() > MaxMaterials) throw Error("materials must contain 1-16 entries");
+    std::set<std::string> materialNames;
+    for (const auto& value : materials) {
+        Fields(value,{"name","color","finish","opacity"},"material");
+        Material material;
+        material.name = SafeName(Text(value.at("name"),128,"material name"),"Material");
+        material.color = Vector3(value.at("color"),0,1,"material color");
+        material.finish = ParseFinish(value.at("finish").as_string());
+        material.opacity = Number(value.at("opacity"),0,1,"material opacity");
+        if (!materialNames.insert(material.name).second) throw Error("Material names must be unique");
+        plan.materials.push_back(std::move(material));
+    }
+    const auto& components = root.at("components").as_array();
+    if (components.empty() || components.size() > MaxComponents)
+        throw Error("components must contain 1-" + std::to_string(MaxComponents) + " entries");
+    std::set<std::string> componentNames;
+    for (const auto& value : components) {
+        const auto kind = value.at("kind").as_string();
+        Component component;
+        component.name = SafeName(Text(value.at("name"),128,"component name"),"Part");
+        component.material = Integer(value.at("material"),0,plan.materials.size()-1,"material index");
+        if (!componentNames.insert(component.name).second) throw Error("Component names must be unique after A:M name cleanup");
+        if (kind == "box") {
+            Fields(value,{"kind","name","material","center","rotation","size"},"box");
+            component.kind=Component::Kind::Box;component.center=Vector3(value.at("center"),-100000,100000,"center");
+            component.rotation=Vector3(value.at("rotation"),-3600,3600,"rotation");
+            component.size=Vector3(value.at("size"),.01,100000,"size");
+        } else if (kind == "ellipsoid") {
+            Fields(value,{"kind","name","material","center","rotation","radii","detail"},"ellipsoid");
+            component.kind=Component::Kind::Ellipsoid;component.center=Vector3(value.at("center"),-100000,100000,"center");
+            component.rotation=Vector3(value.at("rotation"),-3600,3600,"rotation");
+            component.radii=Vector3(value.at("radii"),.01,50000,"radii");
+            component.detail=Integer(value.at("detail"),1,4,"detail");component.smooth=true;
+        } else if (kind == "torus") {
+            Fields(value,{"kind","name","material","center","rotation","major_radius","minor_radius","major_segments","minor_segments"},"torus");
+            component.kind=Component::Kind::Torus;component.center=Vector3(value.at("center"),-100000,100000,"center");
+            component.rotation=Vector3(value.at("rotation"),-3600,3600,"rotation");
+            component.majorRadius=Number(value.at("major_radius"),.02,50000,"major radius");
+            component.minorRadius=Number(value.at("minor_radius"),.01,25000,"minor radius");
+            if (component.majorRadius <= component.minorRadius*1.01) throw Error("Torus major radius must exceed its minor radius");
+            component.majorSegments=Integer(value.at("major_segments"),4,32,"major segments");
+            component.minorSegments=Integer(value.at("minor_segments"),4,16,"minor segments");component.smooth=true;
+        } else if (kind == "tube") {
+            Fields(value,{"kind","name","material","start","end","radius_start","radius_end","sides"},"tube");
+            component.kind=Component::Kind::Tube;component.start=Vector3(value.at("start"),-100000,100000,"start");
+            component.end=Vector3(value.at("end"),-100000,100000,"end");
+            if (Length(component.end-component.start)<.01) throw Error("Tube start and end are too close");
+            component.radiusStart=Number(value.at("radius_start"),.01,25000,"start radius");
+            component.radiusEnd=Number(value.at("radius_end"),.01,25000,"end radius");
+            component.sides=Integer(value.at("sides"),4,24,"tube sides");component.smooth=true;
+        } else if (kind == "lathe") {
+            Fields(value,{"kind","name","material","center","rotation","segments","profile"},"lathe");
+            component.kind=Component::Kind::Lathe;component.center=Vector3(value.at("center"),-100000,100000,"center");
+            component.rotation=Vector3(value.at("rotation"),-3600,3600,"rotation");
+            component.segments=Integer(value.at("segments"),4,32,"lathe segments");
+            const auto& profile=value.at("profile").as_array();
+            if(profile.size()<2||profile.size()>16)throw Error("Lathe profile must contain 2-16 points");
+            double previous=-std::numeric_limits<double>::infinity();
+            for(const auto& point:profile){
+                const auto& pair=point.as_array();
+                if(pair.size()!=2)throw Error("Lathe profile points require [radius,height]");
+                const double radius=Number(pair[0],.01,50000,"lathe radius");
+                const double height=Number(pair[1],-100000,100000,"lathe height");
+                if(height<=previous)throw Error("Lathe profile heights must increase from bottom to top");
+                previous=height;
+                component.profile.push_back({radius,height});
+            }
+            component.smooth=true;
+        } else if (kind == "patch_grid") {
+            Fields(value,{"kind","name","material","rows","columns","smooth","points"},"patch grid");
+            component.kind=Component::Kind::PatchGrid;component.rows=Integer(value.at("rows"),2,12,"rows");
+            component.columns=Integer(value.at("columns"),2,12,"columns");component.smooth=value.at("smooth").as_bool();
+            const auto& points=value.at("points").as_array();if(points.size()!=component.rows*component.columns)throw Error("Patch-grid point count must equal rows times columns");
+            for(const auto& point:points)component.points.push_back(Vector3(point,-100000,100000,"patch-grid point"));
+        } else throw Error("Unknown component kind: "+kind);
+        plan.components.push_back(std::move(component));
+    }
+    return plan;
+}
+
+SplinePlan RouteSplines(const MeshPart& part) {
+    using Edge=std::pair<std::uint32_t,std::uint32_t>;
+    const auto edge=[](std::uint32_t a,std::uint32_t b)->Edge{return std::minmax(a,b);};
+    constexpr std::uint32_t end=UINT32_MAX;
+    std::set<Edge> edges;
+    std::vector<std::set<std::uint32_t>> neighbors(part.vertices.size());
+    std::vector<std::set<Edge>> adjacent(part.vertices.size());
+    for(const auto& face:part.faces)for(std::uint32_t k=0;k<4;++k){const auto a=face.vertex[k],b=face.vertex[(k+1)%4],c=face.vertex[(k+3)%4];
+        edges.insert(edge(a,b));neighbors[a].insert(b);neighbors[b].insert(a);adjacent[a].insert(edge(b,c));}
+    std::vector<std::map<std::uint32_t,std::uint32_t>> through(neighbors.size());
+    for(std::uint32_t v=0;v<neighbors.size();++v){const auto& ns=neighbors[v];if(ns.empty())throw Error("Unused routing point");
+        if(ns.size()>4)throw Error("Component '"+part.name+"' exceeds A:M's two-spline junction limit");
+        for(auto n:ns)through[v][n]=end;
+        if(ns.size()<3)continue;
+        struct Pair{bool adjacent;double bend;std::uint32_t a,b;};std::vector<Pair> pairs;
+        for(auto a:ns)for(auto b:ns)if(a<b)pairs.push_back({adjacent[v].count(edge(a,b))!=0,Dot(Unit(part.vertices[a]-part.vertices[v]),Unit(part.vertices[b]-part.vertices[v])),a,b});
+        std::sort(pairs.begin(),pairs.end(),[](const Pair& a,const Pair& b){return std::tie(a.adjacent,a.bend,a.a,a.b)<std::tie(b.adjacent,b.bend,b.a,b.b);});
+        std::set<std::uint32_t> paired;for(const auto& pair:pairs)if(!paired.count(pair.a)&&!paired.count(pair.b)){through[v][pair.a]=pair.b;through[v][pair.b]=pair.a;paired.insert(pair.a);paired.insert(pair.b);}}
+    const auto emit=[&](){SplinePlan result;result.edges=edges.size();result.occurrences.resize(neighbors.size());std::set<Edge> remaining=edges;
+        const auto walk=[&](std::uint32_t start,std::uint32_t next){SplinePath path;path.vertex.push_back(start);auto previous=start,current=next;
+            while(true){if(!remaining.erase(edge(previous,current)))throw Error("Spline routing reused an edge");const auto following=through[current].at(previous);
+                if(current==start&&following==next){path.closed=true;break;}path.vertex.push_back(current);if(following==end)break;previous=current;current=following;}
+            if(!path.closed&&path.vertex.front()==path.vertex.back()){path.closed=true;path.vertex.pop_back();}
+            if(path.vertex.size()<2||(path.closed&&path.vertex.size()<3))throw Error("Invalid spline path");
+            for(auto v:path.vertex)++result.occurrences[v];
+            result.paths.push_back(std::move(path));
+        };
+        for(std::uint32_t v=0;v<through.size();++v)for(const auto& pair:through[v])if(pair.second==end&&remaining.count(edge(v,pair.first)))walk(v,pair.first);
+        while(!remaining.empty()){const auto first=*remaining.begin();walk(first.first,first.second);}return result;};
+    const auto single=[&](const SplinePlan& routing){std::map<Edge,std::size_t> owner;
+        for(std::size_t i=0;i<routing.paths.size();++i){const auto& path=routing.paths[i];for(std::size_t k=1;k<path.vertex.size();++k)owner.emplace(edge(path.vertex[k-1],path.vertex[k]),i);if(path.closed)owner.emplace(edge(path.vertex.back(),path.vertex.front()),i);}
+        std::vector<std::size_t> bad;for(std::size_t i=0;i<part.faces.size();++i){const auto& face=part.faces[i];const auto first=owner.at(edge(face.vertex[0],face.vertex[1]));bool same=true;
+            for(std::size_t k=1;k<4;++k)
+                if(owner.at(edge(face.vertex[k],face.vertex[(k+1)%4]))!=first)same=false;
+            if(same)bad.push_back(i);
+        }
+        return bad;
+    };
+    auto result=emit();auto bad=single(result);std::size_t work=0;
+    while(!bad.empty()){bool repaired=false;const auto& face=part.faces[bad.front()];
+        for(std::size_t a=0;a<4&&!repaired;++a)for(std::size_t b=a+1;b<4&&!repaired;++b){const auto u=face.vertex[a],v=face.vertex[b];if(neighbors[u].size()!=3||neighbors[v].size()!=3)continue;
+            const auto beforeU=through[u],beforeV=through[v];for(auto endU:neighbors[u])for(auto endV:neighbors[v]){if(repaired||beforeU.at(endU)==end||beforeV.at(endV)==end)continue;
+                if(work+edges.size()>20000000)throw Error("Spline routing repair limit exceeded");
+                work+=edges.size();
+                const auto pairOthers=[&](std::uint32_t at,std::uint32_t endpoint){
+                    std::vector<std::uint32_t> pair;
+                    for(auto n:neighbors[at]){
+                        through[at][n]=end;
+                        if(n!=endpoint)pair.push_back(n);
+                    }
+                    through[at][pair[0]]=pair[1];
+                    through[at][pair[1]]=pair[0];
+                };
+                pairOthers(u,endU);pairOthers(v,endV);auto candidate=emit();auto next=single(candidate);if(next.size()<bad.size()){result=std::move(candidate);bad=std::move(next);repaired=true;}else{through[u]=beforeU;through[v]=beforeV;}}}
+        if(!repaired)throw Error("Cannot route every quad across at least two splines in component '"+part.name+"'");}
+    for(std::size_t v=0;v<neighbors.size();++v){const auto degree=neighbors[v].size();const auto expected=degree<3?degree:(degree+1)/2;
+        if(result.occurrences[v]>2||(result.occurrences[v]!=expected&&!(degree==2&&result.occurrences[v]==1)))throw Error("Spline occurrence count does not match topology");}
+    return result;
+}
+
+PreparedPlan PreparePlan(ModelPlan plan, std::size_t requestedPatchLimit,
+                         std::size_t requestedComponentLimit) {
+    if(requestedPatchLimit<1||requestedPatchLimit>HardMaxPatches)throw Error("Patch limit must be 1-20000");
+    if(requestedComponentLimit<1||requestedComponentLimit>MaxComponents)
+        throw Error("Component limit must be 1-" + std::to_string(MaxComponents));
+    if(plan.components.size()>requestedComponentLimit)throw Error("Astra plan exceeds the requested component limit");
+    PreparedPlan prepared;prepared.source=std::move(plan);prepared.parts.reserve(prepared.source.components.size());
+    for(const auto& component:prepared.source.components){MeshPart part=BuildMesh(component);RoundToNativePrecision(part);ValidateMesh(part);
+        if(prepared.patches+part.faces.size()>requestedPatchLimit)throw Error("Astra plan exceeds the requested patch limit before A:M is modified");
+        part.splines=RouteSplines(part);std::size_t records=0;for(auto count:part.splines.occurrences)records+=count;
+        if(prepared.controlPointRecords+records>HardMaxControlPointRecords)throw Error("Astra plan exceeds the control-point record limit");
+        prepared.patches+=part.faces.size();prepared.vertices+=part.vertices.size();prepared.splinePaths+=part.splines.paths.size();prepared.controlPointRecords+=records;prepared.parts.push_back(std::move(part));}
+    if(!prepared.patches)throw Error("Astra plan contains no patches");
+    return prepared;
+}
+
+amjson::Value BuildToolSchema(std::size_t componentLimit) {
+    componentLimit=std::clamp(componentLimit,std::size_t(1),MaxComponents);
+    Object materialProperties{{"name",StringSchema("Short ASCII material name")},
+        {"color",VectorSchema(0,1,"Linear-looking RGB values from 0 to 1")},
+        {"finish",EnumSchema({"matte","satin","glossy","metallic","glass"})},
+        {"opacity",NumberSchema(0,1)}};
+    const auto material=ObjectSchema(std::move(materialProperties),{"name","color","finish","opacity"});
+    Object planProperties{{"name",StringSchema("Short ASCII model name")},{"description",StringSchema("Concise construction summary")},
+        {"materials",amjson::Value::object({{"type","array"},{"items",material},{"minItems",1},{"maxItems",MaxMaterials}})},
+        {"components",amjson::Value::object({{"type","array"},{"items",ComponentSchema()},{"minItems",1},{"maxItems",componentLimit}})}};
+    auto parameters=ObjectSchema(std::move(planProperties),{"name","description","materials","components"});
+    return amjson::Value::object({{"type","function"},{"name","build_animation_master_model"},
+        {"description","Create one bounded Animation:Master patch-model plan from procedural components."},
+        {"parameters",std::move(parameters)},{"strict",true}});
+}
+
+std::string_view ReferenceImageSourceName(ReferenceImageSource source) {
+    switch (source) {
+    case ReferenceImageSource::File: return "file";
+    case ReferenceImageSource::Clipboard: return "clipboard";
+    case ReferenceImageSource::ApiGenerated: return "api_generated";
+    case ReferenceImageSource::ApiRefined: return "api_refined";
+    }
+    return "unknown";
+}
+
+std::string Base64Encode(const std::vector<unsigned char>& bytes) {
+    static constexpr char Alphabet[] =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    if (bytes.size() > MaxReferenceImageBytes)
+        throw Error("Reference image exceeds the 4 MiB safety limit");
+    std::string encoded;
+    encoded.reserve(((bytes.size() + 2) / 3) * 4);
+    for (std::size_t offset = 0; offset < bytes.size(); offset += 3) {
+        const std::uint32_t first = bytes[offset];
+        const std::uint32_t second = offset + 1 < bytes.size() ? bytes[offset + 1] : 0;
+        const std::uint32_t third = offset + 2 < bytes.size() ? bytes[offset + 2] : 0;
+        const std::uint32_t value = (first << 16) | (second << 8) | third;
+        encoded.push_back(Alphabet[(value >> 18) & 63]);
+        encoded.push_back(Alphabet[(value >> 12) & 63]);
+        encoded.push_back(offset + 1 < bytes.size() ? Alphabet[(value >> 6) & 63] : '=');
+        encoded.push_back(offset + 2 < bytes.size() ? Alphabet[value & 63] : '=');
+    }
+    return encoded;
+}
+
+std::vector<unsigned char> Base64Decode(std::string_view encoded,
+                                        std::size_t maximumBytes) {
+    if (encoded.size() % 4 != 0)
+        throw Error("Base64 image data has an invalid length");
+    if (encoded.empty()) return {};
+
+    const auto value = [](unsigned char character) -> int {
+        if (character >= 'A' && character <= 'Z') return character - 'A';
+        if (character >= 'a' && character <= 'z') return character - 'a' + 26;
+        if (character >= '0' && character <= '9') return character - '0' + 52;
+        if (character == '+') return 62;
+        if (character == '/') return 63;
+        return -1;
+    };
+
+    std::size_t padding = 0;
+    if (encoded.back() == '=') {
+        padding = 1;
+        if (encoded.size() >= 2 && encoded[encoded.size() - 2] == '=') padding = 2;
+    }
+    const std::size_t decodedSize = (encoded.size() / 4) * 3 - padding;
+    if (decodedSize > maximumBytes)
+        throw Error("Decoded image exceeds the configured safety limit");
+
+    std::vector<unsigned char> decoded;
+    decoded.reserve(decodedSize);
+    for (std::size_t offset = 0; offset < encoded.size(); offset += 4) {
+        const bool last = offset + 4 == encoded.size();
+        const unsigned char a = static_cast<unsigned char>(encoded[offset]);
+        const unsigned char b = static_cast<unsigned char>(encoded[offset + 1]);
+        const unsigned char c = static_cast<unsigned char>(encoded[offset + 2]);
+        const unsigned char d = static_cast<unsigned char>(encoded[offset + 3]);
+        const int first = value(a);
+        const int second = value(b);
+        if (first < 0 || second < 0)
+            throw Error("Base64 image data contains an invalid character or padding");
+
+        const bool thirdPadded = c == '=';
+        const bool fourthPadded = d == '=';
+        if (thirdPadded) {
+            if (!last || !fourthPadded || (second & 0x0f) != 0)
+                throw Error("Base64 image data has non-canonical padding");
+            decoded.push_back(static_cast<unsigned char>((first << 2) | (second >> 4)));
+            continue;
+        }
+
+        const int third = value(c);
+        if (third < 0)
+            throw Error("Base64 image data contains an invalid character or padding");
+        decoded.push_back(static_cast<unsigned char>((first << 2) | (second >> 4)));
+        decoded.push_back(static_cast<unsigned char>((second << 4) | (third >> 2)));
+        if (fourthPadded) {
+            if (!last || (third & 0x03) != 0)
+                throw Error("Base64 image data has non-canonical padding");
+            continue;
+        }
+
+        const int fourth = value(d);
+        if (fourth < 0)
+            throw Error("Base64 image data contains an invalid character or padding");
+        decoded.push_back(static_cast<unsigned char>((third << 6) | fourth));
+    }
+    if (decoded.size() != decodedSize)
+        throw Error("Base64 image data has inconsistent padding");
+    return decoded;
+}
+
+std::string Sha256Hex(const std::vector<unsigned char>& bytes) {
+    static constexpr std::array<std::uint32_t, 64> Constants = {
+        0x428a2f98u,0x71374491u,0xb5c0fbcfu,0xe9b5dba5u,0x3956c25bu,0x59f111f1u,0x923f82a4u,0xab1c5ed5u,
+        0xd807aa98u,0x12835b01u,0x243185beu,0x550c7dc3u,0x72be5d74u,0x80deb1feu,0x9bdc06a7u,0xc19bf174u,
+        0xe49b69c1u,0xefbe4786u,0x0fc19dc6u,0x240ca1ccu,0x2de92c6fu,0x4a7484aau,0x5cb0a9dcu,0x76f988dau,
+        0x983e5152u,0xa831c66du,0xb00327c8u,0xbf597fc7u,0xc6e00bf3u,0xd5a79147u,0x06ca6351u,0x14292967u,
+        0x27b70a85u,0x2e1b2138u,0x4d2c6dfcu,0x53380d13u,0x650a7354u,0x766a0abbu,0x81c2c92eu,0x92722c85u,
+        0xa2bfe8a1u,0xa81a664bu,0xc24b8b70u,0xc76c51a3u,0xd192e819u,0xd6990624u,0xf40e3585u,0x106aa070u,
+        0x19a4c116u,0x1e376c08u,0x2748774cu,0x34b0bcb5u,0x391c0cb3u,0x4ed8aa4au,0x5b9cca4fu,0x682e6ff3u,
+        0x748f82eeu,0x78a5636fu,0x84c87814u,0x8cc70208u,0x90befffau,0xa4506cebu,0xbef9a3f7u,0xc67178f2u
+    };
+    const auto rotateRight = [](std::uint32_t value, unsigned count) {
+        return (value >> count) | (value << (32 - count));
+    };
+    if (bytes.size() > std::numeric_limits<std::uint64_t>::max() / 8)
+        throw Error("Input is too large to hash");
+    const std::uint64_t bitLength = static_cast<std::uint64_t>(bytes.size()) * 8;
+    std::vector<unsigned char> message(bytes);
+    message.push_back(0x80);
+    while (message.size() % 64 != 56) message.push_back(0);
+    for (int shift = 56; shift >= 0; shift -= 8)
+        message.push_back(static_cast<unsigned char>(bitLength >> shift));
+
+    std::array<std::uint32_t, 8> hash = {
+        0x6a09e667u,0xbb67ae85u,0x3c6ef372u,0xa54ff53au,
+        0x510e527fu,0x9b05688cu,0x1f83d9abu,0x5be0cd19u
+    };
+    for (std::size_t offset = 0; offset < message.size(); offset += 64) {
+        std::array<std::uint32_t, 64> words{};
+        for (std::size_t index = 0; index < 16; ++index) {
+            const std::size_t at = offset + index * 4;
+            words[index] = (static_cast<std::uint32_t>(message[at]) << 24) |
+                           (static_cast<std::uint32_t>(message[at + 1]) << 16) |
+                           (static_cast<std::uint32_t>(message[at + 2]) << 8) |
+                           static_cast<std::uint32_t>(message[at + 3]);
+        }
+        for (std::size_t index = 16; index < words.size(); ++index) {
+            const std::uint32_t s0 = rotateRight(words[index - 15], 7) ^
+                                     rotateRight(words[index - 15], 18) ^
+                                     (words[index - 15] >> 3);
+            const std::uint32_t s1 = rotateRight(words[index - 2], 17) ^
+                                     rotateRight(words[index - 2], 19) ^
+                                     (words[index - 2] >> 10);
+            words[index] = words[index - 16] + s0 + words[index - 7] + s1;
+        }
+        std::uint32_t a = hash[0], b = hash[1], c = hash[2], d = hash[3];
+        std::uint32_t e = hash[4], f = hash[5], g = hash[6], h = hash[7];
+        for (std::size_t index = 0; index < words.size(); ++index) {
+            const std::uint32_t sum1 = rotateRight(e, 6) ^ rotateRight(e, 11) ^ rotateRight(e, 25);
+            const std::uint32_t choice = (e & f) ^ (~e & g);
+            const std::uint32_t temporary1 = h + sum1 + choice + Constants[index] + words[index];
+            const std::uint32_t sum0 = rotateRight(a, 2) ^ rotateRight(a, 13) ^ rotateRight(a, 22);
+            const std::uint32_t majority = (a & b) ^ (a & c) ^ (b & c);
+            const std::uint32_t temporary2 = sum0 + majority;
+            h = g; g = f; f = e; e = d + temporary1;
+            d = c; c = b; b = a; a = temporary1 + temporary2;
+        }
+        hash[0] += a; hash[1] += b; hash[2] += c; hash[3] += d;
+        hash[4] += e; hash[5] += f; hash[6] += g; hash[7] += h;
+    }
+
+    static constexpr char Hex[] = "0123456789abcdef";
+    std::string result;
+    result.reserve(64);
+    for (const auto word : hash) {
+        for (int shift = 28; shift >= 0; shift -= 4)
+            result.push_back(Hex[(word >> shift) & 0x0f]);
+    }
+    return result;
+}
+
+namespace {
+
+std::uint16_t Big16(const std::vector<unsigned char>& bytes, std::size_t offset) {
+    return static_cast<std::uint16_t>((static_cast<std::uint16_t>(bytes[offset]) << 8) |
+                                      bytes[offset + 1]);
+}
+
+std::uint32_t Big32(const std::vector<unsigned char>& bytes, std::size_t offset) {
+    return (static_cast<std::uint32_t>(bytes[offset]) << 24) |
+           (static_cast<std::uint32_t>(bytes[offset + 1]) << 16) |
+           (static_cast<std::uint32_t>(bytes[offset + 2]) << 8) |
+           static_cast<std::uint32_t>(bytes[offset + 3]);
+}
+
+bool BytesEqual(const std::vector<unsigned char>& bytes, std::size_t offset,
+                std::string_view expected) {
+    if (offset > bytes.size() || bytes.size() - offset < expected.size()) return false;
+    for (std::size_t index = 0; index < expected.size(); ++index)
+        if (bytes[offset + index] != static_cast<unsigned char>(expected[index])) return false;
+    return true;
+}
+
+void ValidateDimensions(std::size_t width, std::size_t height) {
+    if (!width || !height || width > MaxReferenceImageDimension ||
+        height > MaxReferenceImageDimension || width > MaxReferenceImagePixels / height)
+        throw Error("Reference image dimensions exceed the 65,535-pixel or 64-megapixel safety limit");
+}
+
+ReferenceImageMetadata InspectPng(const std::vector<unsigned char>& bytes) {
+    static constexpr unsigned char Signature[] = {0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a};
+    if (bytes.size() < 33 || !std::equal(std::begin(Signature), std::end(Signature), bytes.begin()) ||
+        Big32(bytes, 8) != 13 || !BytesEqual(bytes, 12, "IHDR"))
+        throw Error("The selected PNG is malformed or truncated");
+    const auto width = static_cast<std::size_t>(Big32(bytes, 16));
+    const auto height = static_cast<std::size_t>(Big32(bytes, 20));
+    ValidateDimensions(width, height);
+    ReferenceImageMetadata metadata;
+    metadata.mimeType = "image/png";
+    metadata.byteSize = bytes.size();
+    metadata.width = width;
+    metadata.height = height;
+    return metadata;
+}
+
+bool IsJpegSof(unsigned char marker) {
+    switch (marker) {
+    case 0xc0: case 0xc1: case 0xc2: case 0xc3:
+    case 0xc5: case 0xc6: case 0xc7:
+    case 0xc9: case 0xca: case 0xcb:
+    case 0xcd: case 0xce: case 0xcf:
+        return true;
+    default:
+        return false;
+    }
+}
+
+ReferenceImageMetadata InspectJpeg(const std::vector<unsigned char>& bytes) {
+    if (bytes.size() < 4 || bytes[0] != 0xff || bytes[1] != 0xd8)
+        throw Error("The selected JPEG is malformed or truncated");
+    std::size_t cursor = 2;
+    while (cursor < bytes.size()) {
+        if (bytes[cursor++] != 0xff) throw Error("The selected JPEG has an invalid marker");
+        while (cursor < bytes.size() && bytes[cursor] == 0xff) ++cursor;
+        if (cursor >= bytes.size()) break;
+        const unsigned char marker = bytes[cursor++];
+        if (marker == 0xd9 || marker == 0xda) break;
+        if (marker == 0x01 || marker == 0xd8 || (marker >= 0xd0 && marker <= 0xd7)) continue;
+        if (cursor + 2 > bytes.size()) throw Error("The selected JPEG is truncated");
+        const std::size_t segmentLength = Big16(bytes, cursor);
+        if (segmentLength < 2 || segmentLength > bytes.size() - cursor)
+            throw Error("The selected JPEG has an invalid segment length");
+        if (IsJpegSof(marker)) {
+            if (segmentLength < 7) throw Error("The selected JPEG has an invalid frame header");
+            const auto height = static_cast<std::size_t>(Big16(bytes, cursor + 3));
+            const auto width = static_cast<std::size_t>(Big16(bytes, cursor + 5));
+            ValidateDimensions(width, height);
+            ReferenceImageMetadata metadata;
+            metadata.mimeType = "image/jpeg";
+            metadata.byteSize = bytes.size();
+            metadata.width = width;
+            metadata.height = height;
+            return metadata;
+        }
+        cursor += segmentLength;
+    }
+    throw Error("The selected JPEG has no supported frame header");
+}
+
+} // namespace
+
+ReferenceImage PrepareReferenceImage(std::string fileName,
+                                     const std::vector<unsigned char>& bytes,
+                                     ReferenceImageSource source) {
+    if (bytes.empty()) throw Error("The selected reference image is empty");
+    if (bytes.size() > MaxReferenceImageBytes)
+        throw Error("Reference image exceeds the 4 MiB safety limit");
+    if (fileName.empty() || fileName.size() > 512 ||
+        fileName.find('/') != std::string::npos || fileName.find('\\') != std::string::npos)
+        throw Error("Reference image filename is invalid");
+    for (unsigned char character : fileName)
+        if (character < 0x20 || character == 0x7f)
+            throw Error("Reference image filename contains a control character");
+    if (ReferenceImageSourceName(source) == "unknown")
+        throw Error("Reference image source is invalid");
+
+    ReferenceImageMetadata metadata;
+    if (bytes.size() >= 8 && bytes[0] == 0x89 && BytesEqual(bytes, 1, "PNG\r\n\x1a\n"))
+        metadata = InspectPng(bytes);
+    else if (bytes.size() >= 2 && bytes[0] == 0xff && bytes[1] == 0xd8)
+        metadata = InspectJpeg(bytes);
+    else
+        throw Error("Reference image must be a valid PNG or JPEG file");
+    metadata.fileName = std::move(fileName);
+    metadata.source = source;
+    metadata.sha256 = Sha256Hex(bytes);
+    return {std::move(metadata), Base64Encode(bytes)};
+}
+
+namespace {
+
+void ValidateImagePrompt(std::string_view prompt) {
+    if (prompt.empty() || prompt.size() > MaxImagePromptBytes)
+        throw Error("Image prompt must contain 1-4000 UTF-8 bytes");
+}
+
+void ValidatePreparedReferenceImage(const ReferenceImage& image) {
+    if (image.base64.empty()) throw Error("Reference image data is incomplete or invalid");
+    const auto bytes = Base64Decode(image.base64, MaxReferenceImageBytes);
+    const auto canonical = PrepareReferenceImage(image.metadata.fileName, bytes,
+                                                 image.metadata.source);
+    if (canonical.base64 != image.base64 ||
+        canonical.metadata.mimeType != image.metadata.mimeType ||
+        canonical.metadata.byteSize != image.metadata.byteSize ||
+        canonical.metadata.width != image.metadata.width ||
+        canonical.metadata.height != image.metadata.height ||
+        canonical.metadata.sha256 != image.metadata.sha256)
+        throw Error("Reference image data is incomplete or invalid");
+}
+
+std::string SerializeImageRequest(amjson::Value request) {
+    auto serialized = amjson::dump(request);
+    if (serialized.size() > MaxRequestBytes)
+        throw Error("OpenAI image request exceeds the 8 MiB safety limit");
+    return serialized;
+}
+
+} // namespace
+
+std::string BuildRequestJson(std::string_view prompt,std::size_t componentLimit,std::size_t patchLimit,
+                             const ReferenceImage* image) {
+    if(prompt.empty()||prompt.size()>MaxPromptBytes)throw Error("Prompt must contain 1-16000 UTF-8 bytes");
+    componentLimit=std::clamp(componentLimit,std::size_t(1),MaxComponents);patchLimit=std::clamp(patchLimit,std::size_t(1),HardMaxPatches);
+    std::ostringstream instructions;
+    instructions<<"Create a modest, editable, stylized patch model for Animation:Master. Call build_animation_master_model exactly once. "
+        <<"All coordinates and dimensions are centimeters. Y is up. Use at most "<<componentLimit<<" components and keep the estimated total below "<<patchLimit<<" quad patches. "
+        <<"The component limit is a ceiling, not a target: use only the components needed for a clear result. "
+        <<"Use boxes for hard forms, ellipsoids for rounded closed forms, tori for rings, open tapered tubes for limbs/rails, bottom-to-top positive-radius lathes for revolved forms, and patch grids for custom sheets. "
+        <<"Tube and lathe ends are open: bury or cover them with another component when a closed silhouette matters. Components are separate A:M groups and are not welded to one another. "
+        <<"Prefer low detail, meaningful unique ASCII names, a compact material palette, and deliberate overlap. Avoid zero thickness, coincident duplicate surfaces, and coplanar overlaps. "
+        <<"For patch_grid, provide exactly rows*columns row-major points with consistent winding. Material indexes are zero-based. Follow the user's requested subject and proportions.";
+    amjson::Value input{std::string(prompt)};
+    if (image) {
+        const auto& metadata = image->metadata;
+        ValidatePreparedReferenceImage(*image);
+        instructions << " A reference image is attached. Use its primary subject, major silhouette, proportions, "
+            "and large color regions as guidance. Ignore the background, lighting, texture, text, logos, and tiny "
+            "or hidden details. Infer unseen sides conservatively using only the supported component types.";
+        const std::string imageUrl = "data:" + metadata.mimeType + ";base64," + image->base64;
+        input = amjson::Value::array({amjson::Value::object({
+            {"role", "user"},
+            {"content", amjson::Value::array({
+                amjson::Value::object({{"type", "input_text"}, {"text", std::string(prompt)}}),
+                amjson::Value::object({{"type", "input_image"}, {"image_url", imageUrl},
+                                       {"detail", "high"}})
+            })}
+        })});
+    }
+    amjson::Value request=amjson::Value::object({{"model","gpt-6-astra"},{"instructions",instructions.str()},{"input",std::move(input)},
+        {"reasoning",amjson::Value::object({{"effort","high"}})},{"max_output_tokens",20000},{"store",false},{"parallel_tool_calls",false},
+        {"tools",amjson::Value::array({BuildToolSchema(componentLimit)})},
+        {"tool_choice",amjson::Value::object({{"type","function"},{"name","build_animation_master_model"}})}});
+    auto serialized = amjson::dump(request);
+    if (serialized.size() > MaxRequestBytes)
+        throw Error("OpenAI request exceeds the 8 MiB safety limit");
+    return serialized;
+}
+
+std::string BuildImageGenerationRequestJson(std::string_view prompt) {
+    ValidateImagePrompt(prompt);
+    return SerializeImageRequest(amjson::Value::object({
+        {"model", std::string(ImageGenerationModel)},
+        {"prompt", std::string(prompt)},
+        {"n", 1},
+        {"size", "1024x1024"},
+        {"quality", "medium"},
+        {"background", "opaque"},
+        {"output_format", "jpeg"},
+        {"output_compression", 85},
+        {"moderation", "auto"}
+    }));
+}
+
+std::string BuildImageEditRequestJson(std::string_view prompt,
+                                      const ReferenceImage& image) {
+    ValidateImagePrompt(prompt);
+    ValidatePreparedReferenceImage(image);
+    const std::string imageUrl = "data:" + image.metadata.mimeType + ";base64," + image.base64;
+    return SerializeImageRequest(amjson::Value::object({
+        {"model", std::string(ImageEditModel)},
+        {"prompt", std::string(prompt)},
+        {"images", amjson::Value::array({
+            amjson::Value::object({{"image_url", imageUrl}})
+        })},
+        {"input_fidelity", "high"},
+        {"n", 1},
+        {"size", "1024x1024"},
+        {"quality", "medium"},
+        {"background", "opaque"},
+        {"output_format", "jpeg"},
+        {"output_compression", 85},
+        {"moderation", "auto"}
+    }));
+}
+
+std::string SanitizeDiagnostic(std::string_view detail) {
+    constexpr std::size_t Limit = 2048;
+    const auto asciiAlphaNumeric = [](unsigned char character) {
+        return (character >= 'A' && character <= 'Z') ||
+               (character >= 'a' && character <= 'z') ||
+               (character >= '0' && character <= '9');
+    };
+    const auto asciiWhitespace = [](unsigned char character) {
+        return character == ' ' || character == '\t' || character == '\r' ||
+               character == '\n' || character == '\f' || character == '\v';
+    };
+    const auto base64Character = [](unsigned char character) {
+        return (character >= 'A' && character <= 'Z') ||
+               (character >= 'a' && character <= 'z') ||
+               (character >= '0' && character <= '9') ||
+               character == '+' || character == '/' || character == '=';
+    };
+    const auto caseInsensitiveAt = [&](std::size_t offset, std::string_view expected) {
+        if (offset > detail.size() || detail.size() - offset < expected.size()) return false;
+        for (std::size_t index = 0; index < expected.size(); ++index) {
+            unsigned char found = static_cast<unsigned char>(detail[offset + index]);
+            if (found >= 'A' && found <= 'Z') found = static_cast<unsigned char>(found + ('a' - 'A'));
+            if (found != static_cast<unsigned char>(expected[index])) return false;
+        }
+        return true;
+    };
+    const auto dataDelimiter = [&](unsigned char character) {
+        if (asciiWhitespace(character)) return false;
+        return character < 0x20 || character == '"' || character == '\'' ||
+               character == '<' || character == '>' || character == ')' ||
+               character == ']' || character == '}' || character == '\\';
+    };
+    const auto tokenDelimiter = [&](unsigned char character) {
+        return asciiWhitespace(character) || character < 0x20 || character == '"' ||
+               character == '\'' || character == '<' || character == '>' ||
+               character == '(' || character == ')' || character == '[' ||
+               character == ']' || character == '{' || character == '}' ||
+               character == '\\' || character == ',' || character == ';';
+    };
+    const auto append = [](std::string& output, std::string_view replacement) {
+        output.append(replacement.substr(0, Limit - output.size()));
+    };
+    std::string result;
+    result.reserve(std::min(detail.size(), Limit));
+    for (std::size_t offset = 0; offset < detail.size() && result.size() < Limit;) {
+        if (caseInsensitiveAt(offset, "data:image/")) {
+            static constexpr std::string_view Replacement = "[image data omitted]";
+            append(result, Replacement);
+            offset += 11;
+            while (offset < detail.size() &&
+                   !dataDelimiter(static_cast<unsigned char>(detail[offset]))) ++offset;
+            continue;
+        }
+        const bool bearerBoundary = offset == 0 ||
+            (!asciiAlphaNumeric(static_cast<unsigned char>(detail[offset - 1])) &&
+             detail[offset - 1] != '_');
+        if (bearerBoundary && caseInsensitiveAt(offset, "bearer")) {
+            std::size_t token = offset + 6;
+            if (token < detail.size() &&
+                asciiWhitespace(static_cast<unsigned char>(detail[token]))) {
+                while (token < detail.size() &&
+                       asciiWhitespace(static_cast<unsigned char>(detail[token]))) ++token;
+                std::size_t end = token;
+                while (end < detail.size() &&
+                       !tokenDelimiter(static_cast<unsigned char>(detail[end]))) ++end;
+                if (end != token) {
+                    append(result, "Bearer [token omitted]");
+                    offset = end;
+                    continue;
+                }
+            }
+        }
+        if (detail.size() - offset >= 3 && detail.substr(offset, 3) == "sk-") {
+            std::size_t end = offset + 3;
+            while (end < detail.size() &&
+                   !tokenDelimiter(static_cast<unsigned char>(detail[end]))) ++end;
+            if (end != offset + 3) {
+                append(result, "[API key omitted]");
+                offset = end;
+                continue;
+            }
+        }
+        if (base64Character(static_cast<unsigned char>(detail[offset]))) {
+            std::size_t end = offset + 1;
+            while (end < detail.size() &&
+                   base64Character(static_cast<unsigned char>(detail[end]))) ++end;
+            if (end - offset >= 128) {
+                static constexpr std::string_view Replacement = "[long encoded value omitted]";
+                append(result, Replacement);
+                offset = end;
+                continue;
+            }
+        }
+        result.push_back(detail[offset++]);
+    }
+    return result;
+}
+
+ApiResult ExtractApiResult(std::string_view responseJson,std::string requestId) {
+    if(responseJson.empty()||responseJson.size()>MaxResponseBytes)throw Error("OpenAI response is empty or exceeds 8 MiB");
+    const auto root=amjson::parse(responseJson);
+    if(const auto* error=root.find("error");error&&error->is_object()){
+        if(const auto* message=error->find("message");message&&message->is_string())
+            throw Error("OpenAI API: "+SanitizeDiagnostic(message->as_string()));
+        throw Error("OpenAI API returned an error");}
+    ApiResult result;result.requestId=std::move(requestId);
+    result.responseId=root.at("id").as_string();
+    if(result.responseId.empty()||result.responseId.size()>256)throw Error("OpenAI response has an invalid ID");
+    const auto& status=root.at("status").as_string();
+    if(status!="completed")throw Error("OpenAI response did not complete: "+status.substr(0,128));
+    const auto& output=root.at("output").as_array();std::size_t calls=0;
+    for(const auto& item:output){if(!item.is_object())continue;const auto* type=item.find("type");if(!type||!type->is_string()||type->as_string()!="function_call")continue;
+        ++calls;const auto& name=item.at("name").as_string();if(name!="build_animation_master_model")throw Error("Astra returned an unexpected function call");
+        result.arguments=item.at("arguments").as_string();}
+    if(calls!=1||result.arguments.empty())throw Error("Astra did not return exactly one required model-plan tool call");
+    if(result.arguments.size()>1024*1024)throw Error("Astra model plan exceeds 1 MiB");
+    if(const auto* usage=root.find("usage");usage&&usage->is_object()){
+        if(const auto* input=usage->find("input_tokens");input&&input->is_number())result.inputTokens=SizeValue(*input,"input token count");
+        if(const auto* outputTokens=usage->find("output_tokens");outputTokens&&outputTokens->is_number())result.outputTokens=SizeValue(*outputTokens,"output token count");}
+    return result;
+}
+
+ImageApiResult ExtractImageApiResult(std::string_view responseJson,
+                                     std::string requestId,
+                                     ReferenceImageSource source) {
+    if (responseJson.empty() || responseJson.size() > MaxResponseBytes)
+        throw Error("OpenAI image response is empty or exceeds 8 MiB");
+    if (source != ReferenceImageSource::ApiGenerated &&
+        source != ReferenceImageSource::ApiRefined)
+        throw Error("OpenAI image response requires an API image source");
+    if (requestId.size() > 256)
+        throw Error("OpenAI image request ID is invalid");
+    for (const unsigned char character : requestId)
+        if (character < 0x20 || character == 0x7f)
+            throw Error("OpenAI image request ID is invalid");
+
+    const auto root = amjson::parse(responseJson);
+    if (!root.is_object()) throw Error("OpenAI image response must be a JSON object");
+    if (const auto* error = root.find("error"); error && error->is_object()) {
+        if (const auto* message = error->find("message"); message && message->is_string())
+            throw Error("OpenAI API: " + SanitizeDiagnostic(message->as_string()));
+        throw Error("OpenAI API returned an image error");
+    }
+
+    const auto* dataValue = root.find("data");
+    if (!dataValue || !dataValue->is_array() || dataValue->as_array().size() != 1)
+        throw Error("OpenAI image response did not contain exactly one image");
+    const auto& item = dataValue->as_array().front();
+    if (!item.is_object()) throw Error("OpenAI image response item is invalid");
+    const auto* encodedValue = item.find("b64_json");
+    if (!encodedValue || !encodedValue->is_string() || encodedValue->as_string().empty())
+        throw Error("OpenAI image response did not contain Base64 image data");
+
+    ImageApiResult result;
+    result.requestId = std::move(requestId);
+    result.model = source == ReferenceImageSource::ApiGenerated
+                       ? std::string(ImageGenerationModel)
+                       : std::string(ImageEditModel);
+
+    if (const auto* revised = item.find("revised_prompt")) {
+        if (!revised->is_string() || revised->as_string().size() > MaxPromptBytes)
+            throw Error("OpenAI image response has an invalid revised prompt");
+        result.revisedPrompt = revised->as_string();
+    }
+
+    const auto optionalSetting = [&](std::string_view name, std::size_t maximum,
+                                     std::initializer_list<std::string_view> allowed,
+                                     std::string& destination) -> bool {
+        const auto* field = root.find(name);
+        if (!field) return false;
+        if (!field->is_string() || field->as_string().empty() ||
+            field->as_string().size() > maximum)
+            throw Error("OpenAI image response has an invalid " + std::string(name));
+        for (const unsigned char character : field->as_string())
+            if (character < 0x20 || character == 0x7f)
+                throw Error("OpenAI image response has an invalid " + std::string(name));
+        if (allowed.size() != 0 &&
+            std::find(allowed.begin(), allowed.end(), field->as_string()) == allowed.end())
+            throw Error("OpenAI image response has an unsupported " + std::string(name));
+        destination = field->as_string();
+        return true;
+    };
+    std::string returnedFormat;
+    std::string returnedSize;
+    optionalSetting("output_format", 16, {"png", "jpeg", "webp"}, returnedFormat);
+    optionalSetting("size", 32, {}, returnedSize);
+    optionalSetting("quality", 16, {"low", "medium", "high", "xhigh", "max"},
+                    result.quality);
+    optionalSetting("background", 16, {"transparent", "opaque"}, result.background);
+    if (const auto* compression = root.find("output_compression")) {
+        result.outputCompression = Integer(*compression, 0, 100, "output compression");
+        result.hasOutputCompression = true;
+    }
+
+    const auto bytes = Base64Decode(encodedValue->as_string(), MaxReferenceImageBytes);
+    const bool png = bytes.size() >= 8 && bytes[0] == 0x89 &&
+                     BytesEqual(bytes, 1, "PNG\r\n\x1a\n");
+    const std::string fileName = source == ReferenceImageSource::ApiGenerated
+                                     ? (png ? "openai-generated.png" : "openai-generated.jpg")
+                                     : (png ? "openai-refined.png" : "openai-refined.jpg");
+    result.image = PrepareReferenceImage(fileName, bytes, source);
+    result.outputFormat = result.image.metadata.mimeType == "image/png" ? "png" : "jpeg";
+    result.size = std::to_string(result.image.metadata.width) + "x" +
+                  std::to_string(result.image.metadata.height);
+    if (!returnedFormat.empty() && returnedFormat != result.outputFormat)
+        throw Error("OpenAI image response format does not match its image bytes");
+    if (!returnedSize.empty() && returnedSize != result.size)
+        throw Error("OpenAI image response size does not match its image dimensions");
+
+    if (const auto* usage = root.find("usage")) {
+        if (!usage->is_object()) throw Error("OpenAI image response usage is invalid");
+        result.usagePresent = true;
+        const auto optionalTokens = [&](const amjson::Value& object, std::string_view name,
+                                        std::size_t& destination) {
+            if (const auto* field = object.find(name))
+                destination = SizeValue(*field, name);
+        };
+        optionalTokens(*usage, "input_tokens", result.inputTokens);
+        optionalTokens(*usage, "output_tokens", result.outputTokens);
+        optionalTokens(*usage, "total_tokens", result.totalTokens);
+        if (const auto* details = usage->find("input_tokens_details")) {
+            if (!details->is_object())
+                throw Error("OpenAI image response input token details are invalid");
+            optionalTokens(*details, "text_tokens", result.inputTextTokens);
+            optionalTokens(*details, "image_tokens", result.inputImageTokens);
+        }
+        if (const auto* details = usage->find("output_tokens_details")) {
+            if (!details->is_object())
+                throw Error("OpenAI image response output token details are invalid");
+            optionalTokens(*details, "text_tokens", result.outputTextTokens);
+            optionalTokens(*details, "image_tokens", result.outputImageTokens);
+        }
+    }
+    return result;
+}
+
+} // namespace amastra

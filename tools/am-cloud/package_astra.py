@@ -1,0 +1,90 @@
+"""Make an AMAstraModeler source + Visual Studio + SDK kit around an audited package."""
+import argparse
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import tempfile
+import zipfile
+
+from build_support import archive_name, sha256, verify_hash
+
+HERE = Path(__file__).resolve().parent
+REPOSITORY = HERE.parent.parent
+VERSION = '0.3.0'
+
+
+def package(native_zip: Path, output: Path) -> Path:
+    if output.exists():
+        raise ValueError('Choose a new kit output directory.')
+    expected = native_zip.with_suffix('.zip.sha256').read_text().split()[0]
+    verify_hash(native_zip, expected)
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary) / f'AMAstraModeler-{VERSION}'
+        native = root / 'plugin'
+        native.mkdir(parents=True)
+        with zipfile.ZipFile(native_zip) as archive:
+            for member in archive.infolist():
+                relative = archive_name(member.filename)
+                destination = native.joinpath(*relative.parts)
+                if member.is_dir():
+                    destination.mkdir(parents=True, exist_ok=True)
+                else:
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    with archive.open(member) as source, destination.open('xb') as target:
+                        shutil.copyfileobj(source, target)
+        receipt = json.loads((native / 'build-receipt.json').read_text())
+        commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=REPOSITORY,
+                                         text=True).strip()
+        if (receipt['status'] != 'passed' or receipt['configuration'] != 'Release' or
+                receipt['plugin']['file'] != 'AMAstraModeler_64.hxt' or
+                receipt['source']['checkout_commit'] != commit):
+            raise ValueError('Expected this checkout\'s audited AMAstraModeler Release package.')
+        verify_hash(native / 'AMAstraModeler_64.hxt', receipt['plugin']['sha256'])
+
+        plugin_source = HERE / 'plugins/AMAstraModeler'
+        tracked = subprocess.check_output(
+            ['git', 'ls-files', '--', str(plugin_source.relative_to(REPOSITORY))],
+            cwd=REPOSITORY, text=True).splitlines()
+        if any(Path(relative).name.casefold() == 'api_key.txt' for relative in tracked):
+            raise ValueError('Refusing to package api_key.txt.')
+        for relative in tracked:
+            path = REPOSITORY / relative
+            destination = root / path.relative_to(plugin_source)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(path, destination)
+        helper_log = (HERE / 'test-results/tests.log').read_text(encoding='utf-8', errors='replace')
+        build_log = (HERE / 'artifacts/diagnostics/msbuild.log').read_text(
+            encoding='utf-8', errors='replace')
+        planner_lines = [line for line in build_log.splitlines()
+                         if 'AMAstraModeler core tests passed:' in line]
+        if len(planner_lines) != 1:
+            raise ValueError('Expected one successful AMAstraModeler pre-link core-test record.')
+        (root / 'CORE-AND-BUILDER-TESTS.log').write_text(
+            helper_log.rstrip() + '\n\nPlanner pre-link gate:\n' + planner_lines[0] + '\n',
+            encoding='utf-8')
+        sdk_lock = json.loads((HERE / 'sdk.lock.json').read_text())
+        verify_hash(HERE / 'vendor/sdk195.zip', sdk_lock['sha256'])
+        shutil.copy2(HERE / 'vendor/sdk195.zip', root / 'sdk195.zip')
+        for name in ('sdk.lock.json', 'toolchain.lock.json'):
+            shutil.copy2(HERE / name, root / name)
+        (root / 'KIT-SHA256SUMS.txt').write_text(''.join(
+            f'{sha256(path)}  {path.relative_to(root).as_posix()}\n'
+            for path in sorted(root.rglob('*')) if path.is_file()), encoding='utf-8')
+        output.mkdir(parents=True)
+        run = receipt['source']['run_id'] or 'local'
+        kit = output / f'AMAstraModeler-{VERSION}-Release-x64-r{run}-{commit[:12]}-kit.zip'
+        with zipfile.ZipFile(kit, 'x', zipfile.ZIP_DEFLATED) as archive:
+            for path in sorted(root.rglob('*')):
+                if path.is_file():
+                    archive.write(path, path.relative_to(root.parent).as_posix())
+        kit.with_suffix('.zip.sha256').write_text(f'{sha256(kit)}  {kit.name}\n', encoding='utf-8')
+        return kit
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('native_zip', type=Path)
+    parser.add_argument('output', type=Path)
+    arguments = parser.parse_args()
+    print(package(arguments.native_zip, arguments.output))
