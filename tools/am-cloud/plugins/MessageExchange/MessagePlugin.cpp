@@ -142,8 +142,9 @@ BOOL sendMessage(HTreeObject *object) {
     }
     CString message;
     if (status == AM_MESSAGE_OK || status == AM_MESSAGE_CANCELLED) {
-        message.Format("%s resumed after %s returned.\n\nSent: %s\n\nReply: %s\n\n"
-                       "Result: %s", kSelf, kPeer, request.message, reply.message,
+        const String version = GetAMVersion();
+        message.Format("%s resumed after %s returned.\n\nA:M: %s\n\nSent: %s\n\nReply: %s\n\n"
+                       "Result: %s", kSelf, kPeer, version.Get(), request.message, reply.message,
                        status == AM_MESSAGE_OK ? "Completed" : "Cancelled");
         MessageBoxA(owner, message.GetString(), kSelf, MB_OK | MB_ICONINFORMATION);
     } else {
