@@ -94,7 +94,10 @@ when appending, existing geometry that inherits the model color also changes;
 existing group/material overrides continue to take precedence.
 
 The SDK property is enabled as a model override and receives normalized (0–1)
-RGB components after geometry is finalized. The model is marked modified,
+RGB components after geometry is finalized. Color is committed at time zero
+with `HColorProperty::StoreValue(Time(), color, TRUE)`, matching the SDK
+`Plugin/HXT/RenderPasses/worker.cpp` model/group edit examples. Existing animation
+keys are not deleted. The model is marked modified,
 invalidated and made current, and visible instances are refreshed. With the
 option off, no surface property is written. The existing JSON checkbox/RGB fields
 now control model color too; Load Settings alone never recolors geometry.
@@ -214,3 +217,13 @@ The owner reports that the group notification/invalidation candidate still does
 not display color immediately. The next candidate deliberately assigns the Model
 surface instead, to isolate model-level color assignment from group composition.
 This remains an A:M host test; native CI cannot verify visible surface color.
+
+The owner reports that direct Model assignment still updates the property but
+not the visible surface. This candidate changes the write from SetValue to the
+SDK example's StoreValue path. Whether that resolves the displayed/evaluated
+property mismatch must be tested before Save/reload in A:M. A pre-save file is
+not required for that comparison; the supplied post-save file cannot capture
+the earlier in-memory property or shading state.
+
+Model-level color is a temporary diagnostic only. The intended final behavior
+is independent color on each named text group after assignment works reliably.

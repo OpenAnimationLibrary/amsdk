@@ -122,7 +122,8 @@ HModelCache *Generate(HModelCache *model, const Options &options, std::uint32_t 
         // Finish topology first, then invalidate/notify after the final color
         // is written. Marking a file dirty or redrawing alone is insufficient.
         diffuse->SetNull(FALSE, model);
-        diffuse->SetValue(RGBFloat(rgb[0], rgb[1], rgb[2]));
+        // Match the SDK RenderPasses command's model/group color edit path.
+        diffuse->StoreValue(Time(), RGBFloat(rgb[0], rgb[1], rgb[2]), TRUE);
         diffuse->OnModified();
         model->OnModified();
         model->OffInterpolate(diffuse);
