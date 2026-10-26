@@ -87,20 +87,19 @@ prefix to keep the complete name within twenty characters. A:M's group-name API
 uses the Windows ANSI code page, so group names can substitute characters that
 that code page cannot represent; this does not change the Unicode model text.
 
-**Apply model surface color** is off initially. When enabled, **Choose Color...**
-sets the Model cache's diffuse surface property directly. Named text groups are
-still created but receive no color override. This is a model-level assignment:
-when appending, existing geometry that inherits the model color also changes;
-existing group/material overrides continue to take precedence.
+**Apply surface color** is off initially. When enabled, **Choose Color...**
+sets the new named text group's diffuse surface property. Each stamp can have
+its own color; the Model surface and earlier groups keep their existing values.
+With the option off, the new group receives no surface override.
 
-The SDK property is enabled as a model override and receives normalized (0–1)
-RGB components after geometry is finalized. Color is committed at time zero
-with `HColorProperty::StoreValue(Time(), color, TRUE)`, matching the SDK
-`Plugin/HXT/RenderPasses/worker.cpp` model/group edit examples. Existing animation
-keys are not deleted. The model is marked modified,
-invalidated and made current, and visible instances are refreshed. With the
-option off, no surface property is written. The existing JSON checkbox/RGB fields
-now control model color too; Load Settings alone never recolors geometry.
+After geometry is finalized, the group's diffuse property is enabled and receives
+normalized (0–1) RGB components using
+`HColorProperty::StoreValue(Time(), color, TRUE)`. This preserves the write path
+confirmed in the temporary Model-color test and matches the SDK
+`Plugin/HXT/RenderPasses/worker.cpp` group edit example. Existing animation keys
+are not deleted. The group/model are marked modified and visible instances are
+refreshed. JSON checkbox/RGB fields now apply to the new group; Load Settings
+alone never recolors geometry.
 
 Text is limited to 512 UTF-16 code units. BMP glyphs and accented text are
 supported; supplementary characters/emoji are rejected. Complex script shaping,
@@ -172,13 +171,16 @@ Before promotion, test the exact Release binaries in A:M and record their hashes
    reset the zoom. Repeat with append/Undo on disposable data.
 10. Confirm each stamp has its own persistent group, correct membership and a
     distinct name of at most twenty characters. Save/reload and Undo/Redo the groups.
-11. In a fresh/disposable model, enable Apply model surface color and stamp red,
-    green and a mixed RGB color; verify their immediate
-    shaded appearance, deselect and verify again. Confirm Save does not change
-    the appearance, then close/reopen the model and compare.
-    Stamp with model color disabled, then with two chosen colors. Confirm the
-    model diffuse property changes only when enabled, new named groups have no
-    color override, and geometry inheriting model color follows the new value. Save/Load both the enabled and disabled color setting.
+11. In a fresh/disposable model, note its Model surface color. Enable Apply
+    surface color and append red text; move it aside, then append green and a
+    mixed RGB color. Verify each group's diffuse value and immediate shaded
+    appearance, including after deselection, without saving first. Confirm the
+    Model surface and earlier text/geometry retain their colors. Disable color
+    and stamp again: its new group must have no diffuse override. Save/reload
+    and Undo/Redo; check membership, group colors and the Model surface again.
+    Save/Load both the enabled and disabled color setting. A Model color assigned
+    by an earlier diagnostic build remains in that model; test on fresh data or
+    restore that property manually when comparing inheritance.
 12. Close/delete the original model, switch projects and close the application
     while the wizard is open. Confirm stale targets are rejected and dialog/hook
     cleanup leaves A:M usable. Test the synchronous caller separately when peer
@@ -205,25 +207,13 @@ existing four FileCons.h warnings. Other locations/codes still fail the build.
 JSON parsing/serialization uses picojson v1.3.0. Its license and source identity
 are retained in `THIRD-PARTY-NOTICES.txt`, included in the generated package.
 
-A user-provided saved model contained two disjoint groups of 1,104 control points,
-335 patches each, and valid red diffuse assignments, with no dangling references.
-The owner reports that saving repairs the display. This supports investigating
-live surface composition/notification rather than rewriting serialized colors.
-The file is post-save evidence and cannot establish the exact pre-save cache
-state. The notification/order change still requires a before-save A:M retest;
-CI does not execute host interpolation or surface composition.
-
-The owner reports that the group notification/invalidation candidate still does
-not display color immediately. The next candidate deliberately assigns the Model
-surface instead, to isolate model-level color assignment from group composition.
-This remains an A:M host test; native CI cannot verify visible surface color.
-
-The owner reports that direct Model assignment still updates the property but
-not the visible surface. This candidate changes the write from SetValue to the
-SDK example's StoreValue path. Whether that resolves the displayed/evaluated
-property mismatch must be tested before Save/reload in A:M. A pre-save file is
-not required for that comparison; the supplied post-save file cannot capture
-the earlier in-memory property or shading state.
-
-Model-level color is a temporary diagnostic only. The intended final behavior
-is independent color on each named text group after assignment works reliably.
+The owner reported that the supplied run 13 Release candidate displayed its
+chosen color immediately after changing the write from SetValue to StoreValue.
+That candidate temporarily targeted the Model surface. Its HXT SHA-256 was
+`be96ecd361b7b917857ac1995aec23ff868570ee34ae39388ef66c2ef4461d58`;
+PR head `ee21238d64fe29decfca1320058a1225f11cd11a`, checkout
+`0af23e9cb0b82c96693857f6d12f04e3469ab051`, run `40292468212`, attempt 1.
+This is limited owner-reported color evidence, not complete host validation;
+the host version and remaining checklist were not reconfirmed. This revision
+restores the new named group as the color target and needs its own host test.
+Build receipts remain unmodified at `runtime_tested: false`.
