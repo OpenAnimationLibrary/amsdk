@@ -7,6 +7,7 @@
 #include <string>
 
 class HModelCache;
+class HTreeObject;
 namespace fw2 {
 struct Options {
     LOGFONTW font{};

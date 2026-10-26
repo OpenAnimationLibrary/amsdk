@@ -1,4 +1,6 @@
 #pragma once
+class Subdiv;
+class PolygonalAreaArray;
 
 // include geom.h before this
 
