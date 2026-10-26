@@ -1,0 +1,5 @@
+#pragma once
+#define IDD_FW2_LAUNCHER 32001
+#define IDC_FW2_INPUT 32002
+#define IDC_FW2_OPEN 32003
+#define IDC_FW2_RESULT 32004
