@@ -1,6 +1,7 @@
 #include "FontWiz2.h"
 #include "SDK/HModel.h"
 #include <exception>
+#include <stdexcept>
 #include <cwchar>
 
 CPluginApp theApp;
@@ -31,14 +32,24 @@ extern "C" __declspec(dllexport) FW2Status __cdecl FontWiz2RunV1(
             detail(reply, L"The dialog owner must belong to A:M's UI thread."); return FW2_INVALID_INPUT;
         }
         fw2::Options options = remembered; options.text = request->text;
-        if (!fw2::ShowWizard(owner, options, model != nullptr)) {
+        const auto result = fw2::ShowWizard(AfxGetInstanceHandle(), owner, options, model != nullptr,
+            [&](const fw2::Options &values) -> fw2::StampResult {
+                try {
+                    std::uint32_t splines = 0;
+                    void *generated = fw2::Generate(model, values, splines);
+                    return {generated, splines};
+                } catch (CException *error) {
+                    if (error) error->Delete();
+                    throw std::runtime_error("A:M or MFC could not finish text generation.");
+                }
+            });
+        if (!result.stamps) {
             detail(reply, L"FontWiz2 cancelled. No geometry was added."); return FW2_CANCELLED;
         }
         remembered = options;
-        CWaitCursor wait;
-        reply->model = fw2::Generate(model, options, reply->splines);
-        wcscpy_s(reply->text, options.text.c_str());
-        swprintf_s(reply->detail, L"FontWiz2 completed: %u splines created.", reply->splines);
+        reply->model = result.model; reply->splines = result.splines;
+        wcscpy_s(reply->text, result.text.c_str());
+        swprintf_s(reply->detail, L"FontWiz2 completed: %u splines across %u stamp(s).", reply->splines, result.stamps);
         return FW2_COMPLETED;
     } catch (CException *error) {
         if (error) error->Delete();

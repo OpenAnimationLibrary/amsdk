@@ -58,7 +58,7 @@
     <ClCompile><RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary><PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions><Optimization>Disabled</Optimization></ClCompile>
     <Link><AdditionalDependencies>FileIO_64d.lib;Matrix_64d.lib;Plugin_64d.lib;SDK_64d.lib;comdlg32.lib;gdi32.lib;%(AdditionalDependencies)</AdditionalDependencies></Link>
   </ItemDefinitionGroup>
-  <ItemGroup><ClCompile Include="Entry.cpp" /><ClCompile Include="Engine.cpp" /><ClCompile Include="Wizard.cpp" /><ClCompile Include="GlyphOutline.cpp" /><ClCompile Include="geometry/geom.cpp" /><ClCompile Include="geometry/poly.cpp" /><ClCompile Include="geometry/tri.cpp" /><ClCompile Include="geometry/quad.cpp" /><ClCompile Include="geometry/extrude.cpp" /><ResourceCompile Include="FontWiz2.rc" /></ItemGroup>
+  <ItemGroup><ClCompile Include="Entry.cpp" /><ClCompile Include="Engine.cpp" /><ClCompile Include="Wizard.cpp" /><ClCompile Include="Settings.cpp" /><ClCompile Include="GlyphOutline.cpp" /><ClCompile Include="geometry/geom.cpp" /><ClCompile Include="geometry/poly.cpp" /><ClCompile Include="geometry/tri.cpp" /><ClCompile Include="geometry/quad.cpp" /><ClCompile Include="geometry/extrude.cpp" /><ResourceCompile Include="FontWiz2.rc" /></ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Target Name="ValidateAMBuild" BeforeTargets="PrepareForBuild">
     <Error Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug'" Text="Only Release or Debug configurations are supported." />

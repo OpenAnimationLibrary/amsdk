@@ -21,11 +21,17 @@ def main():
         compiler = installation / 'VC/Tools/MSVC' / lock['vc_tools_version'] / 'bin/Hostx64/x64/cl.exe'
         folder = HERE / 'plugins/FontWiz2'
         executable = work / 'fontwiz2-tests.exe'
+        resource = work / 'fontwiz2-tests.res'
+        subprocess.run(['rc.exe', '/nologo', '/I' + str(folder), '/fo' + str(resource),
+                        str(folder / 'FontWiz2.rc')], env=env, cwd=work, check=True, timeout=30)
         runtime = '/MDd' if os.environ.get('AM_CONFIGURATION') == 'Debug' else '/MD'
         subprocess.run([str(compiler), '/nologo', '/EHsc', '/std:c++20', '/W4', '/WX', runtime,
-                        str(folder / 'NativeTests.cpp'), str(folder / 'GlyphOutline.cpp'),
+                        *[str(folder / name) for name in ('NativeTests.cpp', 'GlyphOutline.cpp',
+                                                          'Settings.cpp', 'SettingsTests.cpp',
+                                                          'Wizard.cpp', 'WizardTests.cpp')],
                         '/Fo' + work.as_posix() + '/', '/Fe' + str(executable),
-                        '/link', 'gdi32.lib', 'user32.lib'], env=env, cwd=work, check=True, timeout=60)
+                        '/link', str(resource), 'gdi32.lib', 'user32.lib', 'comdlg32.lib'],
+                       env=env, cwd=work, check=True, timeout=60)
         subprocess.run([str(executable)], env=env, cwd=work, check=True, timeout=30)
 
 

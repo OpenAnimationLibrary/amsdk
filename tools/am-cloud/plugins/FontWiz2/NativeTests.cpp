@@ -7,7 +7,9 @@
 namespace {
 void require(bool value) { if (!value) throw std::runtime_error("FontWiz2 native test failed."); }
 }
-int main() {
+void TestFontWiz2Settings();
+void TestFontWiz2Wizard();
+int main() try {
     FW2Request request; FW2Reply reply;
     require(!FW2ValidRequest(&request, &reply));
     wcscpy_s(request.text, L"Hello\r\nWorld");
@@ -42,5 +44,12 @@ int main() {
     try { (void)fw2::ReadGlyphOutlines(L"A", font, std::numeric_limits<float>::infinity()); }
     catch (const std::exception &) { rejected = true; }
     require(rejected);
+    TestFontWiz2Settings();
+    TestFontWiz2Wizard();
     std::cout << "FontWiz2: API validation and real GDI outline, curve, hole, multiline and accented-text tests passed.\n";
+    std::cout << "FontWiz2: JSON settings/file round trips, invalid-file handling and modal repeated-stamping tests passed (mock generation backend).\n";
+    return 0;
+} catch (const std::exception &error) {
+    std::cerr << error.what() << '\n';
+    return 1;
 }
