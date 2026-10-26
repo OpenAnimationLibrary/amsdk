@@ -12,6 +12,7 @@ struct Options {
     bool newModel = false;
     bool keepOpen = true;
     bool applyColor = false;
+    bool saveModelCopy = false;
     COLORREF surfaceColor = RGB(255, 255, 255);
     std::wstring text = L"FontWiz2";
     Options() {

@@ -145,6 +145,35 @@ void TestFilteredInput() {
     }
     require(!timeout && result.stamps == 0 && !IsWindow(cancel));
 }
+void TestSaveCopyCancel() {
+    fw2::Options options; options.keepOpen = false; options.saveModelCopy = true;
+    unsigned generations = 0, saves = 0;
+    bool finished = false;
+    fw2::WizardResult result;
+    int identity = 0;
+    HWND window = nullptr;
+    window = fw2::OpenWizard(GetModuleHandleW(nullptr), modelWindow, options, true,
+        [&](const fw2::Options &values) {
+            require(values.saveModelCopy); ++generations; return fw2::StampResult{&identity, 3};
+        }, [&](const fw2::Options &, const fw2::WizardResult &value) { result = value; finished = true; }, {},
+        [&](void *model, HWND owner) { require(model == &identity && owner == window); return ++saves > 1; });
+    timeout = false; SetTimer(window, 0xF2FF, 10000, watchdog);
+    PostMessageW(window, WM_COMMAND, IDOK, 0);
+    constexpr UINT checkpoint = WM_APP + 43;
+    PostThreadMessageW(GetCurrentThreadId(), checkpoint, 0, 0);
+    while (!finished) {
+        MSG message{}; require(GetMessageW(&message, nullptr, 0, 0) > 0);
+        if (message.message == checkpoint) {
+            require(IsWindow(window) && generations == 1 && saves == 1);
+            wchar_t label[32]{}; GetDlgItemTextW(window, IDCANCEL, label, 32);
+            require(std::wstring(label) == L"Close");
+            PostMessageW(window, WM_COMMAND, IDC_FW2_SAVE_MODEL, 0);
+            PostMessageW(window, WM_CLOSE, 0, 0);
+        }
+        TranslateMessage(&message); DispatchMessageW(&message);
+    }
+    require(!timeout && generations == 1 && saves == 2 && result.stamps == 1 && result.model == &identity);
+}
 }
 
 void TestFontWiz2Wizard() {
@@ -196,6 +225,7 @@ void TestFontWiz2Wizard() {
     SendMessageW(asynchronous, WM_CLOSE, 0, 0);
     require(finished && !IsWindow(asynchronous));
     TestFilteredInput();
+    TestSaveCopyCancel();
     // WM_QUIT must survive the synchronous V1 adapter and its window must close.
     PostQuitMessage(97);
     const auto quit = fw2::ShowWizard(GetModuleHandleW(nullptr), modelWindow, options, true,

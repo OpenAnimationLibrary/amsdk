@@ -1,6 +1,7 @@
 #pragma once
 #include "Options.h"
 #include "Inspector.h"
+#include "ModelCopy.h"
 #include <cstdint>
 #include <functional>
 
@@ -13,8 +14,8 @@ struct WizardResult : StampResult {
 using GenerateText = std::function<StampResult(const Options &)>;
 using WizardClosed = std::function<void(const Options &, const WizardResult &)>;
 HWND OpenWizard(HINSTANCE module, HWND owner, const Options &options,
-                bool hasModel, GenerateText generate, WizardClosed closed, InspectModel inspect = {});
+                bool hasModel, GenerateText generate, WizardClosed closed, InspectModel inspect = {}, SaveModelCopy saveCopy = {});
 WizardResult ShowWizard(HINSTANCE module, HWND owner, Options &options,
                         bool hasModel, const GenerateText &generate,
-                        const std::function<bool(MSG &)> &preTranslate = {}, InspectModel inspect = {});
+                        const std::function<bool(MSG &)> &preTranslate = {}, InspectModel inspect = {}, SaveModelCopy saveCopy = {});
 }

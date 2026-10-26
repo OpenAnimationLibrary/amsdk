@@ -22,7 +22,7 @@ void rejects(const std::string &text) {
 
 void TestFontWiz2Settings() {
     fw2::Options original;
-    require(!original.newModel && original.keepOpen && !original.applyColor);
+    require(!original.newModel && original.keepOpen && !original.applyColor && !original.saveModelCopy);
     require(fw2::NormalizedSurfaceColor(RGB(0, 0, 0)) == std::array<float, 3>{0, 0, 0});
     require(fw2::NormalizedSurfaceColor(RGB(255, 255, 255)) == std::array<float, 3>{1, 1, 1});
     require(fw2::NormalizedSurfaceColor(RGB(255, 0, 0)) == std::array<float, 3>{1, 0, 0});
@@ -41,7 +41,7 @@ void TestFontWiz2Settings() {
     original.flags = EX_CLOSE_FRONT | EX_CLOSE_BACK | EX_BEV_FRONT | EX_BEV_SIDE |
         EX_BEV_BACK | EX_ROUND | EX_INWARD | EX_SUB | EX_SUB_ALL;
     original.newModel = false; original.keepOpen = true;
-    original.applyColor = true; original.surfaceColor = RGB(17, 128, 249);
+    original.saveModelCopy = true; original.applyColor = true; original.surfaceColor = RGB(17, 128, 249);
     const std::string json = fw2::SettingsToJson(original);
     require(fw2::SettingsToJson(fw2::SettingsFromJson(json)) == json);
     require(fw2::SettingsToJson(fw2::SettingsFromJson("\xEF\xBB\xBF" + json)) == json);
@@ -53,6 +53,10 @@ void TestFontWiz2Settings() {
     rejects("{}"); rejects(json.substr(0, json.size() / 2)); rejects(json + "garbage");
     rejects(std::string(65537, ' ')); rejects("[[[[[[[[[0]]]]]]]]]");
     const auto legacy = fw2::SettingsFromJson(replace(json, "\"version\": 2", "\"version\": 1"));
+    require(!legacy.saveModelCopy);
+    const auto oldV2 = fw2::SettingsFromJson(replace(json, "  \"save_model_copy_after_creation\": true,\n", ""));
+    require(!oldV2.saveModelCopy);
+    rejects(replace(json, "\"save_model_copy_after_creation\": true", "\"save_model_copy_after_creation\": 1"));
     require(!legacy.applyColor && legacy.surfaceColor == RGB(255, 255, 255));
     require(!fw2::Options().applyColor);
     rejects(replace(json, "\"version\": 2", "\"version\": 3"));

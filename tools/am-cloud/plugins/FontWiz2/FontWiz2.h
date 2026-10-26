@@ -11,6 +11,7 @@
 class HModelCache;
 class HTreeObject;
 namespace fw2 {
+std::string ModelCode(HModelCache *model, const std::wstring &path = {});
 std::wstring ModelSnapshot(HModelCache *model, bool serialize);
 HModelCache *ResolveModel(HTreeObject *object);
 HModelCache *FindLiveModel(const void *identity);

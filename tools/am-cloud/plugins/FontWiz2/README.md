@@ -1,7 +1,7 @@
 # FontWiz2 and Pass text to FontWiz2
 
 Independent Windows x64 command plugins for Animation:Master 19.5. FontWiz2 has
-its own HXT filename, command label, dialog resources (31001-31032), API and
+its own HXT filename, command label, dialog resources (31001-31034), API and
 session settings. The launcher uses resource IDs 32001-32004. Neither loads the
 original Font HXT or reads/writes its settings. Standard Windows OK/Cancel IDs
 and the three required A:M callback names keep their standard meanings.
@@ -107,6 +107,35 @@ bidirectional layout and kerning are not implemented. Missing glyphs produce a
 clear error instead of silent substitution. Invalid text, cancelled dialogs and
 rejected outline geometry do not add model data. Geometry is staged before host
 mutation; a failure during host insertion is not claimed to be transactional.
+
+## Interim save workaround
+
+Enable **Save model copy after creation** to show a `.mdl` Save dialog after
+each successful stamp. The option starts off and is included in JSON settings;
+older v1/v2 settings default it off. **Save Model Copy...** also saves on demand,
+including retrying a cancelled or failed save without stamping again. Saving
+uses the last stamped model, or the original Model context before any stamp.
+The Save dialog asks for a filename each time and confirms overwriting.
+
+The SDK serializes the complete current model to memory with the destination
+filename as its context. Its original bytes are written to an adjacent temporary
+file, flushed, then atomically moved over the chosen destination. Incomplete
+model-file wrappers or failed writes leave an existing destination untouched.
+No extra property inspection is performed. The SDK's ANSI filename limitation
+applies when the system code page cannot represent a chosen path.
+
+This is a model-copy export, not the native A:M Save command. It does not change
+the open model's filename, embedded/modified status, identity or wizard target.
+Cancelling or failing to save preserves the completed stamp and keeps the wizard
+open even if Keep window open was cleared. The standalone and receiving paths
+use the same behavior; the V1 ABI is unchanged. Model copies have a 256 MiB limit.
+
+The SDK exposes serialization but no direct reload-in-place operation. If the
+copy save does not refresh the visible color, use A:M's normal Save, close that
+model, reopen its `.mdl`, then reopen FontWiz2 from it. This workaround does not
+automatically replace models, retarget choreography instances, or clear Undo.
+Native Save was reported to repair appearance; whether this SDK export has the
+same effect and whether its output reopens correctly require an A:M test.
 
 ## Inspect the current model
 
@@ -266,3 +295,9 @@ reads are limited to null flags and the stored RGB vector. The color assignment
 and optional serializer are unchanged; this is a crash-isolation candidate,
 not a confirmed runtime repair. Capture the live report before using the separate
 Capture model code action, and note which action fails if a problem remains.
+
+Development is paused on the group-color root cause in favor of the optional
+save-copy workaround above. Native tests cover byte preservation, replacement,
+failed replacement retaining the original file, settings compatibility and a
+cancelled post-stamp save followed by a manual retry without duplicate geometry
+(mock generation/save callbacks). SDK export and host reload remain untested.

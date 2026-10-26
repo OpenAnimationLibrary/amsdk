@@ -1,4 +1,5 @@
 #include "Inspector.h"
+#include "ModelCopy.h"
 #include "resource.h"
 #include <fstream>
 #include <filesystem>
@@ -46,6 +47,25 @@ void TestFontWiz2Inspector() {
     rejected = false;
     try { (void)fw2::ReadDiagnosticFile(path); } catch (const std::exception &) { rejected = true; }
     require(rejected && DeleteFileW(path));
+    require(GetTempFileNameW(temp, L"fw2", 0, path) != 0);
+    const std::string modelBytes = "<MODELFILE>\r\nName=Caf\xE9\r\n</MODELFILE>\r\n";
+    fw2::WriteModelCopy(path, modelBytes);
+    const auto readBytes = [&]() {
+        std::ifstream stream(std::filesystem::path(path), std::ios::binary);
+        return std::string(std::istreambuf_iterator<char>(stream), {});
+    };
+    require(readBytes() == modelBytes); // Preserve SDK bytes; no UTF-8 conversion.
+    const HANDLE locked = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    require(locked != INVALID_HANDLE_VALUE);
+    rejected = false;
+    try { fw2::WriteModelCopy(path, "replacement"); } catch (const std::exception &) { rejected = true; }
+    CloseHandle(locked);
+    require(rejected && readBytes() == modelBytes);
+    fw2::WriteModelCopy(path, "second save");
+    require(readBytes() == "second save");
+    rejected = false;
+    try { fw2::WriteModelCopy(path, ""); } catch (const std::exception &) { rejected = true; }
+    require(rejected && readBytes() == "second save" && DeleteFileW(path));
     unsigned getter = 0, serializer = 0;
     const HHOOK input = SetWindowsHookExW(WH_CBT, hook, nullptr, GetCurrentThreadId());
     require(input != nullptr);

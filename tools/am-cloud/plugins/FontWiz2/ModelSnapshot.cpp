@@ -26,16 +26,29 @@ void color(std::ostream &out, HAttrProperty *attributes) {
 }
 unsigned id(HCP *cp) { return cp ? cp->GetID() : 0; }
 }
-std::wstring ModelSnapshot(HModelCache *model, bool serialize) {
-    if (serialize) {
-        MemoryStream stream(FileMode::HS_ASCII | FileMode::HS_DONTPROGRESS);
-        stream.m_productversion = 19.5F;
-        if (!model->ExportModel(stream) || stream.IsFailed())
-            throw std::runtime_error("A:M could not serialize the model into memory.");
-        if (stream.GetLength() > 16 * 1024 * 1024)
-            throw std::runtime_error("The serialized model exceeds 16 MiB.");
-        return DiagnosticText(std::string(stream.m_buf ? stream.m_buf : "", stream.GetLength()));
+std::string ModelCode(HModelCache *model, const std::wstring &path) {
+    MemoryStream stream(FileMode::HS_ASCII | FileMode::HS_DONTPROGRESS);
+    stream.m_productversion = 19.5F;
+    if (!path.empty()) {
+        BOOL substituted = FALSE;
+        const bool utf8 = GetACP() == CP_UTF8;
+        const DWORD flags = utf8 ? WC_ERR_INVALID_CHARS : WC_NO_BEST_FIT_CHARS;
+        BOOL *usedDefault = utf8 ? nullptr : &substituted;
+        const int count = WideCharToMultiByte(CP_ACP, flags, path.c_str(), -1, nullptr, 0, nullptr, usedDefault);
+        if (!count || substituted) throw std::runtime_error("Choose a path supported by A:M's Windows ANSI code page.");
+        std::string filename(static_cast<std::size_t>(count), '\0');
+        if (!WideCharToMultiByte(CP_ACP, flags, path.c_str(), -1, filename.data(), count, nullptr, usedDefault) || substituted)
+            throw std::runtime_error("Choose a path supported by A:M's Windows ANSI code page.");
+        stream.m_filename = filename.c_str();
     }
+    if (!model->ExportModel(stream) || stream.IsFailed())
+        throw std::runtime_error("A:M could not serialize the model. Generated text remains in A:M.");
+    if (!stream.m_buf || !stream.GetLength() || stream.GetLength() > 256 * 1024 * 1024)
+        throw std::runtime_error("The serialized model is empty or exceeds 256 MiB.");
+    return std::string(stream.m_buf, stream.GetLength());
+}
+std::wstring ModelSnapshot(HModelCache *model, bool serialize) {
+    if (serialize) return DiagnosticText(ModelCode(model));
     // Getter-only report precedes the optional SDK serializer. No Save, Update,
     // FindPatches, MakeCurrent, interpolation, property writes or redraw here.
     std::ostringstream out; out.imbue(std::locale::classic()); out << std::setprecision(9);

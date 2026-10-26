@@ -114,7 +114,8 @@ std::string SettingsToJson(const Options &options) {
     Object root{{"format", Json(std::string("FontWiz2.Settings"))}, {"version", Json(2.0)},
         {"text", Json(utf8(options.text))}, {"font", Json(font)}, {"geometry", Json(geometry)},
         {"bevel", Json(bevel)}, {"surface", Json(surface)},
-        {"create_new_model", Json(options.newModel)}, {"keep_window_open", Json(options.keepOpen)}};
+        {"create_new_model", Json(options.newModel)}, {"keep_window_open", Json(options.keepOpen)},
+        {"save_model_copy_after_creation", Json(options.saveModelCopy)}};
     return Json(root).serialize(true) + "\n";
 }
 
@@ -184,6 +185,8 @@ Options SettingsFromJson(const std::string &input) {
             static_cast<BYTE>(number(surface, "green", 0, 255, true)),
             static_cast<BYTE>(number(surface, "blue", 0, 255, true)));
     }
+    if (version >= 2 && root.find("save_model_copy_after_creation") != root.end())
+        options.saveModelCopy = boolean(root, "save_model_copy_after_creation");
     validate(options);
     return options;
 }

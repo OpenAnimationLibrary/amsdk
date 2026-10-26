@@ -21,6 +21,7 @@ struct State {
     GenerateText generate;
     WizardClosed closed;
     InspectModel inspect;
+    SaveModelCopy saveCopy;
     HWND window = nullptr;
     HHOOK input = nullptr;
     HFONT preview = nullptr;
@@ -118,6 +119,7 @@ Options readControls(HWND dialog, const State &state) {
     if (subdivision == 2) options.flags |= EX_SUB_ALL;
     options.newModel = IsDlgButtonChecked(dialog, IDC_FW2_NEW) == BST_CHECKED;
     options.keepOpen = IsDlgButtonChecked(dialog, IDC_FW2_KEEP_OPEN) == BST_CHECKED;
+    options.saveModelCopy = IsDlgButtonChecked(dialog, IDC_FW2_AUTO_SAVE) == BST_CHECKED;
     options.applyColor = IsDlgButtonChecked(dialog, IDC_FW2_APPLY_COLOR) == BST_CHECKED;
     return options;
 }
@@ -134,6 +136,7 @@ void populate(HWND dialog, State &state, const Options &options) {
                        options.flags & EX_SUB_ALL ? 2 : options.flags & EX_SUB ? 1 : 0, 0);
     CheckDlgButton(dialog, IDC_FW2_NEW, options.newModel || !state.hasModel ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(dialog, IDC_FW2_KEEP_OPEN, options.keepOpen ? BST_CHECKED : BST_UNCHECKED);
+    CheckDlgButton(dialog, IDC_FW2_AUTO_SAVE, options.saveModelCopy ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(dialog, IDC_FW2_APPLY_COLOR, options.applyColor ? BST_CHECKED : BST_UNCHECKED);
     EnableWindow(GetDlgItem(dialog, IDC_FW2_NEW), state.hasModel);
     state.applying = false;
@@ -184,6 +187,16 @@ void createText(HWND dialog, State &state) {
     state.result.splines = static_cast<std::uint32_t>((std::min)(total, std::uint64_t(std::numeric_limits<std::uint32_t>::max())));
     if (state.result.stamps < std::numeric_limits<std::uint32_t>::max()) ++state.result.stamps;
     state.result.text = values.text;
+    SetDlgItemTextW(dialog, IDCANCEL, L"Close");
+    if (values.saveModelCopy) {
+        SetDlgItemTextW(dialog, IDC_FW2_STATUS, L"Text created. Save a model copy, or Cancel to keep working without saving.");
+        if (!state.saveCopy) throw std::runtime_error("Text was created; model-copy saving is unavailable.");
+        // Record the completed stamp first. Cancel/failure must not invite a duplicate stamp.
+        if (!state.saveCopy(state.result.model, dialog)) {
+            SetDlgItemTextW(dialog, IDC_FW2_STATUS, L"Text created; model copy not saved. Use Save Model Copy to retry.");
+            return;
+        }
+    }
     if (!values.keepOpen) { DestroyWindow(dialog); return; }
     wchar_t status[160]{};
     swprintf_s(status, L"Created %u splines (%u stamps). You can move the selected text in A:M, then stamp again.", stamp.splines, state.result.stamps);
@@ -251,6 +264,13 @@ INT_PTR CALLBACK procedure(HWND dialog, UINT message, WPARAM wparam, LPARAM lpar
                 }
                 return TRUE;
             }
+            if (id == IDC_FW2_SAVE_MODEL) {
+                if (!state->saveCopy) throw std::runtime_error("Model-copy saving is unavailable.");
+                SetDlgItemTextW(dialog, IDC_FW2_STATUS, L"Saving the model copy...");
+                const bool saved = state->saveCopy(state->result.model, dialog);
+                SetDlgItemTextW(dialog, IDC_FW2_STATUS, saved ? L"Model copy saved. Close/reopen it in A:M if a reload is needed." : L"Model copy not saved; current model remains open.");
+                return TRUE;
+            }
             if (id == IDC_FW2_INSPECT) {
                 if (!state->inspect) throw std::runtime_error("Model inspection is unavailable.");
                 ShowModelInspector(reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(dialog, GWLP_HINSTANCE)),
@@ -268,9 +288,9 @@ INT_PTR CALLBACK procedure(HWND dialog, UINT message, WPARAM wparam, LPARAM lpar
 }
 }
 HWND OpenWizard(HINSTANCE module, HWND owner, const Options &options, bool hasModel,
-                GenerateText generate, WizardClosed closed, InspectModel inspect) {
+                GenerateText generate, WizardClosed closed, InspectModel inspect, SaveModelCopy saveCopy) {
     if (active) throw std::runtime_error("FontWiz2 is already open.");
-    auto state = std::make_shared<State>(State{options, hasModel, std::move(generate), std::move(closed), std::move(inspect)});
+    auto state = std::make_shared<State>(State{options, hasModel, std::move(generate), std::move(closed), std::move(inspect), std::move(saveCopy)});
     active = state;
     const HWND dialog = CreateDialogParamW(module, MAKEINTRESOURCEW(IDD_FW2_WIZARD), owner, procedure, 0);
     if (!dialog) { active.reset(); throw std::runtime_error("The FontWiz2 dialog could not be opened."); }
@@ -280,11 +300,11 @@ HWND OpenWizard(HINSTANCE module, HWND owner, const Options &options, bool hasMo
     return dialog;
 }
 WizardResult ShowWizard(HINSTANCE module, HWND owner, Options &options, bool hasModel,
-                        const GenerateText &generate, const std::function<bool(MSG &)> &preTranslate, InspectModel inspect) {
+                        const GenerateText &generate, const std::function<bool(MSG &)> &preTranslate, InspectModel inspect, SaveModelCopy saveCopy) {
     WizardResult result;
     bool finished = false;
     const HWND dialog = OpenWizard(module, owner, options, hasModel, generate,
-        [&](const Options &values, const WizardResult &completed) { options = values; result = completed; finished = true; }, std::move(inspect));
+        [&](const Options &values, const WizardResult &completed) { options = values; result = completed; finished = true; }, std::move(inspect), std::move(saveCopy));
     try {
         while (!finished) {
             MSG message{};
