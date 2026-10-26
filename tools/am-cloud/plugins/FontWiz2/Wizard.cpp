@@ -20,6 +20,7 @@ struct State {
     bool hasModel;
     GenerateText generate;
     WizardClosed closed;
+    InspectModel inspect;
     HWND window = nullptr;
     HHOOK input = nullptr;
     HFONT preview = nullptr;
@@ -250,6 +251,12 @@ INT_PTR CALLBACK procedure(HWND dialog, UINT message, WPARAM wparam, LPARAM lpar
                 }
                 return TRUE;
             }
+            if (id == IDC_FW2_INSPECT) {
+                if (!state->inspect) throw std::runtime_error("Model inspection is unavailable.");
+                ShowModelInspector(reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(dialog, GWLP_HINSTANCE)),
+                    dialog, state->result.model, state->inspect);
+                return TRUE;
+            }
             if (id == IDOK) { createText(dialog, *state); return TRUE; }
         }
     } catch (const std::exception &error) {
@@ -261,9 +268,9 @@ INT_PTR CALLBACK procedure(HWND dialog, UINT message, WPARAM wparam, LPARAM lpar
 }
 }
 HWND OpenWizard(HINSTANCE module, HWND owner, const Options &options, bool hasModel,
-                GenerateText generate, WizardClosed closed) {
+                GenerateText generate, WizardClosed closed, InspectModel inspect) {
     if (active) throw std::runtime_error("FontWiz2 is already open.");
-    auto state = std::make_shared<State>(State{options, hasModel, std::move(generate), std::move(closed)});
+    auto state = std::make_shared<State>(State{options, hasModel, std::move(generate), std::move(closed), std::move(inspect)});
     active = state;
     const HWND dialog = CreateDialogParamW(module, MAKEINTRESOURCEW(IDD_FW2_WIZARD), owner, procedure, 0);
     if (!dialog) { active.reset(); throw std::runtime_error("The FontWiz2 dialog could not be opened."); }
@@ -273,11 +280,11 @@ HWND OpenWizard(HINSTANCE module, HWND owner, const Options &options, bool hasMo
     return dialog;
 }
 WizardResult ShowWizard(HINSTANCE module, HWND owner, Options &options, bool hasModel,
-                        const GenerateText &generate, const std::function<bool(MSG &)> &preTranslate) {
+                        const GenerateText &generate, const std::function<bool(MSG &)> &preTranslate, InspectModel inspect) {
     WizardResult result;
     bool finished = false;
     const HWND dialog = OpenWizard(module, owner, options, hasModel, generate,
-        [&](const Options &values, const WizardResult &completed) { options = values; result = completed; finished = true; });
+        [&](const Options &values, const WizardResult &completed) { options = values; result = completed; finished = true; }, std::move(inspect));
     try {
         while (!finished) {
             MSG message{};

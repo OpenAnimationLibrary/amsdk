@@ -9,6 +9,7 @@ void require(bool value) { if (!value) throw std::runtime_error("FontWiz2 native
 }
 void TestFontWiz2Settings();
 void TestFontWiz2Wizard();
+void TestFontWiz2Inspector();
 int main() try {
     FW2Request request; FW2Reply reply;
     require(!FW2ValidRequest(&request, &reply));
@@ -46,6 +47,7 @@ int main() try {
     require(rejected);
     TestFontWiz2Settings();
     TestFontWiz2Wizard();
+    TestFontWiz2Inspector();
     std::cout << "FontWiz2: API validation and real GDI outline, curve, hole, multiline and accented-text tests passed.\n";
     std::cout << "FontWiz2: JSON settings/file round trips, invalid-file handling and modal repeated-stamping tests passed (mock generation backend).\n";
     return 0;

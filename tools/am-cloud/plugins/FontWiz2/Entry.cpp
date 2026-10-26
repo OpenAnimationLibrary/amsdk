@@ -32,6 +32,23 @@ fw2::GenerateText generator(HModelCache *original) {
         }
     };
 }
+fw2::InspectModel inspector(HModelCache *original) {
+    const void *projectIdentity = GetHProject();
+    const void *modelIdentity = original;
+    return [projectIdentity, modelIdentity](void *lastModel, bool serialize) {
+        AFX_MANAGE_STATE(AfxGetStaticModuleState());
+        try {
+            if (!projectIdentity || GetHProject() != projectIdentity)
+                throw std::runtime_error("The project changed. Reopen FontWiz2 from the intended model.");
+            auto *model = fw2::FindLiveModel(lastModel ? lastModel : modelIdentity);
+            if (!model) throw std::runtime_error("The inspected model is no longer available. Reopen FontWiz2.");
+            return fw2::ModelSnapshot(model, serialize);
+        } catch (CException *error) {
+            if (error) error->Delete();
+            throw std::runtime_error("A:M or MFC could not inspect the model.");
+        }
+    };
+}
 struct EnabledHost {
     HWND window; bool restore;
     explicit EnabledHost(HWND host) : window(host), restore(!IsWindowEnabled(host)) {
@@ -65,7 +82,7 @@ extern "C" __declspec(dllexport) FW2Status __cdecl FontWiz2RunV1(
             generator(model), [](MSG &message) {
                 CWinApp *host = GetMainApplication();
                 return host && host->PreTranslateMessage(&message) != FALSE;
-            });
+            }, inspector(model));
         if (!result.stamps) {
             detail(reply, L"FontWiz2 cancelled. No geometry was added."); return FW2_CANCELLED;
         }
@@ -116,7 +133,7 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject *object, const st
                 AFX_MANAGE_STATE(AfxGetStaticModuleState());
                 if (result.stamps) remembered = values;
                 busy = false;
-            });
+            }, inspector(model));
         return TRUE;
     } catch (const std::exception &error) {
         busy = false; MessageBoxA(GetMainApplicationWnd(), error.what(), "FontWiz2", MB_OK | MB_ICONERROR);

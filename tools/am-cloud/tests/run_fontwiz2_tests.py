@@ -34,7 +34,7 @@ def main():
         subprocess.run([str(compiler), '/nologo', '/EHsc', '/std:c++20', '/W4', '/WX', runtime,
                         *[str(folder / name) for name in ('NativeTests.cpp', 'GlyphOutline.cpp',
                                                           'Settings.cpp', 'SettingsTests.cpp',
-                                                          'Wizard.cpp', 'WizardTests.cpp')],
+                                                          'Wizard.cpp', 'WizardTests.cpp', 'Inspector.cpp', 'InspectorTests.cpp')],
                         '/Fo' + work.as_posix() + '/', '/Fe' + str(executable),
                         '/link', str(resource), 'gdi32.lib', 'user32.lib', 'comdlg32.lib'],
                        env=env, cwd=work, check=True, timeout=60)

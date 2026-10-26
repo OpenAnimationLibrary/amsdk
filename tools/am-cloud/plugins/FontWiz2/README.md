@@ -1,7 +1,7 @@
 # FontWiz2 and Pass text to FontWiz2
 
 Independent Windows x64 command plugins for Animation:Master 19.5. FontWiz2 has
-its own HXT filename, command label, dialog resources (31001-31025), API and
+its own HXT filename, command label, dialog resources (31001-31032), API and
 session settings. The launcher uses resource IDs 32001-32004. Neither loads the
 original Font HXT or reads/writes its settings. Standard Windows OK/Cancel IDs
 and the three required A:M callback names keep their standard meanings.
@@ -107,6 +107,36 @@ bidirectional layout and kerning are not implemented. Missing glyphs produce a
 clear error instead of silent substitution. Invalid text, cancelled dialogs and
 rejected outline geometry do not add model data. Geometry is staged before host
 mutation; a failure during host insertion is not claimed to be transactional.
+
+## Inspect the current model
+
+**Inspect Model...** captures the last model stamped by this wizard, or the
+original Model context before any stamp. The left pane initially shows live
+Model/group diffuse values and flags, group CP IDs, and each patch's own and
+composited diffuse values. This getter-only report runs before serialization;
+it does not call Save, FindPatches, Update, interpolation or refresh operations.
+SDK getters may still evaluate internal data lazily; this is not a raw memory dump.
+
+**Capture model code** appends ASCII model text produced by
+`HModelCache::ExportModel` into a `MemoryStream`. No model file is written and
+no model is reloaded. The SDK serializer may normalize data; the original live
+report remains above it. This output need not be byte-identical to an ordinary
+A:M Save, and cannot expose every internal cache.
+
+**Save snapshot...** writes only the captured text to a separate UTF-8 `.txt`
+file. **Open saved model...** reads a `.mdl` or text file into the right pane;
+it never imports it into A:M. Both panes support selection and Ctrl+C.
+The viewer and file reader have a 16 MiB limit and reject binary/compressed data.
+Only explicit Save snapshot writes a file; no diagnostic data is uploaded.
+The inspector is modal while open; close it to interact with A:M.
+
+To compare: stamp colored text, open Inspect Model before saving, and save the
+live report. Optionally capture model code and save a second snapshot, noting
+whether that action changes visible color. Close the inspector, save the model
+normally, reopen Inspect Model and save an after report. Repeat after reload if
+needed (reopen FontWiz2 from that model). Load the saved `.mdl` in the right pane
+or compare the before/after snapshots externally. Project/target changes are
+checked again before each capture; deleted targets produce an error.
 
 ## Public interface
 
@@ -217,3 +247,10 @@ This is limited owner-reported color evidence, not complete host validation;
 the host version and remaining checklist were not reconfirmed. This revision
 restores the new named group as the color target and needs its own host test.
 Build receipts remain unmodified at `runtime_tested: false`.
+
+The owner reports that run 14's group diffuse property is set but color still
+fails to display immediately. That candidate's Release HXT SHA-256 was
+`d32f0ea1ec2cbf030de2b450794b70385e379dbacc10bb8d8f2a1c8e712cbb9f`
+(run `40305369804`, attempt 1). This revision adds inspection without changing
+the group color write path. Inspector UI/file handling has native mock tests;
+actual live capture, SDK serialization and visible color require A:M testing.
