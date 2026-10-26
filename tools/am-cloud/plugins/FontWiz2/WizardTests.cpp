@@ -44,7 +44,87 @@ LRESULT CALLBACK activated(int code, WPARAM wparam, LPARAM lparam) {
     }
     return CallNextHookEx(nullptr, code, wparam, lparam);
 }
-void require(bool condition) { if (!condition) throw std::runtime_error("FontWiz2 modal stamping test failed."); }
+void require(bool condition) { if (!condition) throw std::runtime_error("FontWiz2 modeless input/stamping test failed."); }
+void click(HWND window, int id) {
+    const HWND button = GetDlgItem(window, id);
+    PostMessageW(button, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(5, 5));
+    PostMessageW(button, WM_LBUTTONUP, 0, MAKELPARAM(5, 5));
+}
+void type(HWND edit, const wchar_t *text) {
+    for (; *text; ++text) PostMessageW(edit, WM_CHAR, static_cast<WPARAM>(*text), 0);
+}
+void TestFilteredInput() {
+    bool finished = false;
+    unsigned creations = 0, leaked = 0;
+    fw2::WizardResult result;
+    std::vector<fw2::Options> generated;
+    fw2::Options options;
+    timeout = false;
+    SetWindowTextW(modelEdit, L"");
+    const HWND window = fw2::OpenWizard(GetModuleHandleW(nullptr), modelWindow, options, true,
+        [&](const fw2::Options &values) {
+            ++creations; generated.push_back(values); return fw2::StampResult{nullptr, 3};
+        }, [&](const fw2::Options &, const fw2::WizardResult &value) { result = value; finished = true; });
+    SetTimer(window, 0xF2FF, 10000, watchdog);
+    const HWND edit = GetDlgItem(window, IDC_FW2_TEXT);
+    SetWindowTextW(edit, L"");
+    SetFocus(edit);
+    type(edit, L"Input works");
+    PostMessageW(GetDlgItem(window, IDC_FW2_SUBDIVIDE), WM_KEYDOWN, VK_END, 0);
+    click(window, IDC_FW2_KEEP_OPEN);
+    click(window, IDC_FW2_APPLY_COLOR);
+    click(window, IDOK);
+    PostMessageW(modelEdit, WM_CHAR, L'm', 0);
+    constexpr UINT checkpoint = WM_APP + 42;
+    PostThreadMessageW(GetCurrentThreadId(), checkpoint, 0, 0);
+    while (!finished) {
+        MSG message{};
+        require(GetMessageW(&message, nullptr, 0, 0) > 0);
+        if (!message.hwnd && message.message == checkpoint) {
+            require(creations == 1 && IsWindow(window) && IsWindowEnabled(window));
+            require(IsWindowEnabled(modelWindow) && IsWindowEnabled(GetDlgItem(window, IDC_FW2_COLOR)));
+            require(generated[0].text == L"Input works" && generated[0].keepOpen && generated[0].applyColor);
+            require(SendDlgItemMessageW(window, IDC_FW2_SUBDIVIDE, CB_GETCURSEL, 0, 0) == 2);
+            wchar_t received[8]{}; GetWindowTextW(modelEdit, received, 8);
+            require(std::wstring(received) == L"m");
+            SetWindowTextW(edit, L"");
+            type(edit, L"Second input");
+            click(window, IDC_FW2_KEEP_OPEN);
+            click(window, IDOK);
+            continue;
+        }
+        const bool input = (message.message >= WM_KEYFIRST && message.message <= WM_KEYLAST) ||
+            (message.message >= WM_MOUSEFIRST && message.message <= WM_MOUSELAST);
+        // Model A:M pretranslation which consumes input to an unknown palette.
+        // No WM_COMMAND or BM_CLICK shortcuts: use the controls' input path.
+        if (input && (message.hwnd == window || IsChild(window, message.hwnd))) {
+            ++leaked; continue;
+        }
+        TranslateMessage(&message); DispatchMessageW(&message);
+    }
+    require(!timeout && leaked == 0 && creations == 2 && result.stamps == 2 && result.splines == 6);
+    require(generated[1].text == L"Second input" && !generated[1].keepOpen);
+    require(!IsWindow(window) && IsWindowEnabled(modelWindow));
+    // Keyboard navigation and Escape still work after mouse/typing dispatch.
+    finished = false;
+    const HWND cancel = fw2::OpenWizard(GetModuleHandleW(nullptr), modelWindow, options, true,
+        [](const fw2::Options &) { return fw2::StampResult{}; },
+        [&](const fw2::Options &, const fw2::WizardResult &value) { result = value; finished = true; });
+    SetTimer(cancel, 0xF2FF, 10000, watchdog);
+    SetFocus(GetDlgItem(cancel, IDC_FW2_TEXT));
+    PostMessageW(GetDlgItem(cancel, IDC_FW2_TEXT), WM_KEYDOWN, VK_TAB, 0);
+    PostThreadMessageW(GetCurrentThreadId(), checkpoint, 0, 0);
+    while (!finished) {
+        MSG message{}; require(GetMessageW(&message, nullptr, 0, 0) > 0);
+        if (!message.hwnd && message.message == checkpoint) {
+            require(GetFocus() == GetDlgItem(cancel, IDC_FW2_PICKFONT));
+            PostMessageW(GetFocus(), WM_KEYDOWN, VK_ESCAPE, 0);
+            continue;
+        }
+        TranslateMessage(&message); DispatchMessageW(&message);
+    }
+    require(!timeout && result.stamps == 0 && !IsWindow(cancel));
+}
 }
 
 void TestFontWiz2Wizard() {
@@ -93,6 +173,7 @@ void TestFontWiz2Wizard() {
     require(IsWindow(asynchronous) && !finished && IsWindowEnabled(modelWindow));
     SendMessageW(asynchronous, WM_CLOSE, 0, 0);
     require(finished && !IsWindow(asynchronous));
+    TestFilteredInput();
     // WM_QUIT must survive the synchronous V1 adapter and its window must close.
     PostQuitMessage(97);
     const auto quit = fw2::ShowWizard(GetModuleHandleW(nullptr), modelWindow, options, true,

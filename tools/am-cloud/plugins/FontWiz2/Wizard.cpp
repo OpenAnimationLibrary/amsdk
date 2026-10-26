@@ -21,7 +21,7 @@ struct State {
     GenerateText generate;
     WizardClosed closed;
     HWND window = nullptr;
-    HHOOK keyboard = nullptr;
+    HHOOK input = nullptr;
     HFONT preview = nullptr;
     bool applying = false;
     bool busy = false;
@@ -29,13 +29,27 @@ struct State {
     WizardResult result;
 };
 std::shared_ptr<State> active;
-LRESULT CALLBACK dialogKeys(int code, WPARAM wparam, LPARAM lparam) {
+LRESULT CALLBACK dialogInput(int code, WPARAM wparam, LPARAM lparam) {
     const auto state = active;
-    if (code >= 0 && wparam == PM_REMOVE && state && state->window) {
+    if (code == HC_ACTION && wparam == PM_REMOVE && state && IsWindowEnabled(state->window)) {
         auto *message = reinterpret_cast<MSG *>(lparam);
-        if ((message->hwnd == state->window || IsChild(state->window, message->hwnd)) &&
-            IsDialogMessageW(state->window, message)) {
-            message->message = WM_NULL; message->wParam = 0; message->lParam = 0;
+        const bool keyboard = message->message >= WM_KEYFIRST && message->message <= WM_KEYLAST;
+        const bool mouse = (message->message >= WM_MOUSEFIRST && message->message <= WM_MOUSELAST) ||
+            (message->message >= WM_NCMOUSEMOVE && message->message <= WM_NCXBUTTONDBLCLK);
+        if (!keyboard && !mouse) return CallNextHookEx(nullptr, code, wparam, lparam);
+        COMBOBOXINFO combo{}; combo.cbSize = sizeof(combo);
+        GetComboBoxInfo(GetDlgItem(state->window, IDC_FW2_SUBDIVIDE), &combo);
+        const bool dropdown = message->hwnd && message->hwnd == combo.hwndList;
+        if ((keyboard || mouse) && (message->hwnd == state->window ||
+            IsChild(state->window, message->hwnd) || dropdown)) {
+            // A:M may consume control input in its own pretranslation. Deliver
+            // this wizard's input before it reaches that code, exactly once.
+            MSG input = *message;
+            message->hwnd = nullptr; message->message = WM_NULL;
+            message->wParam = 0; message->lParam = 0;
+            if (!keyboard || dropdown || !IsDialogMessageW(state->window, &input)) {
+                TranslateMessage(&input); DispatchMessageW(&input);
+            }
         }
     }
     return CallNextHookEx(nullptr, code, wparam, lparam);
@@ -177,7 +191,7 @@ INT_PTR CALLBACK procedure(HWND dialog, UINT message, WPARAM wparam, LPARAM lpar
     if (message == WM_INITDIALOG) state->window = dialog;
     if (message == WM_NCDESTROY) {
         state->window = nullptr;
-        if (state->keyboard) { UnhookWindowsHookEx(state->keyboard); state->keyboard = nullptr; }
+        if (state->input) { UnhookWindowsHookEx(state->input); state->input = nullptr; }
         if (state->preview) { DeleteObject(state->preview); state->preview = nullptr; }
         active.reset();
         try { if (state->closed) state->closed(state->options, state->result); } catch (...) {}
@@ -245,8 +259,8 @@ HWND OpenWizard(HINSTANCE module, HWND owner, const Options &options, bool hasMo
     active = state;
     const HWND dialog = CreateDialogParamW(module, MAKEINTRESOURCEW(IDD_FW2_WIZARD), owner, procedure, 0);
     if (!dialog) { active.reset(); throw std::runtime_error("The FontWiz2 dialog could not be opened."); }
-    state->keyboard = SetWindowsHookExW(WH_GETMESSAGE, dialogKeys, nullptr, GetCurrentThreadId());
-    if (!state->keyboard) { DestroyWindow(dialog); throw std::runtime_error("FontWiz2 keyboard navigation could not be initialized."); }
+    state->input = SetWindowsHookExW(WH_GETMESSAGE, dialogInput, nullptr, GetCurrentThreadId());
+    if (!state->input) { DestroyWindow(dialog); throw std::runtime_error("FontWiz2 input routing could not be initialized."); }
     ShowWindow(dialog, SW_SHOW); SetForegroundWindow(dialog);
     return dialog;
 }

@@ -29,8 +29,10 @@ preferences remain independent. Files are written only when Save Settings is use
 
 The standalone command opens a modeless wizard and returns immediately to A:M.
 You can select, move, rotate and scale the generated text in the modeling window
-while FontWiz2 stays open. A thread-local keyboard hook handles dialog navigation
-only for the wizard and its children; A:M retains its normal message loop.
+while FontWiz2 stays open. A thread-local input hook delivers mouse/keyboard messages to the wizard
+controls before host pretranslation, including its subdivision drop-down.
+Dialog navigation still uses IsDialogMessage. Each input is dispatched once;
+model-window input and other messages remain with A:M's normal message loop.
 
 ## Save Settings and Load Settings
 
@@ -124,7 +126,13 @@ Native modeless-dialog tests use the real wizard resource and a mock generation
 callback to exercise cancel, single creation, two successive stamps with changed
 text/size/color, an enabled owner receiving input between stamps, immediate
 return from the standalone window opener, cleanup and WM_QUIT preservation.
-Naming tests cover truncation, whitespace and repeat suffixes. They do not run actual A:M insertion, cap quality or Undo.
+Naming tests cover truncation, whitespace and repeat suffixes. A filtered-host
+regression test queues actual control mouse/key messages (not direct command
+notifications): typing, checkbox/button clicks, subdivision selection, two
+stamps, host edit input, Tab and Escape. Its simulated host discards unhandled
+wizard input to expose the Esc-only interaction failure reported in run 7.
+This models a possible host pretranslation conflict; an A:M retest is required
+to establish the actual host result. They do not run actual A:M insertion, cap quality or Undo.
 
 Before promotion, test the exact Release binaries in A:M and record their hashes:
 
