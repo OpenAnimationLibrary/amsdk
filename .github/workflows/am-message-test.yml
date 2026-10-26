@@ -51,7 +51,8 @@ jobs:
         run: python tools/am-cloud/build.py --configuration "$env:AM_CONFIGURATION" --project "$env:AM_PROJECT"
       - name: Check message ABI and include usage notes
         run: |
-          if (-not (Select-String -Path tools/am-cloud/artifacts/diagnostics/exports.log -Pattern '^\s*\d+\s+[0-9A-Fa-f]+\s+[0-9A-Fa-f]{8,16}\s+AMMessageExchangeV1\s*$' -Quiet)) { throw 'Message ABI export is missing.' }
+          $receipt = Get-Content -Raw tools/am-cloud/artifacts/diagnostics/build-receipt.json | ConvertFrom-Json
+          if ('AMMessageExchangeV1' -notin $receipt.plugin.exports) { throw 'Message ABI export is missing.' }
           Copy-Item tools/am-cloud/plugins/MessageExchange/README.md tools/am-cloud/artifacts/packages/MESSAGE-TEST.md
       - name: Test the packaged verifier
         run: |
