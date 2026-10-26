@@ -110,24 +110,35 @@ HModelCache *Generate(HModelCache *model, const Options &options, std::uint32_t 
     if (!group) throw std::runtime_error("A:M could not create the text group.");
     group->SetTempGroup(FALSE);
     SubdivToModel(&subdivision, model, group);
-    if (options.applyColor) {
-        auto *attributes = group->GetAttr();
-        auto *diffuse = attributes ? attributes->GetDiffuseColor() : nullptr;
-        if (!diffuse) throw std::runtime_error("A:M could not apply the text group's surface color.");
-        const auto rgb = NormalizedSurfaceColor(options.surfaceColor);
-        // An unset group property inherits its color; enable this override and
-        // use normalized RGB, rather than COLORREF's byte-valued components.
-        diffuse->SetNull(FALSE, group);
-        diffuse->SetValue(RGBFloat(rgb[0], rgb[1], rgb[2]));
-    }
     model->FindPatches();
     model->SetChanged(TRUE);
     model->Update();
+    HColorProperty *diffuse = nullptr;
+    if (options.applyColor) {
+        auto *attributes = group->GetAttr();
+        diffuse = attributes ? attributes->GetDiffuseColor() : nullptr;
+        if (!diffuse) throw std::runtime_error("A:M could not apply the text group's surface color.");
+        const auto rgb = NormalizedSurfaceColor(options.surfaceColor);
+        // Finish topology first, then invalidate/notify after the final color
+        // is written. Marking a file dirty or redrawing alone is insufficient.
+        diffuse->SetNull(FALSE, group);
+        diffuse->SetValue(RGBFloat(rgb[0], rgb[1], rgb[2]));
+        diffuse->OnModified();
+        group->OnModified();
+        group->OffInterpolate(diffuse);
+        model->OnModified();
+        model->OffInterpolate(diffuse);
+        model->MakeCurrent();
+    }
     model->OpenView();
     if (options.applyColor) {
         for (auto *instance = model->GetHeadInstance(); instance; instance = model->GetNextInstance(instance))
-            if (instance->GetObjectType() == HOT_MODEL && !instance->IsCache())
+            if (instance->GetObjectType() == HOT_MODEL && !instance->IsCache()) {
+                instance->OffInterpolate(diffuse);
                 static_cast<HModel *>(instance)->ApplyAttrPropertyToPatches();
+                instance->MarkViewsNeedDrawn();
+            }
+        model->MarkViewsNeedDrawn(); // The modeling view can display the cache itself.
         group->RefreshInProjectBar();
     }
     if (creating) model->ZoomFit();

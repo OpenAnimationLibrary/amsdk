@@ -90,7 +90,11 @@ that code page cannot represent; this does not change the Unicode model text.
 **Apply surface color** is off initially. When enabled, **Choose Color...** sets
 only the new text group's diffuse surface color. The SDK property is explicitly
 enabled as a group override and receives normalized (0–1) RGB components.
-Visible model instances reapply group attributes to their patches and redraw. Existing geometry and other
+Geometry is finalized before writing the color. After enabling the override
+and writing its final value, the property, group and model are marked modified,
+group/model interpolation is invalidated and the modeling cache is made current.
+Visible model instances reapply group attributes to their patches and both
+cache and instance views are marked for redraw. Existing geometry and other
 surface properties are left alone. With the option off, no surface property is
 written. The checkbox and chosen RGB color are saved/loaded with settings.
 
@@ -164,7 +168,10 @@ Before promotion, test the exact Release binaries in A:M and record their hashes
    reset the zoom. Repeat with append/Undo on disposable data.
 10. Confirm each stamp has its own persistent group, correct membership and a
     distinct name of at most twenty characters. Save/reload and Undo/Redo the groups.
-11. Stamp with surface color disabled, then with two chosen colors. Confirm only
+11. Before saving, stamp red, green and a mixed RGB color; verify their immediate
+    shaded appearance, deselect and verify again. Confirm Save does not change
+    the appearance, then close/reopen the model and compare.
+    Stamp with surface color disabled, then with two chosen colors. Confirm only
     the corresponding groups change color and prior/model surface properties
     remain intact. Save/Load both the enabled and disabled color setting.
 12. Close/delete the original model, switch projects and close the application
@@ -192,3 +199,11 @@ existing four FileCons.h warnings. Other locations/codes still fail the build.
 
 JSON parsing/serialization uses picojson v1.3.0. Its license and source identity
 are retained in `THIRD-PARTY-NOTICES.txt`, included in the generated package.
+
+A user-provided saved model contained two disjoint groups of 1,104 control points,
+335 patches each, and valid red diffuse assignments, with no dangling references.
+The owner reports that saving repairs the display. This supports investigating
+live surface composition/notification rather than rewriting serialized colors.
+The file is post-save evidence and cannot establish the exact pre-save cache
+state. The notification/order change still requires a before-save A:M retest;
+CI does not execute host interpolation or surface composition.
