@@ -173,10 +173,11 @@ def audit_dependencies(text: str, configuration: str) -> list[str]:
 
 
 def audit_warnings(text: str, sdk: Path) -> list[str]:
-    """Retain the four known warnings in the locked SDK; reject new warnings."""
+    """Retain reviewed warnings at exact locations in the locked SDK."""
     warnings = sorted(set(re.sub(r'^\d+>', '', line.strip()) for line in text.splitlines()
                           if re.search(r'\bwarning\s+[A-Z]+\d+\s*:', line, re.I)))
     expected = str((sdk / 'Include/FileCons.h').resolve()).replace('\\', '/').casefold()
+    rgb = str((sdk / 'Include/RGBByte.h').resolve()).replace('\\', '/').casefold()
     for line in warnings:
         match = re.match(r'^(.+?)\((\d+),(\d+)\): warning ([A-Z]+\d+):', line, re.I)
         accepted = False
@@ -185,6 +186,11 @@ def audit_warnings(text: str, sdk: Path) -> list[str]:
             row, column = int(match[2]), int(match[3])
             accepted = (filename == expected and match[4].upper() == 'C4244' and
                         (row, column) in ((83, 21), (84, 21), (85, 20), (86, 20)))
+            # HModel includes the locked SDK's byte-color operators. These six
+            # float-to-byte compound assignments were reviewed for FontWiz2.
+            accepted = accepted or (filename == rgb and match[4].upper() == 'C4244' and
+                        (row, column) in ((138, 18), (139, 20), (140, 19),
+                                          (299, 20), (473, 24), (474, 20)))
         if not accepted:
             raise ValueError('Unreviewed build warning (see msbuild.log): ' + line)
     return warnings
