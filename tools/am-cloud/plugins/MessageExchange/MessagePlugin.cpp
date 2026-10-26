@@ -1,12 +1,14 @@
 #include "StdAfx.h"
+#include "ObjType.h"
 #include "SDK/Entry.h"
-#include "SDK/HModel.h"
+#include "SDK/Misc.h"
 #include "ExchangeProtocol.h"
 #include <array>
 #include <exception>
 #include <stdexcept>
 #include <string>
 
+class HTreeObject;
 CPluginApp theApp;
 
 namespace {
@@ -57,11 +59,9 @@ private:
 };
 
 bool validContext(HTreeObject *object, std::uint32_t index) {
-    if (!object || index >= kContextCount ||
-        object->GetObjectType() != kContexts[index]) return false;
-    if (index == 0)
-        return static_cast<HAnimObject *>(object)->IsCache() != FALSE;
-    return true;
+    // A:M supplies the registered context. This message-only test never needs
+    // to dereference its object or pull in the model-editing headers.
+    return object != nullptr && index < kContextCount;
 }
 
 HWND ownerWindow() {
