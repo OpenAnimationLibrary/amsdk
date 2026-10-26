@@ -1,0 +1,25 @@
+name: FontWiz2 Windows Build
+on:
+  pull_request:
+    paths: ['tools/am-cloud/**', '.github/workflows/fontwiz2.yml']
+permissions:
+  contents: read
+jobs:
+  inspect-sdk:
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Verify the committed SDK
+        shell: pwsh
+        run: |
+          $lock = Get-Content -Raw tools/am-cloud/sdk.lock.json | ConvertFrom-Json
+          $archive = Get-Item tools/am-cloud/vendor/sdk195.zip
+          if ($archive.Length -ne $lock.size_bytes -or (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne $lock.sha256) { throw 'SDK identity mismatch' }
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: SDK195-FontWiz2-source-inspection
+          path: tools/am-cloud/vendor/sdk195.zip
+          retention-days: 1
