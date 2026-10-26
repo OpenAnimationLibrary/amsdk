@@ -2,9 +2,11 @@
 #include "FontWiz2Api.h"
 #include "geometry/extrude.h"
 #include "StampName.h"
+#include "SurfaceColor.h"
 #include <filesystem>
 #include <fstream>
 #include <limits>
+#include <cmath>
 #include <stdexcept>
 
 namespace {
@@ -20,6 +22,13 @@ void rejects(const std::string &text) {
 
 void TestFontWiz2Settings() {
     fw2::Options original;
+    require(!original.newModel && original.keepOpen && !original.applyColor);
+    require(fw2::NormalizedSurfaceColor(RGB(0, 0, 0)) == std::array<float, 3>{0, 0, 0});
+    require(fw2::NormalizedSurfaceColor(RGB(255, 255, 255)) == std::array<float, 3>{1, 1, 1});
+    require(fw2::NormalizedSurfaceColor(RGB(255, 0, 0)) == std::array<float, 3>{1, 0, 0});
+    const auto color = fw2::NormalizedSurfaceColor(RGB(17, 128, 249));
+    require(std::abs(color[0] - 0.06666667F) < 0.000001F &&
+        std::abs(color[1] - 0.5019608F) < 0.000001F && std::abs(color[2] - 0.9764706F) < 0.000001F);
     original.text = L"Caf\x00e9 \x03a9\r\n\"quoted\" \\ path\t\xD83D\xDE00";
     wcscpy_s(original.font.lfFaceName, L"Times New Roman");
     original.font.lfHeight = -24; original.font.lfWidth = 1;
@@ -71,9 +80,10 @@ void TestFontWiz2Settings() {
     try { unchanged = fw2::LoadSettingsFile(path.wstring()); } catch (const std::exception &) { failed = true; }
     require(failed && fw2::SettingsToJson(unchanged) == fw2::SettingsToJson(changed));
     std::filesystem::remove(path);
-    require(fw2::StampName(L"Hello World!") == L"Hello Worl");
+    require(fw2::StampName(L"Hello World!") == L"Hello World!");
+    require(fw2::StampName(L"123456789012345678901234") == L"12345678901234567890");
     require(fw2::StampName(L"\r\n  Hello\tA") == L"Hello A");
-    require(fw2::StampName(L"1234567890123", 2) == L"12345678 2");
-    require(fw2::StampName(L"1234567890123", 100) == L"123456 100");
+    require(fw2::StampName(L"123456789012345678901234", 2) == L"123456789012345678 2");
+    require(fw2::StampName(L"123456789012345678901234", 100) == L"1234567890123456 100");
     require(fw2::StampName(L"\t\n ") == L"Text");
 }

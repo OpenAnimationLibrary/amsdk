@@ -69,6 +69,7 @@ void TestFilteredInput() {
     fw2::WizardResult result;
     std::vector<fw2::Options> generated;
     fw2::Options options;
+    options.keepOpen = false; // Exercise turning it on with a control click.
     timeout = false;
     SetWindowTextW(modelEdit, L"");
     const HWND window = fw2::OpenWizard(GetModuleHandleW(nullptr), modelWindow, options, true,
@@ -179,7 +180,7 @@ void TestFontWiz2Wizard() {
         if (test == 2) {
             require(result.splines == 7 && result.text == L"Second stamp" && closedLabel && modelInteracted);
             require(generated[0].text == L"First stamp" && generated[1].text == L"Second stamp");
-            require(generated[1].height == 12.5F && generated[1].newModel && options.keepOpen);
+            require(generated[1].height == 12.5F && !generated[1].newModel && options.keepOpen);
             require(!generated[0].applyColor && generated[1].applyColor);
         }
     }
@@ -190,6 +191,8 @@ void TestFontWiz2Wizard() {
         [](const fw2::Options &) { return fw2::StampResult{}; },
         [&](const fw2::Options &, const fw2::WizardResult &result) { finished = true; require(result.stamps == 0); });
     require(IsWindow(asynchronous) && !finished && IsWindowEnabled(modelWindow));
+    require(IsDlgButtonChecked(asynchronous, IDC_FW2_NEW) == BST_UNCHECKED);
+    require(IsDlgButtonChecked(asynchronous, IDC_FW2_KEEP_OPEN) == BST_CHECKED);
     SendMessageW(asynchronous, WM_CLOSE, 0, 0);
     require(finished && !IsWindow(asynchronous));
     TestFilteredInput();

@@ -7,6 +7,7 @@
 #include "SDK/HProject.h"
 #include "SDK/HPropert.h"
 #include "StampName.h"
+#include "SurfaceColor.h"
 #include "geometry/geom.h"
 #include "geometry/poly.h"
 #include "geometry/extrude.h"
@@ -113,15 +114,25 @@ HModelCache *Generate(HModelCache *model, const Options &options, std::uint32_t 
         auto *attributes = group->GetAttr();
         auto *diffuse = attributes ? attributes->GetDiffuseColor() : nullptr;
         if (!diffuse) throw std::runtime_error("A:M could not apply the text group's surface color.");
-        diffuse->SetValue(RGBFloat(options.surfaceColor));
+        const auto rgb = NormalizedSurfaceColor(options.surfaceColor);
+        // An unset group property inherits its color; enable this override and
+        // use normalized RGB, rather than COLORREF's byte-valued components.
+        diffuse->SetNull(FALSE, group);
+        diffuse->SetValue(RGBFloat(rgb[0], rgb[1], rgb[2]));
     }
     model->FindPatches();
     model->SetChanged(TRUE);
     model->Update();
     model->OpenView();
+    if (options.applyColor) {
+        for (auto *instance = model->GetHeadInstance(); instance; instance = model->GetNextInstance(instance))
+            if (instance->GetObjectType() == HOT_MODEL && !instance->IsCache())
+                static_cast<HModel *>(instance)->ApplyAttrPropertyToPatches();
+        group->RefreshInProjectBar();
+    }
     if (creating) model->ZoomFit();
     if (creating) model->HilightInProjectBar();
-    GetHProject()->UpdateAllViews();
+    GetHProject()->UpdateAllViews(options.applyColor ? TRUE : FALSE);
     return model;
 }
 }  // namespace fw2

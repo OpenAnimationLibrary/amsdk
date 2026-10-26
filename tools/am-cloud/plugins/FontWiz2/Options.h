@@ -9,8 +9,8 @@ struct Options {
     float depth = 2.5F;
     float bevel = 0.2F;  // cm; UI and JSON express mm
     unsigned flags = 0x4 | 0x2 | 0x100;
-    bool newModel = true;
-    bool keepOpen = false;
+    bool newModel = false;
+    bool keepOpen = true;
     bool applyColor = false;
     COLORREF surfaceColor = RGB(255, 255, 255);
     std::wstring text = L"FontWiz2";

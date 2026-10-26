@@ -22,8 +22,10 @@ Under **Plugins > Wizards**, the Model node/Model selection contexts offer:
 
 FontWiz2 provides multiline text, native font/style selection, a font preview,
 em height and extrusion in cm, front/back caps and sides, bevel controls and edge
-subdivision. **Create a new model** is checked initially. Uncheck it to append to
-the original Model context. The launcher keeps that original target until closed.
+subdivision. **Create a new model** is off initially, so text appends to the original
+Model context. **Keep window open** is on initially. Check Create a new model
+when each stamp should become a separate model; without a target model the
+wizard forces that option on. The launcher keeps that original target until closed.
 Font/geometry settings are remembered for the A:M session. The original wizard's
 preferences remain independent. Files are written only when Save Settings is used.
 
@@ -79,14 +81,16 @@ the intended Model context. Changing the active view does not retarget append.
 
 Every stamp creates a persistent named group containing its generated control
 points, as well as selecting those points for positioning. Names use up to the
-first ten text characters, with line breaks/tabs replaced by spaces and leading
+first twenty text characters, with line breaks/tabs replaced by spaces and leading
 whitespace removed. Repeated names receive a numeric suffix, shortening the text
-prefix to keep the complete name within ten characters. A:M's group-name API
+prefix to keep the complete name within twenty characters. A:M's group-name API
 uses the Windows ANSI code page, so group names can substitute characters that
 that code page cannot represent; this does not change the Unicode model text.
 
 **Apply surface color** is off initially. When enabled, **Choose Color...** sets
-only the new text group's diffuse surface color. Existing geometry and other
+only the new text group's diffuse surface color. The SDK property is explicitly
+enabled as a group override and receives normalized (0–1) RGB components.
+Visible model instances reapply group attributes to their patches and redraw. Existing geometry and other
 surface properties are left alone. With the option off, no surface property is
 written. The checkbox and chosen RGB color are saved/loaded with settings.
 
@@ -126,7 +130,10 @@ Native modeless-dialog tests use the real wizard resource and a mock generation
 callback to exercise cancel, single creation, two successive stamps with changed
 text/size/color, an enabled owner receiving input between stamps, immediate
 return from the standalone window opener, cleanup and WM_QUIT preservation.
-Naming tests cover truncation, whitespace and repeat suffixes. A filtered-host
+Naming tests cover twenty-character truncation, whitespace and repeat suffixes.
+Defaults are checked in the real dialog and JSON round trips; byte-to-normalized
+RGB conversion is tested for black, white, red and a mixed color. Actual group
+color composition/rendering requires an A:M host test. A filtered-host
 regression test queues actual control mouse/key messages (not direct command
 notifications): typing, checkbox/button clicks, subdivision selection, two
 stamps, host edit input, Tab and Escape. Its simulated host discards unhandled
@@ -147,7 +154,8 @@ Before promotion, test the exact Release binaries in A:M and record their hashes
 7. Try empty text, a missing glyph, an excessive bevel, absent FontWiz2 HXT and
    repeated opens/closes. Confirm explicit errors and no unwanted model edits.
 8. Change every option, Save Settings, change them again and Load Settings. Confirm
-   all controls/preview restore, including Keep window open. Try cancelling both
+   all controls/preview restore, including Keep window open. Saved checkbox values
+   override the new-session defaults. Try cancelling both
    file dialogs and loading invalid JSON; current data must stay unchanged.
 9. Keep window open: stamp two different words into new models, change settings
    between stamps, and Close. Confirm both models persist and the wizard did not
@@ -155,7 +163,7 @@ Before promotion, test the exact Release binaries in A:M and record their hashes
    selected text, use host shortcuts, then stamp again. Confirm append does not
    reset the zoom. Repeat with append/Undo on disposable data.
 10. Confirm each stamp has its own persistent group, correct membership and a
-    distinct name of at most ten characters. Save/reload and Undo/Redo the groups.
+    distinct name of at most twenty characters. Save/reload and Undo/Redo the groups.
 11. Stamp with surface color disabled, then with two chosen colors. Confirm only
     the corresponding groups change color and prior/model surface properties
     remain intact. Save/Load both the enabled and disabled color setting.
