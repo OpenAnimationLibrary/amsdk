@@ -87,16 +87,17 @@ prefix to keep the complete name within twenty characters. A:M's group-name API
 uses the Windows ANSI code page, so group names can substitute characters that
 that code page cannot represent; this does not change the Unicode model text.
 
-**Apply surface color** is off initially. When enabled, **Choose Color...** sets
-only the new text group's diffuse surface color. The SDK property is explicitly
-enabled as a group override and receives normalized (0–1) RGB components.
-Geometry is finalized before writing the color. After enabling the override
-and writing its final value, the property, group and model are marked modified,
-group/model interpolation is invalidated and the modeling cache is made current.
-Visible model instances reapply group attributes to their patches and both
-cache and instance views are marked for redraw. Existing geometry and other
-surface properties are left alone. With the option off, no surface property is
-written. The checkbox and chosen RGB color are saved/loaded with settings.
+**Apply model surface color** is off initially. When enabled, **Choose Color...**
+sets the Model cache's diffuse surface property directly. Named text groups are
+still created but receive no color override. This is a model-level assignment:
+when appending, existing geometry that inherits the model color also changes;
+existing group/material overrides continue to take precedence.
+
+The SDK property is enabled as a model override and receives normalized (0–1)
+RGB components after geometry is finalized. The model is marked modified,
+invalidated and made current, and visible instances are refreshed. With the
+option off, no surface property is written. The existing JSON checkbox/RGB fields
+now control model color too; Load Settings alone never recolors geometry.
 
 Text is limited to 512 UTF-16 code units. BMP glyphs and accented text are
 supported; supplementary characters/emoji are rejected. Complex script shaping,
@@ -168,12 +169,13 @@ Before promotion, test the exact Release binaries in A:M and record their hashes
    reset the zoom. Repeat with append/Undo on disposable data.
 10. Confirm each stamp has its own persistent group, correct membership and a
     distinct name of at most twenty characters. Save/reload and Undo/Redo the groups.
-11. Before saving, stamp red, green and a mixed RGB color; verify their immediate
+11. In a fresh/disposable model, enable Apply model surface color and stamp red,
+    green and a mixed RGB color; verify their immediate
     shaded appearance, deselect and verify again. Confirm Save does not change
     the appearance, then close/reopen the model and compare.
-    Stamp with surface color disabled, then with two chosen colors. Confirm only
-    the corresponding groups change color and prior/model surface properties
-    remain intact. Save/Load both the enabled and disabled color setting.
+    Stamp with model color disabled, then with two chosen colors. Confirm the
+    model diffuse property changes only when enabled, new named groups have no
+    color override, and geometry inheriting model color follows the new value. Save/Load both the enabled and disabled color setting.
 12. Close/delete the original model, switch projects and close the application
     while the wizard is open. Confirm stale targets are rejected and dialog/hook
     cleanup leaves A:M usable. Test the synchronous caller separately when peer
@@ -207,3 +209,8 @@ live surface composition/notification rather than rewriting serialized colors.
 The file is post-save evidence and cannot establish the exact pre-save cache
 state. The notification/order change still requires a before-save A:M retest;
 CI does not execute host interpolation or surface composition.
+
+The owner reports that the group notification/invalidation candidate still does
+not display color immediately. The next candidate deliberately assigns the Model
+surface instead, to isolate model-level color assignment from group composition.
+This remains an A:M host test; native CI cannot verify visible surface color.

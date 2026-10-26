@@ -115,17 +115,15 @@ HModelCache *Generate(HModelCache *model, const Options &options, std::uint32_t 
     model->Update();
     HColorProperty *diffuse = nullptr;
     if (options.applyColor) {
-        auto *attributes = group->GetAttr();
+        auto *attributes = model->GetAttr();
         diffuse = attributes ? attributes->GetDiffuseColor() : nullptr;
-        if (!diffuse) throw std::runtime_error("A:M could not apply the text group's surface color.");
+        if (!diffuse) throw std::runtime_error("A:M could not apply the model's surface color.");
         const auto rgb = NormalizedSurfaceColor(options.surfaceColor);
         // Finish topology first, then invalidate/notify after the final color
         // is written. Marking a file dirty or redrawing alone is insufficient.
-        diffuse->SetNull(FALSE, group);
+        diffuse->SetNull(FALSE, model);
         diffuse->SetValue(RGBFloat(rgb[0], rgb[1], rgb[2]));
         diffuse->OnModified();
-        group->OnModified();
-        group->OffInterpolate(diffuse);
         model->OnModified();
         model->OffInterpolate(diffuse);
         model->MakeCurrent();
@@ -139,7 +137,7 @@ HModelCache *Generate(HModelCache *model, const Options &options, std::uint32_t 
                 instance->MarkViewsNeedDrawn();
             }
         model->MarkViewsNeedDrawn(); // The modeling view can display the cache itself.
-        group->RefreshInProjectBar();
+        model->RefreshInProjectBar();
     }
     if (creating) model->ZoomFit();
     if (creating) model->HilightInProjectBar();
