@@ -53,6 +53,16 @@ void click(HWND window, int id) {
 void type(HWND edit, const wchar_t *text) {
     for (; *text; ++text) PostMessageW(edit, WM_CHAR, static_cast<WPARAM>(*text), 0);
 }
+bool nestedInputPreserved = false;
+LRESULT CALLBACK nestedInput(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
+    if (message == WM_LBUTTONDOWN) {
+        MSG next{};
+        nestedInputPreserved = PeekMessageW(&next, window, WM_LBUTTONUP, WM_LBUTTONUP, PM_REMOVE) &&
+            next.hwnd == window && next.message == WM_LBUTTONUP;
+        return 0;
+    }
+    return DefWindowProcW(window, message, wparam, lparam);
+}
 void TestFilteredInput() {
     bool finished = false;
     unsigned creations = 0, leaked = 0;
@@ -66,6 +76,12 @@ void TestFilteredInput() {
             ++creations; generated.push_back(values); return fw2::StampResult{nullptr, 3};
         }, [&](const fw2::Options &, const fw2::WizardResult &value) { result = value; finished = true; });
     SetTimer(window, 0xF2FF, 10000, watchdog);
+    WNDCLASSW nestedClass{}; nestedClass.lpfnWndProc = nestedInput;
+    nestedClass.hInstance = GetModuleHandleW(nullptr); nestedClass.lpszClassName = L"FontWiz2NestedInputTest";
+    require(RegisterClassW(&nestedClass) != 0);
+    const HWND nested = CreateWindowW(nestedClass.lpszClassName, L"", WS_CHILD,
+        0, 0, 1, 1, window, nullptr, nestedClass.hInstance, nullptr);
+    require(nested != nullptr);
     const HWND edit = GetDlgItem(window, IDC_FW2_TEXT);
     SetWindowTextW(edit, L"");
     SetFocus(edit);
@@ -75,13 +91,15 @@ void TestFilteredInput() {
     click(window, IDC_FW2_APPLY_COLOR);
     click(window, IDOK);
     PostMessageW(modelEdit, WM_CHAR, L'm', 0);
+    PostMessageW(nested, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(0, 0));
+    PostMessageW(nested, WM_LBUTTONUP, 0, MAKELPARAM(0, 0));
     constexpr UINT checkpoint = WM_APP + 42;
     PostThreadMessageW(GetCurrentThreadId(), checkpoint, 0, 0);
     while (!finished) {
         MSG message{};
         require(GetMessageW(&message, nullptr, 0, 0) > 0);
         if (!message.hwnd && message.message == checkpoint) {
-            require(creations == 1 && IsWindow(window) && IsWindowEnabled(window));
+            require(creations == 1 && IsWindow(window) && IsWindowEnabled(window) && nestedInputPreserved);
             require(IsWindowEnabled(modelWindow) && IsWindowEnabled(GetDlgItem(window, IDC_FW2_COLOR)));
             require(generated[0].text == L"Input works" && generated[0].keepOpen && generated[0].applyColor);
             require(SendDlgItemMessageW(window, IDC_FW2_SUBDIVIDE, CB_GETCURSEL, 0, 0) == 2);
@@ -105,6 +123,7 @@ void TestFilteredInput() {
     require(!timeout && leaked == 0 && creations == 2 && result.stamps == 2 && result.splines == 6);
     require(generated[1].text == L"Second input" && !generated[1].keepOpen);
     require(!IsWindow(window) && IsWindowEnabled(modelWindow));
+    require(UnregisterClassW(nestedClass.lpszClassName, nestedClass.hInstance) != FALSE);
     // Keyboard navigation and Escape still work after mouse/typing dispatch.
     finished = false;
     const HWND cancel = fw2::OpenWizard(GetModuleHandleW(nullptr), modelWindow, options, true,

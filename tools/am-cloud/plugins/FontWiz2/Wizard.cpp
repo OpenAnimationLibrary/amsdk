@@ -25,13 +25,14 @@ struct State {
     HFONT preview = nullptr;
     bool applying = false;
     bool busy = false;
+    bool routingInput = false;
     std::wstring settingsPath;
     WizardResult result;
 };
 std::shared_ptr<State> active;
 LRESULT CALLBACK dialogInput(int code, WPARAM wparam, LPARAM lparam) {
     const auto state = active;
-    if (code == HC_ACTION && wparam == PM_REMOVE && state && IsWindowEnabled(state->window)) {
+    if (code == HC_ACTION && wparam == PM_REMOVE && state && !state->routingInput && IsWindowEnabled(state->window)) {
         auto *message = reinterpret_cast<MSG *>(lparam);
         const bool keyboard = message->message >= WM_KEYFIRST && message->message <= WM_KEYLAST;
         const bool mouse = (message->message >= WM_MOUSEFIRST && message->message <= WM_MOUSELAST) ||
@@ -47,6 +48,13 @@ LRESULT CALLBACK dialogInput(int code, WPARAM wparam, LPARAM lparam) {
             MSG input = *message;
             message->hwnd = nullptr; message->message = WM_NULL;
             message->wParam = 0; message->lParam = 0;
+            // Caption dragging and native drop-downs can run nested message
+            // loops here; those loops must receive their own input unchanged.
+            struct Routing {
+                bool &value;
+                explicit Routing(bool &flag) : value(flag) { value = true; }
+                ~Routing() { value = false; }
+            } routing(state->routingInput);
             if (!keyboard || dropdown || !IsDialogMessageW(state->window, &input)) {
                 TranslateMessage(&input); DispatchMessageW(&input);
             }
