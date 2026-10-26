@@ -10,6 +10,10 @@ struct WizardResult : StampResult {
     std::wstring text;
 };
 using GenerateText = std::function<StampResult(const Options &)>;
+using WizardClosed = std::function<void(const Options &, const WizardResult &)>;
+HWND OpenWizard(HINSTANCE module, HWND owner, const Options &options,
+                bool hasModel, GenerateText generate, WizardClosed closed);
 WizardResult ShowWizard(HINSTANCE module, HWND owner, Options &options,
-                        bool hasModel, const GenerateText &generate);
+                        bool hasModel, const GenerateText &generate,
+                        const std::function<bool(MSG &)> &preTranslate = {});
 }

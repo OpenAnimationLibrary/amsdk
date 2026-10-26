@@ -10,20 +10,44 @@
 #include <cwchar>
 #include <cwctype>
 #include <limits>
+#include <memory>
 #include <stdexcept>
 
 namespace fw2 {
 namespace {
 struct State {
-    Options &options;
+    Options options;
     bool hasModel;
-    const GenerateText &generate;
+    GenerateText generate;
+    WizardClosed closed;
+    HWND window = nullptr;
+    HHOOK keyboard = nullptr;
     HFONT preview = nullptr;
     bool applying = false;
     bool busy = false;
     std::wstring settingsPath;
     WizardResult result;
 };
+std::shared_ptr<State> active;
+LRESULT CALLBACK dialogKeys(int code, WPARAM wparam, LPARAM lparam) {
+    const auto state = active;
+    if (code >= 0 && wparam == PM_REMOVE && state && state->window) {
+        auto *message = reinterpret_cast<MSG *>(lparam);
+        if ((message->hwnd == state->window || IsChild(state->window, message->hwnd)) &&
+            IsDialogMessageW(state->window, message)) {
+            message->message = WM_NULL; message->wParam = 0; message->lParam = 0;
+        }
+    }
+    return CallNextHookEx(nullptr, code, wparam, lparam);
+}
+void colorControls(HWND dialog, const State &state) {
+    const bool enabled = IsDlgButtonChecked(dialog, IDC_FW2_APPLY_COLOR) == BST_CHECKED;
+    EnableWindow(GetDlgItem(dialog, IDC_FW2_COLOR), enabled);
+    wchar_t label[32]{};
+    swprintf_s(label, L"#%02X%02X%02X", unsigned(GetRValue(state.options.surfaceColor)),
+        unsigned(GetGValue(state.options.surfaceColor)), unsigned(GetBValue(state.options.surfaceColor)));
+    SetDlgItemTextW(dialog, IDC_FW2_COLOR_SAMPLE, enabled ? label : L"No surface change");
+}
 const std::array<int, 8> controlIDs = {IDC_FW2_FRONT, IDC_FW2_SIDES, IDC_FW2_BACK,
     IDC_FW2_BEVFRONT, IDC_FW2_BEVSIDE, IDC_FW2_BEVBACK, IDC_FW2_ROUND, IDC_FW2_INWARD};
 const std::array<unsigned, 8> controlFlags = {EX_CLOSE_FRONT, EX_BACK, EX_CLOSE_BACK,
@@ -71,6 +95,7 @@ Options readControls(HWND dialog, const State &state) {
     if (subdivision == 2) options.flags |= EX_SUB_ALL;
     options.newModel = IsDlgButtonChecked(dialog, IDC_FW2_NEW) == BST_CHECKED;
     options.keepOpen = IsDlgButtonChecked(dialog, IDC_FW2_KEEP_OPEN) == BST_CHECKED;
+    options.applyColor = IsDlgButtonChecked(dialog, IDC_FW2_APPLY_COLOR) == BST_CHECKED;
     return options;
 }
 void populate(HWND dialog, State &state, const Options &options) {
@@ -86,9 +111,11 @@ void populate(HWND dialog, State &state, const Options &options) {
                        options.flags & EX_SUB_ALL ? 2 : options.flags & EX_SUB ? 1 : 0, 0);
     CheckDlgButton(dialog, IDC_FW2_NEW, options.newModel || !state.hasModel ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(dialog, IDC_FW2_KEEP_OPEN, options.keepOpen ? BST_CHECKED : BST_UNCHECKED);
+    CheckDlgButton(dialog, IDC_FW2_APPLY_COLOR, options.applyColor ? BST_CHECKED : BST_UNCHECKED);
     EnableWindow(GetDlgItem(dialog, IDC_FW2_NEW), state.hasModel);
     state.applying = false;
     preview(dialog, state);
+    colorControls(dialog, state);
 }
 std::wstring settingsFile(HWND dialog, const State &state, bool save) {
     std::array<wchar_t, 32768> filename{};
@@ -134,9 +161,9 @@ void createText(HWND dialog, State &state) {
     state.result.splines = static_cast<std::uint32_t>((std::min)(total, std::uint64_t(std::numeric_limits<std::uint32_t>::max())));
     if (state.result.stamps < std::numeric_limits<std::uint32_t>::max()) ++state.result.stamps;
     state.result.text = values.text;
-    if (!values.keepOpen) { EndDialog(dialog, IDOK); return; }
+    if (!values.keepOpen) { DestroyWindow(dialog); return; }
     wchar_t status[160]{};
-    swprintf_s(status, L"Created %u splines. Ready for the next stamp (%u completed).", stamp.splines, state.result.stamps);
+    swprintf_s(status, L"Created %u splines (%u stamps). You can move the selected text in A:M, then stamp again.", stamp.splines, state.result.stamps);
     SetDlgItemTextW(dialog, IDC_FW2_STATUS, status);
     SetDlgItemTextW(dialog, IDCANCEL, L"Close");
     SetForegroundWindow(dialog);
@@ -144,11 +171,18 @@ void createText(HWND dialog, State &state) {
     SendDlgItemMessageW(dialog, IDC_FW2_TEXT, EM_SETSEL, 0, -1);
 }
 INT_PTR CALLBACK procedure(HWND dialog, UINT message, WPARAM wparam, LPARAM lparam) {
-    State *state = reinterpret_cast<State *>(GetWindowLongPtrW(dialog, DWLP_USER));
-    if (message == WM_INITDIALOG) {
-        state = reinterpret_cast<State *>(lparam); SetWindowLongPtrW(dialog, DWLP_USER, lparam);
+    (void)lparam;
+    const auto state = active;
+    if (!state || (message != WM_INITDIALOG && state->window != dialog)) return FALSE;
+    if (message == WM_INITDIALOG) state->window = dialog;
+    if (message == WM_NCDESTROY) {
+        state->window = nullptr;
+        if (state->keyboard) { UnhookWindowsHookEx(state->keyboard); state->keyboard = nullptr; }
+        if (state->preview) { DeleteObject(state->preview); state->preview = nullptr; }
+        active.reset();
+        try { if (state->closed) state->closed(state->options, state->result); } catch (...) {}
+        return FALSE;
     }
-    if (!state) return FALSE;
     if (state->busy) return message == WM_COMMAND || message == WM_CLOSE;
     try {
         if (message == WM_INITDIALOG) {
@@ -158,10 +192,19 @@ INT_PTR CALLBACK procedure(HWND dialog, UINT message, WPARAM wparam, LPARAM lpar
             populate(dialog, *state, state->options); return TRUE;
         }
         if (message == WM_CLOSE || (message == WM_COMMAND && LOWORD(wparam) == IDCANCEL)) {
-            EndDialog(dialog, state->result.stamps ? IDOK : IDCANCEL); return TRUE;
+            DestroyWindow(dialog); return TRUE;
         }
         if (message == WM_COMMAND) {
             const WORD id = LOWORD(wparam);
+            if (id == IDC_FW2_APPLY_COLOR) { colorControls(dialog, *state); return TRUE; }
+            if (id == IDC_FW2_COLOR) {
+                static COLORREF custom[16]{};
+                CHOOSECOLORW choice{}; choice.lStructSize = sizeof(choice); choice.hwndOwner = dialog;
+                choice.rgbResult = state->options.surfaceColor; choice.lpCustColors = custom;
+                choice.Flags = CC_FULLOPEN | CC_RGBINIT;
+                if (ChooseColorW(&choice)) { state->options.surfaceColor = choice.rgbResult; colorControls(dialog, *state); }
+                return TRUE;
+            }
             if (id == IDC_FW2_TEXT && HIWORD(wparam) == EN_CHANGE && !state->applying) { preview(dialog, *state); return TRUE; }
             if (id == IDC_FW2_PICKFONT) {
                 LOGFONTW font = state->options.font; font.lfHeight = -24;
@@ -195,11 +238,39 @@ INT_PTR CALLBACK procedure(HWND dialog, UINT message, WPARAM wparam, LPARAM lpar
     return FALSE;
 }
 }
-WizardResult ShowWizard(HINSTANCE module, HWND owner, Options &options, bool hasModel, const GenerateText &generate) {
-    State state{options, hasModel, generate};
-    const INT_PTR result = DialogBoxParamW(module, MAKEINTRESOURCEW(IDD_FW2_WIZARD), owner, procedure, reinterpret_cast<LPARAM>(&state));
-    if (state.preview) DeleteObject(state.preview);
-    if (result == -1) throw std::runtime_error("The FontWiz2 dialog could not be opened.");
-    return state.result;
+HWND OpenWizard(HINSTANCE module, HWND owner, const Options &options, bool hasModel,
+                GenerateText generate, WizardClosed closed) {
+    if (active) throw std::runtime_error("FontWiz2 is already open.");
+    auto state = std::make_shared<State>(State{options, hasModel, std::move(generate), std::move(closed)});
+    active = state;
+    const HWND dialog = CreateDialogParamW(module, MAKEINTRESOURCEW(IDD_FW2_WIZARD), owner, procedure, 0);
+    if (!dialog) { active.reset(); throw std::runtime_error("The FontWiz2 dialog could not be opened."); }
+    state->keyboard = SetWindowsHookExW(WH_GETMESSAGE, dialogKeys, nullptr, GetCurrentThreadId());
+    if (!state->keyboard) { DestroyWindow(dialog); throw std::runtime_error("FontWiz2 keyboard navigation could not be initialized."); }
+    ShowWindow(dialog, SW_SHOW); SetForegroundWindow(dialog);
+    return dialog;
+}
+WizardResult ShowWizard(HINSTANCE module, HWND owner, Options &options, bool hasModel,
+                        const GenerateText &generate, const std::function<bool(MSG &)> &preTranslate) {
+    WizardResult result;
+    bool finished = false;
+    const HWND dialog = OpenWizard(module, owner, options, hasModel, generate,
+        [&](const Options &values, const WizardResult &completed) { options = values; result = completed; finished = true; });
+    try {
+        while (!finished) {
+            MSG message{};
+            const BOOL received = GetMessageW(&message, nullptr, 0, 0);
+            if (received <= 0) {
+                if (IsWindow(dialog)) DestroyWindow(dialog);
+                if (!received) PostQuitMessage(static_cast<int>(message.wParam));
+                else throw std::runtime_error("The FontWiz2 message loop failed.");
+                break;
+            }
+            if (message.message != WM_NULL && (!preTranslate || !preTranslate(message))) {
+                TranslateMessage(&message); DispatchMessageW(&message);
+            }
+        }
+    } catch (...) { if (IsWindow(dialog)) DestroyWindow(dialog); throw; }
+    return result;
 }
 }

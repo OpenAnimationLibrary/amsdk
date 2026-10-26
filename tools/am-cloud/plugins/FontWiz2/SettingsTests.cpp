@@ -1,6 +1,7 @@
 #include "Settings.h"
 #include "FontWiz2Api.h"
 #include "geometry/extrude.h"
+#include "StampName.h"
 #include <filesystem>
 #include <fstream>
 #include <limits>
@@ -31,6 +32,7 @@ void TestFontWiz2Settings() {
     original.flags = EX_CLOSE_FRONT | EX_CLOSE_BACK | EX_BEV_FRONT | EX_BEV_SIDE |
         EX_BEV_BACK | EX_ROUND | EX_INWARD | EX_SUB | EX_SUB_ALL;
     original.newModel = false; original.keepOpen = true;
+    original.applyColor = true; original.surfaceColor = RGB(17, 128, 249);
     const std::string json = fw2::SettingsToJson(original);
     require(fw2::SettingsToJson(fw2::SettingsFromJson(json)) == json);
     require(fw2::SettingsToJson(fw2::SettingsFromJson("\xEF\xBB\xBF" + json)) == json);
@@ -41,7 +43,13 @@ void TestFontWiz2Settings() {
     }
     rejects("{}"); rejects(json.substr(0, json.size() / 2)); rejects(json + "garbage");
     rejects(std::string(65537, ' ')); rejects("[[[[[[[[[0]]]]]]]]]");
-    rejects(replace(json, "\"version\": 1", "\"version\": 2"));
+    const auto legacy = fw2::SettingsFromJson(replace(json, "\"version\": 2", "\"version\": 1"));
+    require(!legacy.applyColor && legacy.surfaceColor == RGB(255, 255, 255));
+    require(!fw2::Options().applyColor);
+    rejects(replace(json, "\"version\": 2", "\"version\": 3"));
+    rejects(replace(json, "\"red\": 17", "\"red\": 256"));
+    rejects(replace(json, "\"green\": 128", "\"green\": 1.5"));
+    rejects(replace(json, "\"apply_color\": true", "\"apply_color\": 1"));
     rejects(replace(json, "\"keep_window_open\": true", "\"keep_window_open\": \"true\""));
     rejects(replace(json, "\"em_height_cm\": ", "\"em_height_cm\": -"));
     rejects(replace(json, "\"charset\": 2", "\"charset\": 256"));
@@ -63,4 +71,9 @@ void TestFontWiz2Settings() {
     try { unchanged = fw2::LoadSettingsFile(path.wstring()); } catch (const std::exception &) { failed = true; }
     require(failed && fw2::SettingsToJson(unchanged) == fw2::SettingsToJson(changed));
     std::filesystem::remove(path);
+    require(fw2::StampName(L"Hello World!") == L"Hello Worl");
+    require(fw2::StampName(L"\r\n  Hello\tA") == L"Hello A");
+    require(fw2::StampName(L"1234567890123", 2) == L"12345678 2");
+    require(fw2::StampName(L"1234567890123", 100) == L"123456 100");
+    require(fw2::StampName(L"\t\n ") == L"Text");
 }

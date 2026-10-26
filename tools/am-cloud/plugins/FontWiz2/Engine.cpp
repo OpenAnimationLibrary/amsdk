@@ -5,6 +5,8 @@
 #include "SDK/HCP.h"
 #include "SDK/HPatch.h"
 #include "SDK/HProject.h"
+#include "SDK/HPropert.h"
+#include "StampName.h"
 #include "geometry/geom.h"
 #include "geometry/poly.h"
 #include "geometry/extrude.h"
@@ -12,10 +14,37 @@
 #include <vector>
 #include <stdexcept>
 
-static void SubdivToModel(const Subdiv *, HModelCache *, BOOL);
+static void SubdivToModel(const Subdiv *, HModelCache *, HGroup *);
 static void SetBiases(HCP *, const Vector &, const Vector &);
 
 namespace fw2 {
+HModelCache *FindLiveModel(const void *identity) {
+    if (!identity) return nullptr;
+    HProject *project = GetHProject();
+    if (!project) return nullptr;
+    auto *container = project->GetChildObjectCacheContainer();
+    if (!container) return nullptr;
+    for (auto *model = container->GetChildModelCache(); model;
+         model = static_cast<HModelCache *>(model->GetSiblingSame()))
+        if (model == identity) return model;
+    return nullptr;
+}
+static std::string GroupName(HModelCache *model, const std::wstring &text) {
+    for (unsigned instance = 1; instance < 1000000; ++instance) {
+        const auto wide = StampName(text, instance);
+        // A:M's group-name API is ANSI; geometry text remains Unicode.
+        const int size = WideCharToMultiByte(CP_ACP, 0, wide.data(), static_cast<int>(wide.size()), nullptr, 0, nullptr, nullptr);
+        std::string name(static_cast<std::size_t>(size), '\0');
+        if (!size || !WideCharToMultiByte(CP_ACP, 0, wide.data(), static_cast<int>(wide.size()), name.data(), size, nullptr, nullptr))
+            throw std::runtime_error("The text group name could not be encoded.");
+        bool found = false;
+        if (auto *container = model->GetChildGroupContainer())
+            for (auto *group = container->GetChildGroup(); group; group = static_cast<HGroup *>(group->GetSiblingSame()))
+                if (name == group->GetName()) { found = true; break; }
+        if (!found) return name;
+    }
+    throw std::runtime_error("A unique text group name could not be created.");
+}
 HModelCache *ResolveModel(HTreeObject *object) {
     if (!object) return nullptr;
     HHashObject *candidate = nullptr;
@@ -74,19 +103,30 @@ HModelCache *Generate(HModelCache *model, const Options &options, std::uint32_t 
     if (creating) model = HModelCache::New("FontWiz2 Text");
     else model->SaveAllToUndo();
     if (!model) throw std::runtime_error("A:M could not create the text model.");
-    SubdivToModel(&subdivision, model, !creating);
+    model->MakeCurrent();
+    const auto name = GroupName(model, options.text);
+    HGroup *group = model->CreateGroup(name.c_str());
+    if (!group) throw std::runtime_error("A:M could not create the text group.");
+    group->SetTempGroup(FALSE);
+    SubdivToModel(&subdivision, model, group);
+    if (options.applyColor) {
+        auto *attributes = group->GetAttr();
+        auto *diffuse = attributes ? attributes->GetDiffuseColor() : nullptr;
+        if (!diffuse) throw std::runtime_error("A:M could not apply the text group's surface color.");
+        diffuse->SetValue(RGBFloat(options.surfaceColor));
+    }
     model->FindPatches();
     model->SetChanged(TRUE);
     model->Update();
     model->OpenView();
-    model->ZoomFit();
+    if (creating) model->ZoomFit();
     if (creating) model->HilightInProjectBar();
     GetHProject()->UpdateAllViews();
     return model;
 }
 }  // namespace fw2
 
-static void UpdateVertRoots(HCP **vertroots, const int i, HCP *cp, HModelCache *mch, HGroupCP **pgroup, BOOL isloopback) {
+static void UpdateVertRoots(HCP **vertroots, const int i, HCP *cp, HModelCache *mch, HGroupCP **pgroup, HGroup *named, BOOL isloopback) {
     HCP *rootcp = vertroots[i];
     if (rootcp == nullptr) {
         vertroots[i] = cp;
@@ -95,16 +135,17 @@ static void UpdateVertRoots(HCP **vertroots, const int i, HCP *cp, HModelCache *
     }
     // Note: if AttachCPs causes loopback, A:M deletes tail cp
     // before attaching, so can't add it to group
-    if (!isloopback)
+    if (!isloopback) {
         cp->AddToGroup(pgroup);
+        if (!named->AddCP(cp) && !named->IsCPInGroup(cp))
+            throw std::runtime_error("A:M could not add a point to the text group.");
+    }
 }
 
 // Convert each spline in subdiv into a spline in the AM sense, in mch.
 // Also, add them all to the "temporary group", which causes them to
 // be selected (and the window to be resized to fit them) when the wizard returns.
-static void SubdivToModel(const Subdiv *subdiv, HModelCache *mch, BOOL makegroup) {
-    if (mch->GetHeadInstance()) // There is at least one visible model, so lets selected the points
-        makegroup = TRUE;
+static void SubdivToModel(const Subdiv *subdiv, HModelCache *mch, HGroup *named) {
     GetHProject()->DeselectAll(); // deselect the current group since we're making a new one
     const int nv = subdiv->NumPoints();
     std::vector<HCP *> roots(static_cast<std::size_t>(nv), nullptr);
@@ -126,9 +167,9 @@ static void SubdivToModel(const Subdiv *subdiv, HModelCache *mch, BOOL makegroup
         HSpline *sh = mch->StartSpline(&p0, &p);
         if (!sh) throw std::runtime_error("A:M could not create a spline.");
         HCP *firstcp = sh->GetHeadCP();
-        UpdateVertRoots(vertroots, i0, firstcp, mch, &group, FALSE);
+        UpdateVertRoots(vertroots, i0, firstcp, mch, &group, named, FALSE);
         HCP *cp = firstcp->GetNext();
-        UpdateVertRoots(vertroots, i, cp, mch, &group, FALSE);
+        UpdateVertRoots(vertroots, i, cp, mch, &group, named, FALSE);
         si.GetNext();
         int nedges = 1;
         for (; si.Cur() != nullptr; si.GetNext()) {
@@ -138,7 +179,7 @@ static void SubdivToModel(const Subdiv *subdiv, HModelCache *mch, BOOL makegroup
             ASSERT(0 <= i && i < nv);
             p = subdiv->Coords(i);
             cp = mch->AddCP(cp, &p);
-            UpdateVertRoots(vertroots, i, cp, mch, &group, i == i0);
+            UpdateVertRoots(vertroots, i, cp, mch, &group, named, i == i0);
         }
 
         // Now set tangents
@@ -195,7 +236,7 @@ static void SubdivToModel(const Subdiv *subdiv, HModelCache *mch, BOOL makegroup
     }
 
     // make all the added CPs and Splines the (selected) temporary group
-    if (group != nullptr && makegroup)
+    if (group != nullptr)
         mch->AddToTemporaryGroup(group);
 
     mch->SetChanged();

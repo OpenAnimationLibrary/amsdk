@@ -12,5 +12,6 @@ class HModelCache;
 class HTreeObject;
 namespace fw2 {
 HModelCache *ResolveModel(HTreeObject *object);
+HModelCache *FindLiveModel(const void *identity);
 HModelCache *Generate(HModelCache *model, const Options &options, std::uint32_t &splines);
 }

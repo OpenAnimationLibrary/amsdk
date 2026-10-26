@@ -1,7 +1,7 @@
 # FontWiz2 and Pass text to FontWiz2
 
 Independent Windows x64 command plugins for Animation:Master 19.5. FontWiz2 has
-its own HXT filename, command label, dialog resources (31001-31022), API and
+its own HXT filename, command label, dialog resources (31001-31025), API and
 session settings. The launcher uses resource IDs 32001-32004. Neither loads the
 original Font HXT or reads/writes its settings. Standard Windows OK/Cancel IDs
 and the three required A:M callback names keep their standard meanings.
@@ -27,12 +27,17 @@ the original Model context. The launcher keeps that original target until closed
 Font/geometry settings are remembered for the A:M session. The original wizard's
 preferences remain independent. Files are written only when Save Settings is used.
 
+The standalone command opens a modeless wizard and returns immediately to A:M.
+You can select, move, rotate and scale the generated text in the modeling window
+while FontWiz2 stays open. A thread-local keyboard hook handles dialog navigation
+only for the wizard and its children; A:M retains its normal message loop.
+
 ## Save Settings and Load Settings
 
 **Save Settings...** writes the current dialog values to a human-readable UTF-8
 `.json` text file. It includes text, full font/style properties, em height and
 extrusion (cm), caps/sides, bevel controls and amount (mm), subdivision, Create a
-new model and Keep window open. It captures the current controls, including edits
+new model, Keep window open and the optional surface color. It captures the current controls, including edits
 made since the last stamp. Blank text and unfinished checkbox combinations can
 be saved as drafts; creating geometry still performs its normal validation.
 
@@ -42,7 +47,8 @@ an invalid/incompatible file leaves the current controls unchanged. Loading does
 not create geometry. Numeric ranges match the UI; files are limited to 64 KiB.
 An imported append preference is overridden when no target model is available.
 
-The schema identifies itself with `"format": "FontWiz2.Settings"` and `"version": 1`.
+New files identify themselves with `"format": "FontWiz2.Settings"` and `"version": 2`.
+Version 1 files still load, with surface color disabled.
 Text is a JSON string; font, geometry and bevel are named objects. Units appear
 in the numeric field names. The JSON contains no model pointers or host handles.
 Saving writes a complete temporary file in the selected folder before replacing
@@ -52,14 +58,35 @@ the destination, preserving the old file if validation/writing/replacement fails
 
 With **Keep window open** checked, each **Create Text** action generates a stamp
 and leaves the wizard open with the text selected for quick replacement. Change
-the text, font or geometry settings and stamp again. Leave **Create a new model**
+the text, font or geometry settings and stamp again. Click into A:M to reposition
+the selected text between stamps. New text starts at the model origin; it does
+not use a mouse click as a placement cursor. Leave **Create a new model**
 checked to make a separate model for every stamp, or uncheck it to append to the
 original Model context. Clear Keep window open to close after the next stamp.
 
 Before any successful stamp, Cancel discards the operation. After one or more
 stamps the button reads Close; closing preserves those models and reports a
 completed operation. Errors leave the dialog open for correction. Both Save and
-Load remain available between stamps. Saving/loading settings never stamps text.
+Load remain available between stamps. Saving/loading settings never stamps text. Appending preserves the current view
+zoom; only newly created models are zoomed to fit. Before every stamp, the target
+is resolved from the current project rather than dereferencing a cached model.
+If the project changes or an append target disappears, reopen the wizard from
+the intended Model context. Changing the active view does not retarget append.
+
+## Text groups and surface color
+
+Every stamp creates a persistent named group containing its generated control
+points, as well as selecting those points for positioning. Names use up to the
+first ten text characters, with line breaks/tabs replaced by spaces and leading
+whitespace removed. Repeated names receive a numeric suffix, shortening the text
+prefix to keep the complete name within ten characters. A:M's group-name API
+uses the Windows ANSI code page, so group names can substitute characters that
+that code page cannot represent; this does not change the Unicode model text.
+
+**Apply surface color** is off initially. When enabled, **Choose Color...** sets
+only the new text group's diffuse surface color. Existing geometry and other
+surface properties are left alone. With the option off, no surface property is
+written. The checkbox and chosen RGB color are saved/loaded with settings.
 
 Text is limited to 512 UTF-16 code units. BMP glyphs and accented text are
 supported; supplementary characters/emoji are rejected. Complex script shaping,
@@ -78,8 +105,12 @@ open, the call returns only after the wizard finally closes. Completed means at
 least one stamp finished; the reply contains the total spline count and the last
 successful model/text. Cancelled means the dialog closed before any stamp. No C++
 objects, allocations or exceptions cross the ABI.
-The result model remains owned by A:M. Do not retain borrowed pointers across
-project/model changes. The launcher resolves only this new V1 export in FontWiz2.
+The synchronous V1 adapter pumps messages until the same modeless wizard closes;
+it temporarily enables a caller-disabled A:M frame and restores its prior state.
+The standalone command needs no nested loop. Caller structures must stay alive
+through the V1 call. If the last generated model has since been deleted, the
+completed reply has a null model pointer. The result model remains owned by A:M.
+Do not retain borrowed pointers across project/model changes. The launcher resolves only this new V1 export in FontWiz2.
 
 ## Validation and host test
 
@@ -89,9 +120,11 @@ rejection. Native tests exercise request validation and **real Windows GDI**
 outline extraction, holes, curves, multiple lines and accented text without A:M.
 Settings tests cover Unicode/escaped text, every stored option, actual JSON file
 round trips, invalid files, replacement and preservation on failed save/load.
-Native modal-dialog tests use the real wizard resource and a mock generation
-callback to exercise cancel, single creation and two successive stamps with
-changed text/size. They do not run actual A:M insertion, cap quality or Undo.
+Native modeless-dialog tests use the real wizard resource and a mock generation
+callback to exercise cancel, single creation, two successive stamps with changed
+text/size/color, an enabled owner receiving input between stamps, immediate
+return from the standalone window opener, cleanup and WM_QUIT preservation.
+Naming tests cover truncation, whitespace and repeat suffixes. They do not run actual A:M insertion, cap quality or Undo.
 
 Before promotion, test the exact Release binaries in A:M and record their hashes:
 
@@ -110,7 +143,18 @@ Before promotion, test the exact Release binaries in A:M and record their hashes
    file dialogs and loading invalid JSON; current data must stay unchanged.
 9. Keep window open: stamp two different words into new models, change settings
    between stamps, and Close. Confirm both models persist and the wizard did not
-   close between stamps. Repeat with append/Undo on disposable data.
+   close between stamps. Click into the modeling window and move/rotate/scale the
+   selected text, use host shortcuts, then stamp again. Confirm append does not
+   reset the zoom. Repeat with append/Undo on disposable data.
+10. Confirm each stamp has its own persistent group, correct membership and a
+    distinct name of at most ten characters. Save/reload and Undo/Redo the groups.
+11. Stamp with surface color disabled, then with two chosen colors. Confirm only
+    the corresponding groups change color and prior/model surface properties
+    remain intact. Save/Load both the enabled and disabled color setting.
+12. Close/delete the original model, switch projects and close the application
+    while the wizard is open. Confirm stale targets are rejected and dialog/hook
+    cleanup leaves A:M usable. Test the synchronous caller separately when peer
+    testing resumes.
 
 Keep generated receipts at `runtime_tested: false` until independent host evidence
 is recorded. Debug `.hxtd` packages require the matching debug A:M host. Removing

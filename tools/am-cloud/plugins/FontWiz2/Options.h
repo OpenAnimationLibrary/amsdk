@@ -11,6 +11,8 @@ struct Options {
     unsigned flags = 0x4 | 0x2 | 0x100;
     bool newModel = true;
     bool keepOpen = false;
+    bool applyColor = false;
+    COLORREF surfaceColor = RGB(255, 255, 255);
     std::wstring text = L"FontWiz2";
     Options() {
         font.lfWeight = FW_NORMAL; font.lfCharSet = DEFAULT_CHARSET;

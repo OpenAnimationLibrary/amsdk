@@ -107,9 +107,14 @@ std::string SettingsToJson(const Options &options) {
     Object bevel{{"amount_mm", Json(double(options.bevel) * 10.0)}};
     for (const auto &[key, flag] : pieces) geometry.emplace(key, Json((options.flags & flag) != 0));
     for (const auto &[key, flag] : bevels) bevel.emplace(key, Json((options.flags & flag) != 0));
-    Object root{{"format", Json(std::string("FontWiz2.Settings"))}, {"version", Json(1.0)},
+    Object surface{{"apply_color", Json(options.applyColor)},
+        {"red", Json(double(GetRValue(options.surfaceColor)))},
+        {"green", Json(double(GetGValue(options.surfaceColor)))},
+        {"blue", Json(double(GetBValue(options.surfaceColor)))}};
+    Object root{{"format", Json(std::string("FontWiz2.Settings"))}, {"version", Json(2.0)},
         {"text", Json(utf8(options.text))}, {"font", Json(font)}, {"geometry", Json(geometry)},
-        {"bevel", Json(bevel)}, {"create_new_model", Json(options.newModel)}, {"keep_window_open", Json(options.keepOpen)}};
+        {"bevel", Json(bevel)}, {"surface", Json(surface)},
+        {"create_new_model", Json(options.newModel)}, {"keep_window_open", Json(options.keepOpen)}};
     return Json(root).serialize(true) + "\n";
 }
 
@@ -137,8 +142,9 @@ Options SettingsFromJson(const std::string &input) {
     while (end != text.cend() && (*end == ' ' || *end == '\t' || *end == '\r' || *end == '\n')) ++end;
     if (!error.empty() || end != text.cend()) throw std::runtime_error("The file is not valid settings JSON.");
     const Object &root = as<Object>(parsed, "root");
-    if (as<std::string>(field(root, "format"), "format") != "FontWiz2.Settings" || number(root, "version", 1, 1, true) != 1)
+    if (as<std::string>(field(root, "format"), "format") != "FontWiz2.Settings")
         throw std::runtime_error("Unsupported FontWiz2 settings format/version.");
+    const double version = number(root, "version", 1, 2, true);
     const Object &font = as<Object>(field(root, "font"), "font");
     const Object &geometry = as<Object>(field(root, "geometry"), "geometry");
     const Object &bevel = as<Object>(field(root, "bevel"), "bevel");
@@ -171,6 +177,13 @@ Options SettingsFromJson(const std::string &input) {
     else if (subdivision == "all") options.flags |= EX_SUB | EX_SUB_ALL;
     else if (subdivision != "none") throw std::runtime_error("Unknown subdivision setting.");
     options.newModel = boolean(root, "create_new_model"); options.keepOpen = boolean(root, "keep_window_open");
+    if (version >= 2) {
+        const Object &surface = as<Object>(field(root, "surface"), "surface");
+        options.applyColor = boolean(surface, "apply_color");
+        options.surfaceColor = RGB(static_cast<BYTE>(number(surface, "red", 0, 255, true)),
+            static_cast<BYTE>(number(surface, "green", 0, 255, true)),
+            static_cast<BYTE>(number(surface, "blue", 0, 255, true)));
+    }
     validate(options);
     return options;
 }
