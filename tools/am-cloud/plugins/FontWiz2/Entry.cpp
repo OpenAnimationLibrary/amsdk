@@ -104,6 +104,12 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject *object, const st
         if (busy) return FALSE;
         auto *model = fw2::ResolveModel(object);
         if (!model) return FALSE;
+        // The command returns while its window/hook still execute plugin code.
+        // Keep that code mapped until process exit, even if A:M releases its HXT.
+        HMODULE module = nullptr;
+        if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN,
+            reinterpret_cast<LPCWSTR>(&HxtOnCommand), &module))
+            throw std::runtime_error("FontWiz2 could not retain its modeless window module.");
         busy = true;
         fw2::OpenWizard(AfxGetInstanceHandle(), GetMainApplicationWnd(), remembered, true, generator(model),
             [](const fw2::Options &values, const fw2::WizardResult &result) {
