@@ -54,3 +54,8 @@ Model-menu appearance, modal dialog sequence, cross-DLL call in A:M and host
 stability remain **untested until the exact binaries are tried in A:M**. Receipts
 retain `runtime_tested: false`. Record run, commit, HXT hashes, A:M version, menu
 route and results before promoting a candidate. See ../../HOST-TEST.md.
+
+The test branch explicitly records the runner's compiler patch 19.44.35229 after
+run 40258131287 detected the change from 19.44.35228. The SDK archive, MSVC toolset
+directory and Windows SDK stay unchanged. The earlier host-tested baseline record
+is preserved; it does not validate these newly compiled plugins.

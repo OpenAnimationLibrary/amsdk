@@ -54,7 +54,10 @@ case collisions, special files, expansion limits, CRCs, header layout and the
 four configuration-matched x64 libraries. SDK bytes are not altered.
 
 `toolchain.lock.json` selects VS 2022's **MSVC 14.44.35207**, compiler patch
-**19.44.35228**, and **Windows SDK 10.0.26100.0**, based on run #7. Selection is
+**19.44.35229**, and **Windows SDK 10.0.26100.0**. This test branch records the
+compiler patch from message-test run **40258131287**, runner image **20261022.344.1**;
+the earlier run #7 host test used **19.44.35228** and remains historical evidence.
+Selection is
 explicit in both the developer environment and MSBuild. A runner update which
 removes or changes that compiler fails visibly instead of silently changing
 our toolchain. Review the lock change, both builds and a new Release host test

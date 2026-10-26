@@ -1,6 +1,6 @@
 {
   "vc_tools_version": "14.44.35207",
-  "compiler_version": "19.44.35228",
+  "compiler_version": "19.44.35229",
   "windows_sdk_version": "10.0.26100.0",
-  "provenance": "Versions recorded by Windows run 33928660776; its Release plugin was tested by Rodney in A:M 19.5g, Group context. Change deliberately and repeat the host test when a runner update removes these versions. The runner image itself is not frozen."
+  "provenance": "Message-test run 40258131287 on windows-2022 image 20261022.344.1 reports compiler 19.44.35229 in the same MSVC 14.44.35207 directory; Release and Debug protocol tests passed. This branch deliberately updates only that compiler patch. Windows SDK and A:M SDK remain unchanged. New native builds and an exact-binary A:M host test are required; the older host-tested record remains unchanged."
 }
