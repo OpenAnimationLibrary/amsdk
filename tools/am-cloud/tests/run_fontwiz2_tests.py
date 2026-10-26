@@ -1,6 +1,7 @@
 """Run FontWiz2's Windows API and GDI tests without loading A:M."""
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -22,7 +23,12 @@ def main():
         folder = HERE / 'plugins/FontWiz2'
         executable = work / 'fontwiz2-tests.exe'
         resource = work / 'fontwiz2-tests.res'
-        subprocess.run(['rc.exe', '/nologo', '/I' + str(folder), '/fo' + str(resource),
+        # CreateProcess resolves executable names using the parent's PATH, not
+        # the replacement environment. Resolve the selected SDK tool explicitly.
+        resource_compiler = shutil.which('rc.exe', path=env['PATH'])
+        if not resource_compiler:
+            raise RuntimeError('Locked Windows SDK resource compiler is absent.')
+        subprocess.run([resource_compiler, '/nologo', '/I' + str(folder), '/fo' + str(resource),
                         str(folder / 'FontWiz2.rc')], env=env, cwd=work, check=True, timeout=30)
         runtime = '/MDd' if os.environ.get('AM_CONFIGURATION') == 'Debug' else '/MD'
         subprocess.run([str(compiler), '/nologo', '/EHsc', '/std:c++20', '/W4', '/WX', runtime,
