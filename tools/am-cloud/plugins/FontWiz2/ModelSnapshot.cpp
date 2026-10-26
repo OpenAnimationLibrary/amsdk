@@ -16,13 +16,13 @@ void color(std::ostream &out, HAttrProperty *attributes) {
     if (!attributes) { out << "attributes=absent"; return; }
     auto *diffuse = attributes->GetDiffuseColor();
     if (!diffuse) { out << "diffuse=absent"; return; }
-    const Vector raw = static_cast<const HVectorProperty *>(diffuse)->GetValue();
-    const auto rgb = diffuse->GetNormalizedRGBFloat();
-    out << "attr_null=" << attributes->IsNull() << " diffuse_null=" << diffuse->IsNull()
-        << " default=" << diffuse->IsDefaultValue() << " keys=" << diffuse->CountKeys()
-        << " driver=" << (diffuse->GetHeadDriver() != nullptr)
-        << " raw_xyz=" << raw.x << ',' << raw.y << ',' << raw.z
-        << " normalized_rgb=" << rgb.m_red << ',' << rgb.m_green << ',' << rgb.m_blue;
+    out << "attr_null=" << attributes->IsNull() << " diffuse_null=" << diffuse->IsNull();
+    if (!diffuse->IsNull()) {
+        // Read only the stored group/model vector. Patch surface handles and
+        // driver/default/normalized-value queries are deliberately excluded.
+        const Vector raw = static_cast<const HVectorProperty *>(diffuse)->GetValue();
+        out << " stored_rgb=" << raw.x << ',' << raw.y << ',' << raw.z;
+    }
 }
 unsigned id(HCP *cp) { return cp ? cp->GetID() : 0; }
 }
@@ -39,7 +39,7 @@ std::wstring ModelSnapshot(HModelCache *model, bool serialize) {
     // Getter-only report precedes the optional SDK serializer. No Save, Update,
     // FindPatches, MakeCurrent, interpolation, property writes or redraw here.
     std::ostringstream out; out.imbue(std::locale::classic()); out << std::setprecision(9);
-    out << "FontWiz2 live model snapshot v1\r\nA:M " << GetAMVersion().Get_const_char()
+    out << "FontWiz2 live model snapshot v2\r\nA:M " << GetAMVersion().Get_const_char()
         << "\r\nModel: " << model->GetName() << "\r\nModified: " << model->IsModified()
         << "\r\nModel surface: "; color(out, model->GetAttr()); out << "\r\n";
     if (auto *container = model->GetChildGroupContainer()) {
@@ -63,11 +63,10 @@ std::wstring ModelSnapshot(HModelCache *model, bool serialize) {
         auto *patch = model->GetPatch(i);
         if (!patch) { out << "Patch " << i << " absent\r\n"; continue; }
         out << "Patch " << i << " CPs=" << id(patch->GetCP1()) << ',' << id(patch->GetCP2())
-            << ',' << id(patch->GetCP3()) << ',' << id(patch->GetCP4()) << "\r\n  own: ";
-        color(out, patch->GetAttr()); out << "\r\n  composited: ";
-        color(out, patch->GetCompositedAttr()); out << "\r\n";
+            << ',' << id(patch->GetCP3()) << ',' << id(patch->GetCP4()) << "\r\n";
         if (out.tellp() > 16 * 1024 * 1024) throw std::runtime_error("The live report exceeds 16 MiB.");
     }
+    out << "\r\nPatch surface values omitted: these SDK reads are suspected in the colored-model inspector crash.\r\n";
     out << "\r\nThe getter report is not a .mdl file. Capture model code separately to invoke\r\n"
         "the SDK serializer in memory. Serialization may normalize data; no claim\r\n"
         "is made that it reproduces every pre-save cache. No model file is written.\r\n";

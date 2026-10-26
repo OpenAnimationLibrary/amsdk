@@ -47,7 +47,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "FontWiz2 - Model Inspector"
 FONT 9, "Segoe UI"
 BEGIN
- LTEXT "Capture before saving in A:M. Live values are captured first; Capture model code invokes the SDK serializer in memory.",-1,10,8,660,24
+ LTEXT "Capture before saving in A:M. Group values are captured first; Capture model code invokes the SDK serializer in memory.",-1,10,8,660,24
  LTEXT "Captured current model (select text and Ctrl+C to copy)",-1,10,36,325,12
  LTEXT "Saved file (read from disk; not loaded into A:M)",-1,345,36,325,12
  EDITTEXT IDC_FW2_CURRENT_CODE,10,52,325,320,ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP

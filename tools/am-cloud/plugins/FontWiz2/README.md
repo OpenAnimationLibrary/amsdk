@@ -112,8 +112,9 @@ mutation; a failure during host insertion is not claimed to be transactional.
 
 **Inspect Model...** captures the last model stamped by this wizard, or the
 original Model context before any stamp. The left pane initially shows live
-Model/group diffuse values and flags, group CP IDs, and each patch's own and
-composited diffuse values. This getter-only report runs before serialization;
+Model/group stored diffuse values and null flags, group CP IDs, and patch corner
+CP IDs. Patch surface handles are not read; driver/key/default and normalized
+color queries are also omitted following a colored-model inspection crash. This getter-only report runs before serialization;
 it does not call Save, FindPatches, Update, interpolation or refresh operations.
 SDK getters may still evaluate internal data lazily; this is not a raw memory dump.
 
@@ -254,3 +255,14 @@ fails to display immediately. That candidate's Release HXT SHA-256 was
 (run `40305369804`, attempt 1). This revision adds inspection without changing
 the group color write path. Inspector UI/file handling has native mock tests;
 actual live capture, SDK serialization and visible color require A:M testing.
+
+The owner reports run 15 crashes when inspecting a model created with color
+enabled, while uncolored inspection works. The supplied A:M 19.5g uncolored
+snapshot contains 620 CPs in the named group and 189 patches whose own/composited
+attributes are absent; it never exercises a populated patch surface handle.
+This does not identify the faulting SDK call. Snapshot v2 removes patch attribute
+access altogether, plus driver/key/default/normalized-color queries. Group/model
+reads are limited to null flags and the stored RGB vector. The color assignment
+and optional serializer are unchanged; this is a crash-isolation candidate,
+not a confirmed runtime repair. Capture the live report before using the separate
+Capture model code action, and note which action fails if a problem remains.
