@@ -64,6 +64,10 @@ jobs:
           pwsh -NoProfile -File "$dest/Verify-Package.ps1" 2>&1 | Tee-Object tools/am-cloud/artifacts/diagnostics/tamper-rejection.log
           if ($LASTEXITCODE -eq 0) { throw 'Verifier incorrectly accepted a modified plugin.' }
           exit 0
+      - name: Record audited build identity
+        run: |
+          $r = Get-Content -Raw tools/am-cloud/artifacts/diagnostics/build-receipt.json | ConvertFrom-Json
+          $r | Select-Object configuration,project,source,sdk,toolchain,plugin,runtime_tested,status,stage,package | ConvertTo-Json -Depth 8 -Compress
       - name: Publish installable test package
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:

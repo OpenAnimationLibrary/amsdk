@@ -209,7 +209,7 @@ def build(args: argparse.Namespace, receipt: dict, output: Path) -> None:
                    '/p:IntDir=' + obj_dir.as_posix() + '/']
         text = run(command, env, diagnostics / 'msbuild.log')
         receipt['stage'] = 'warning-policy'
-        receipt['accepted_sdk_warnings'] = audit_warnings(text, sdk)
+        receipt['accepted_sdk_warnings'] = audit_warnings(text, sdk, reviewed_rgb=project.stem == 'MakeGroup')
         extension = '.hxt' if args.configuration == 'Release' else '.hxtd'
         suffix = '_64' if args.configuration == 'Release' else '_64d'
         expected_name = project.stem + suffix + extension

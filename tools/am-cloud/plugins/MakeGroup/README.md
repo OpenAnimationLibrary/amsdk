@@ -44,3 +44,7 @@ coverage, not SDK insertion or color rendering. All package receipts remain
 runtime_tested:false. Original SDK notices remain applicable. New plugin code:
 Open Animation Library, with AI assistance; cube coordinates derive from the
 owner's earlier model. No merge, automatic installation or release.
+
+The build explicitly reviews six C4244 locations in the locked SDK's RGBByte.h
+for this project only, matching the earlier color-header review. SDK bytes and
+compiler warnings remain visible; any different path, location or warning fails.

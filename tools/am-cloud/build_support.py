@@ -172,11 +172,12 @@ def audit_dependencies(text: str, configuration: str) -> list[str]:
     return names
 
 
-def audit_warnings(text: str, sdk: Path) -> list[str]:
-    """Retain the four known warnings in the locked SDK; reject new warnings."""
+def audit_warnings(text: str, sdk: Path, *, reviewed_rgb: bool = False) -> list[str]:
+    """Retain exact locked-SDK warnings; color-header review is opt-in."""
     warnings = sorted(set(re.sub(r'^\d+>', '', line.strip()) for line in text.splitlines()
                           if re.search(r'\bwarning\s+[A-Z]+\d+\s*:', line, re.I)))
     expected = str((sdk / 'Include/FileCons.h').resolve()).replace('\\', '/').casefold()
+    rgb = str((sdk / 'Include/RGBByte.h').resolve()).replace('\\', '/').casefold()
     for line in warnings:
         match = re.match(r'^(.+?)\((\d+),(\d+)\): warning ([A-Z]+\d+):', line, re.I)
         accepted = False
@@ -185,6 +186,11 @@ def audit_warnings(text: str, sdk: Path) -> list[str]:
             row, column = int(match[2]), int(match[3])
             accepted = (filename == expected and match[4].upper() == 'C4244' and
                         (row, column) in ((83, 21), (84, 21), (85, 20), (86, 20)))
+            # The same six locked RGBByte conversions previously reviewed for
+            # FontWiz2; enabled only for the MakeGroup project by the builder.
+            accepted = accepted or (reviewed_rgb and filename == rgb and match[4].upper() == 'C4244' and
+                        (row, column) in ((138, 18), (139, 20), (140, 19),
+                                          (299, 20), (473, 24), (474, 20)))
         if not accepted:
             raise ValueError('Unreviewed build warning (see msbuild.log): ' + line)
     return warnings
