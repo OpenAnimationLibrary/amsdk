@@ -32,7 +32,16 @@ int main() try {
         (void)point;
         if (count != 3) throw std::runtime_error("Cube corner must meet three faces.");
     }
-    std::cout << "Make Group: six outward planar faces, eight corners, 100 cm bounds passed.\n";
+    for (std::size_t i = 1; i < 3; ++i)
+        if (make_group::centers[i] - make_group::centers[i-1] <= 100)
+            throw std::runtime_error("The three cube bounds overlap.");
+    std::set<std::tuple<int,int,int>> testCorners;
+    for (float center : make_group::centers)
+        for (const auto &face : make_group::faces)
+            for (const auto &p : face)
+                testCorners.emplace(static_cast<int>(p.x + center), static_cast<int>(p.y), static_cast<int>(p.z));
+    if (testCorners.size() != 24) throw std::runtime_error("The three cubes share corners.");
+    std::cout << "Make Group: six outward planar faces, eight corners, 100 cm bounds and three disjoint cubes passed.\n";
     return 0;
 } catch (const std::exception &error) {
     std::cerr << error.what() << '\n'; return 1;

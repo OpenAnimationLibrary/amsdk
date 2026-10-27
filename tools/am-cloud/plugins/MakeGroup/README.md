@@ -48,3 +48,37 @@ owner's earlier model. No merge, automatic installation or release.
 The build explicitly reviews six C4244 locations in the locked SDK's RGBByte.h
 for this project only, matching the earlier color-header review. SDK bytes and
 compiler warnings remain visible; any different path, location or warning fails.
+
+## Group-order experiment
+
+In a **new empty model**, run **Make Group - Create Three Colors** from the same
+Plugins > Wizards menu. It creates three separate 100 cm cubes: red at X=-150 cm,
+green at X=0 and blue at X=150 cm. Groups are **MG Red**, **MG Green** and **MG Blue**.
+Each contains only its cube's 48 CPs (144 CPs/18 patches total expected). The
+single-cube Make Group command and color picker remain available.
+
+Observe all three shaded colors before saving. Run **Make Group - Swap Test Groups**.
+It exchanges the red and blue groups' positions in the PWS using two SDK Move calls.
+The green group, temporary selection group and unrelated groups retain their
+positions. No color values, CP membership or cube positions are changed, and no
+Save/reload is performed. Run it again to swap back. A snapshot is requested for
+Undo; native Undo/Redo behavior still needs a host test.
+
+This deliberately preserves the original group-creation order. It tests the owner's
+observation that dragging another group above a plugin-created group makes its
+assigned color appear. Note whether all colors appear after a swap, whether one
+stays missing, and whether the missing color follows whichever group is first.
+These distinguish a recomposition effect from an order-specific effect without
+overlapping-group color precedence. Do not start with the single-cube command in
+this model; create the three-color set directly.
+
+A prior live report listed a persistent group before the temporary selection group.
+That is an observed ordering difference, not a verified A:M contract. The owner
+also confirmed that A:M's native Surface controls immediately recolor a
+plugin-created group. Group validity, color-commit behavior and group-list refresh
+must therefore not be conflated. No cause is asserted until the new host test.
+
+Repeat-name creation is refused for this named test set; use a fresh model to
+restart. Swap is disabled until all three test groups exist. Renaming or deleting a
+test group makes the swap command unavailable. Model/group pointers are resolved
+anew on every invocation. Exceptions remain within the HXT callback boundary.
