@@ -238,6 +238,9 @@ def build(args: argparse.Namespace, receipt: dict, output: Path) -> None:
         shutil.copy2(pdb, package / 'symbols' / pdb.name)
         for name in ('Verify-Package.ps1', 'HOST-TEST.md'):
             shutil.copy2(HERE / name, package / name)
+        usage = project.parent / 'README.md'
+        if usage.is_file():
+            shutil.copy2(usage, package / 'PLUGIN-README.md')
         source = receipt['source']
         readme = (f'A:M CLOUD-BUILD TEST PACKAGE\n\nConfiguration: {args.configuration} x64\n'
                   f'Plugin: {plugin.name}\nSHA-256: {sha256(plugin)}\n'
