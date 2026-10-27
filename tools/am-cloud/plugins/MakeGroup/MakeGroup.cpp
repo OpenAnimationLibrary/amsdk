@@ -117,8 +117,13 @@ extern "C" __declspec(dllexport) BOOL HxtOnAddCommandMenu(
     HTreeObject *object, const uint32_t index, String &name, MenuCategory &category, BOOL &disabled) {
     if (index >= 2) return FALSE;
     AFX_MANAGE_STATE(AfxGetStaticModuleState());
-    name = "Make Group..."; category = MC_WIZARD; disabled = busy || !modelFor(object);
-    return TRUE;
+    try {
+        name = "Make Group..."; category = MC_WIZARD; disabled = busy || !modelFor(object);
+        return TRUE;
+    } catch (CException *error) {
+        if (error) error->Delete();
+    } catch (...) {}
+    return FALSE;
 }
 extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject *object, const uint32_t index) {
     if (index >= 2) return FALSE;
