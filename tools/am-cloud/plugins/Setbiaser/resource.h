@@ -8,6 +8,7 @@
 #define IDC_OPTIONS 106
 #define IDC_REFRESH 107
 #define IDC_UNITS 108
+#define IDC_CLOSE 109
 #define IDC_VALUE0 200
 #define IDC_VALUE1 201
 #define IDC_VALUE2 202

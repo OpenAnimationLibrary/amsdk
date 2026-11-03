@@ -44,7 +44,7 @@
     <Link><AdditionalDependencies>FileIO_64d.lib;Matrix_64d.lib;Plugin_64d.lib;SDK_64d.lib;comctl32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies></Link>
   </ItemDefinitionGroup>
   <ItemGroup><ClCompile Include="Setbiaser.cpp" /><ClCompile Include="Adapter.cpp" /><ResourceCompile Include="Setbiaser.rc" /></ItemGroup>
-  <ItemGroup><ClInclude Include="StdAfx.h" /><ClInclude Include="Adapter.h" /><ClInclude Include="BiasCore.h" /><ClInclude Include="resource.h" /></ItemGroup>
+  <ItemGroup><ClInclude Include="StdAfx.h" /><ClInclude Include="Adapter.h" /><ClInclude Include="BiasCore.h" /><ClInclude Include="resource.h" /><ClInclude Include="WindowFrame.h" /></ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Target Name="ValidateAMBuild" BeforeTargets="PrepareForBuild">
     <Error Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug'" Text="Only Release or Debug configurations are supported." />

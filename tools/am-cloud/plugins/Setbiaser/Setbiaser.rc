@@ -1,9 +1,9 @@
 #include <windows.h>
 #include "resource.h"
 IDD_SETBIASER DIALOGEX 0, 0, 224, 176
-STYLE DS_SETFONT | DS_CONTROL | WS_POPUP | WS_CAPTION | WS_SYSMENU
+STYLE DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT
-CAPTION "Setbiaser 0.1.0-preview"
+CAPTION "Setbiaser 0.1.1-preview"
 FONT 9, "Segoe UI", 400, 0, 1
 BEGIN
     COMBOBOX IDC_SCOPE, 7, 7, 94, 58, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
@@ -30,12 +30,13 @@ BEGIN
     LTEXT "Magnitude: % | Angles: degrees", IDC_UNITS, 7, 123, 208, 10
     PUSHBUTTON "Options", IDC_OPTIONS, 7, 138, 45, 15, WS_TABSTOP
     PUSHBUTTON "Refresh", IDC_REFRESH, 57, 138, 45, 15, WS_TABSTOP
-    LTEXT "Commit on release / Enter", -1, 109, 141, 110, 10
+    LTEXT "Enter: apply", -1, 109, 141, 54, 10
+    PUSHBUTTON "Close", IDC_CLOSE, 169, 138, 45, 15, WS_TABSTOP
     LTEXT "Run Setbiaser again to bind a new selection.", IDC_STATUS, 7, 158, 208, 15
 END
 1 VERSIONINFO
- FILEVERSION 0,1,0,0
- PRODUCTVERSION 0,1,0,0
+ FILEVERSION 0,1,1,0
+ PRODUCTVERSION 0,1,1,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS VS_FF_DEBUG | VS_FF_PRERELEASE
@@ -50,9 +51,9 @@ BEGIN
   BLOCK "040904b0"
   BEGIN
    VALUE "FileDescription", "Setbiaser modeless bias editor - host-test candidate\0"
-   VALUE "FileVersion", "0.1.0-preview\0"
+   VALUE "FileVersion", "0.1.1-preview\0"
    VALUE "ProductName", "Setbiaser\0"
-   VALUE "ProductVersion", "0.1.0-preview\0"
+   VALUE "ProductVersion", "0.1.1-preview\0"
    VALUE "Comments", "Inspired by Emilio Le Roux's Setbias. New implementation with AI assistance.\0"
   END
  END

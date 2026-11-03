@@ -1,4 +1,4 @@
-# Setbiaser 0.1.0-preview
+# Setbiaser 0.1.1-preview
 
 A compact, native, modeless bias editor for Animation:Master 19.5 Windows x64.
 Inspired by Emilio Le Roux's Setbias; this is a new implementation, not recovered
@@ -8,6 +8,27 @@ original source or a compatibility claim. Developed with AI assistance.
 A successful Windows build does not establish A:M runtime behavior or native undo
 grouping. The initial implementation deliberately uses explicit selection binding
 and commit-on-release instead of unverified selection notifications/live writes.
+
+## 0.1.1 window fix
+
+The 0.1.0 palette incorrectly specified `DS_CONTROL`, which makes the Windows
+dialog manager strip its caption and system menu. This revision removes that
+embedded-dialog style, restores the native movable frame, and adds an explicit
+**Close** button. The X, system-menu Close, Alt+F4, and Close button close the
+palette; Escape cancels an unfinished edit, or closes the palette when idle.
+Closing discards only uncommitted input; it does not access the bound model,
+so an expired model binding cannot prevent closing.
+
+On the first launch after this upgrade, the palette centers over A:M.
+Unversioned coordinates from the borderless build are ignored once; subsequent
+closes save the movable palette's position. Restored positions are clamped into
+a monitor work area, including monitors with negative coordinates. The title
+identifies **Setbiaser 0.1.1** so an old loaded binary is apparent.
+
+Native Windows regression tests create this exact dialog resource and check its
+frame, caption hit-testing, enabled Move/Close commands, owner-relative and saved
+placement, and close routes. A negative test recreates the old `DS_CONTROL`
+symptom. These checks do not run the A:M host or establish A:M model-edit safety.
 
 ## Install and open
 

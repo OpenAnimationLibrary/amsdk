@@ -52,6 +52,29 @@ jobs:
           Set-Content -LiteralPath "$work/run.cmd" -Value $lines -Encoding ascii
           & cmd.exe /d /c "$work/run.cmd" 2>&1 | Tee-Object tools/am-cloud/test-results/setbiaser-core.log
           exit $LASTEXITCODE
+      - name: Test native palette frame placement and close routes
+        timeout-minutes: 3
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe"
+          $vs = & $vswhere -latest -version '[17.0,18.0)' -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (!$vs) { throw 'Visual Studio 2022 was not found.' }
+          $work = Join-Path $PWD 'tools/am-cloud/.work/setbiaser-window-tests'
+          New-Item -ItemType Directory -Force $work | Out-Null
+          $plugin = Join-Path $PWD 'tools/am-cloud/plugins/Setbiaser'
+          $lines = @(
+            '@echo off',
+            "call `"$vs/VC/Auxiliary/Build/vcvars64.bat`" -vcvars_ver=14.44.35207 10.0.26100.0",
+            'if errorlevel 1 exit /b 1',
+            "rc /nologo /fo `"$work/window.res`" `"$plugin/Setbiaser.rc`"",
+            'if errorlevel 1 exit /b 1',
+            "cl /nologo /std:c++20 /EHsc /W4 /WX /O2 `"$plugin/WindowTests.cpp`" `"$work/window.res`" user32.lib /Fe:`"$work/window-tests.exe`" /Fo:`"$work/window-tests.obj`"",
+            'if errorlevel 1 exit /b 1',
+            "`"$work/window-tests.exe`"",
+            'exit /b %errorlevel%'
+          )
+          Set-Content -LiteralPath "$work/run.cmd" -Value $lines -Encoding ascii
+          & cmd.exe /d /c "$work/run.cmd" 2>&1 | Tee-Object tools/am-cloud/test-results/setbiaser-window.log
+          exit $LASTEXITCODE
       - name: Build and audit Setbiaser
         run: python tools/am-cloud/build.py --configuration "$env:AM_CONFIGURATION" --project "$env:AM_PROJECT"
       - name: Verify intact and reject altered package

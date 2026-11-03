@@ -1,5 +1,6 @@
 #include "Adapter.h"
 #include "resource.h"
+#include "WindowFrame.h"
 #include <memory>
 #include <commctrl.h>
 #include <windowsx.h>
@@ -12,7 +13,7 @@ constexpr wchar_t settingsKey[] = L"Software\\OpenAnimationLibrary\\Setbiaser";
 struct State {
     HWND window{};
     HHOOK hook{};
-    bool routing{}, filling{}, working{}, dirty{}, dragging{}, collapsed{};
+    bool routing{}, filling{}, working{}, dirty{}, dragging{}, collapsed{}, closing{};
     int field = -1, originX{}, expandedHeight{}, sensitivity = 1;
     double startValue{};
     bool entire{}, linked{};
@@ -83,6 +84,16 @@ void refresh(State &s, bool hint = true) {
         throw;
     }
 }
+void closePalette(State &s) noexcept {
+    if (s.closing || !s.window) return;
+    s.closing = true;
+    // Preview values were never written to A:M. Discard pending UI state
+    // without refreshing or dereferencing a possibly expired model binding.
+    s.dirty = false; s.dragging = false; s.field = -1;
+    s.baseline = {};
+    if (GetCapture() && IsChild(s.window,GetCapture())) ReleaseCapture();
+    DestroyWindow(s.window);
+}
 void cancel(State &s) {
     s.dirty = false; s.dragging = false; s.field = -1;
     s.baseline = {};
@@ -134,23 +145,26 @@ void loadPlacement(State &s) {
     const bool hasX=RegGetValueW(HKEY_CURRENT_USER,settingsKey,L"X",RRF_RT_REG_DWORD,nullptr,&x,&size)==ERROR_SUCCESS;
     size=sizeof y;
     const bool hasY=RegGetValueW(HKEY_CURRENT_USER,settingsKey,L"Y",RRF_RT_REG_DWORD,nullptr,&y,&size)==ERROR_SUCCESS;
+    DWORD version{}; size=sizeof version;
+    RegGetValueW(HKEY_CURRENT_USER,settingsKey,L"PlacementVersion",RRF_RT_REG_DWORD,nullptr,&version,&size);
     RECT r{}; GetWindowRect(s.window,&r); s.expandedHeight=r.bottom-r.top;
-    POINT p{hasX?static_cast<LONG>(x):r.left,hasY?static_cast<LONG>(y):r.top};
-    MONITORINFO monitor{}; monitor.cbSize=sizeof monitor;
-    if (GetMonitorInfoW(MonitorFromPoint(p,MONITOR_DEFAULTTONEAREST),&monitor)) {
-        const auto &w=monitor.rcWork;
-        p.x=(std::max)(w.left,(std::min)(p.x,w.right-(r.right-r.left)));
-        p.y=(std::max)(w.top,(std::min)(p.y,w.bottom-(r.bottom-r.top)));
-    }
-    SetWindowPos(s.window,nullptr,p.x,p.y,0,0,SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
+    std::optional<POINT> saved;
+    if (sb::window::useSavedPlacement(version,hasX,hasY))
+        saved=POINT{static_cast<LONG>(x),static_cast<LONG>(y)};
+    if (!sb::window::positionPalette(s.window,GetWindow(s.window,GW_OWNER),saved))
+        throw std::runtime_error("Cannot position the Setbiaser palette.");
 }
 void savePlacement(const State &s) noexcept {
     HKEY key{};
     if (RegCreateKeyExW(HKEY_CURRENT_USER,settingsKey,0,nullptr,0,KEY_SET_VALUE,nullptr,&key,nullptr)!=ERROR_SUCCESS) return;
     RECT r{}; GetWindowRect(s.window,&r);
     const DWORD x=static_cast<DWORD>(r.left),y=static_cast<DWORD>(r.top),sensitivity=static_cast<DWORD>(s.sensitivity);
-    RegSetValueExW(key,L"X",0,REG_DWORD,reinterpret_cast<const BYTE*>(&x),sizeof x);
-    RegSetValueExW(key,L"Y",0,REG_DWORD,reinterpret_cast<const BYTE*>(&y),sizeof y);
+    const auto savedX=RegSetValueExW(key,L"X",0,REG_DWORD,reinterpret_cast<const BYTE*>(&x),sizeof x);
+    const auto savedY=RegSetValueExW(key,L"Y",0,REG_DWORD,reinterpret_cast<const BYTE*>(&y),sizeof y);
+    if (savedX==ERROR_SUCCESS && savedY==ERROR_SUCCESS) {
+        const DWORD version=1;
+        RegSetValueExW(key,L"PlacementVersion",0,REG_DWORD,reinterpret_cast<const BYTE*>(&version),sizeof version);
+    }
     RegSetValueExW(key,L"Sensitivity",0,REG_DWORD,reinterpret_cast<const BYTE*>(&sensitivity),sizeof sensitivity);
     RegCloseKey(key);
 }
@@ -174,9 +188,10 @@ void options(State &s) {
         L"Reset all six biases on the bound eligible selection to 100% magnitude and zero angles?",
         L"Setbiaser - reset biases",MB_YESNO|MB_DEFBUTTON2|MB_ICONWARNING)==IDYES) commit(s,true);
     if (choice==21) MessageBoxW(s.window,
-        L"Setbiaser 0.1.0-preview\nInspired by Emilio Le Roux's Setbias.\nNew implementation with AI assistance.\n\n"
+        L"Setbiaser 0.1.1-preview\nInspired by Emilio Le Roux's Setbias.\nNew implementation with AI assistance.\n\n"
         L"Selection is explicitly bound when invoked. Re-run the plugin to rebind.\n"
-        L"Drag <> horizontally; Shift is fine. Enter/Tab commits text; Escape cancels.\n"
+        L"Drag <> horizontally; Shift is fine. Enter/Tab commits text; Escape cancels an edit.\n"
+        L"Close with X, Close, Alt+F4, or Escape when idle.\n"
         L"Model writes occur only on release/commit. Hooks and open endpoints are skipped.\n\n"
         L"Native undo, save/reopen, modeless input and DPI require testing in A:M.\n"
         L"Use disposable models. This is not a host-validated release.",L"Setbiaser",MB_OK|MB_ICONINFORMATION);
@@ -236,8 +251,14 @@ LRESULT CALLBACK inputHook(int code, WPARAM w, LPARAM l) {
                 const bool edit=id>=IDC_VALUE0 && id<=IDC_VALUE5;
                 const bool handle=id>=IDC_SCRUB0 && id<=IDC_SCRUB5;
                 bool consumed=false;
-                if (input.message==WM_KEYDOWN && !dropdown) {
-                    if (input.wParam==VK_ESCAPE) { cancel(*s); consumed=true; }
+                if (sb::window::isAltF4(input.message,input.wParam,input.lParam)) {
+                    SendMessageW(s->window,WM_CLOSE,0,0); consumed=true;
+                } else if (input.message==WM_KEYDOWN && !dropdown) {
+                    if (input.wParam==VK_ESCAPE) {
+                        if (s->dirty || s->dragging) cancel(*s);
+                        else SendMessageW(s->window,WM_CLOSE,0,0);
+                        consumed=true;
+                    }
                     else if (input.wParam==VK_RETURN && edit) { commit(*s); consumed=true; }
                     else if (input.wParam==VK_TAB && edit) commit(*s);
                     else if ((input.wParam==VK_UP || input.wParam==VK_DOWN) && (edit||handle)) {
@@ -259,12 +280,21 @@ INT_PTR CALLBACK procedure(HWND h, UINT msg, WPARAM w, LPARAM l) {
     const auto s=active;
     if (!s || (msg!=WM_INITDIALOG && s->window!=h)) return FALSE;
     if (msg==WM_INITDIALOG) s->window=h;
-    if (msg==WM_NCDESTROY) {
+    if (msg==WM_DESTROY) {
+        // Save while HWND geometry is valid, before non-client destruction.
         savePlacement(*s);
+        return FALSE;
+    }
+    if (msg==WM_NCDESTROY) {
         if(s->hook) {UnhookWindowsHookEx(s->hook);s->hook=nullptr;}
         s->window=nullptr; active.reset(); return FALSE;
     }
-    if(s->working && (msg==WM_COMMAND || msg==WM_CLOSE)) return TRUE;
+    if (sb::window::isCloseRequest(msg,w)) {
+        if (!s->working) closePalette(*s);
+        return TRUE;
+    }
+    if (s->closing) return FALSE;
+    if(s->working && msg==WM_COMMAND) return TRUE;
     try {
         if (msg==WM_INITDIALOG) {
             for (auto text : {L"Bound selection",L"Entire model"}) SendDlgItemMessageW(h,IDC_SCOPE,CB_ADDSTRING,0,reinterpret_cast<LPARAM>(text));
@@ -278,7 +308,6 @@ INT_PTR CALLBACK procedure(HWND h, UINT msg, WPARAM w, LPARAM l) {
             }
             loadPlacement(*s); refresh(*s); return TRUE;
         }
-        if (msg==WM_CLOSE) { DestroyWindow(h); return TRUE; }
         if (msg==refreshMessage) { refresh(*s,w!=0); return TRUE; }
         if (msg==WM_ACTIVATE && LOWORD(w)==WA_INACTIVE && !s->working) {
             // Losing activation cancels uncommitted input; it never writes to A:M.
@@ -299,7 +328,6 @@ INT_PTR CALLBACK procedure(HWND h, UINT msg, WPARAM w, LPARAM l) {
         }
         if(msg==WM_COMMAND) {
             const int id=LOWORD(w), event=HIWORD(w);
-            if(id==IDCANCEL) { cancel(*s); return TRUE; }
             if(id>=IDC_VALUE0 && id<=IDC_VALUE5 && event==EN_CHANGE && !s->filling) {
                 const int field=id-IDC_VALUE0;
                 if(!s->dirty || s->field!=field) begin(*s,field);
@@ -353,7 +381,7 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject *object,std::uint
             if(GetCapture() && IsChild(active->window,GetCapture()))ReleaseCapture();
             active->binding=binding;active->entire=false;active->baseline={};
             SendDlgItemMessageW(active->window,IDC_SCOPE,CB_SETCURSEL,0,0);
-            SetWindowTextA(active->window,("Setbiaser - "+binding->name()).c_str());
+            SetWindowTextA(active->window,("Setbiaser 0.1.1 - "+binding->name()).c_str());
             refresh(*active); ShowWindow(active->window,SW_SHOWNORMAL); SetForegroundWindow(active->window); return TRUE;
         }
         // Retain callback code after the exported command returns.
@@ -364,7 +392,11 @@ extern "C" __declspec(dllexport) BOOL HxtOnCommand(HTreeObject *object,std::uint
         active=std::make_shared<State>();active->binding=binding;
         HWND window=CreateDialogParamW(AfxGetInstanceHandle(),MAKEINTRESOURCEW(IDD_SETBIASER),owner,procedure,0);
         if(!window) {active.reset();throw std::runtime_error("Cannot create the Setbiaser palette.");}
-        SetWindowTextA(window,("Setbiaser - "+binding->name()).c_str());
+        if (!sb::window::hasPaletteFrame(window)) {
+            closePalette(*active);
+            throw std::runtime_error("Setbiaser did not receive a caption and close controls.");
+        }
+        SetWindowTextA(window,("Setbiaser 0.1.1 - "+binding->name()).c_str());
         active->hook=SetWindowsHookExW(WH_GETMESSAGE,inputHook,nullptr,GetCurrentThreadId());
         if(!active->hook){DestroyWindow(window);throw std::runtime_error("Cannot route modeless palette input safely.");}
         ShowWindow(window,SW_SHOW);return TRUE;
