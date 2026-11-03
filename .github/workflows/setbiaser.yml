@@ -1,0 +1,123 @@
+name: Setbiaser Windows Build
+on:
+  pull_request:
+    paths: ['tools/am-cloud/**', '.github/workflows/setbiaser.yml']
+permissions:
+  contents: read
+concurrency:
+  group: setbiaser-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    name: Setbiaser / ${{ matrix.configuration }}
+    runs-on: windows-2022
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Release, Debug]
+    env:
+      AM_PROJECT: tools/am-cloud/plugins/Setbiaser/Setbiaser.vcxproj
+      AM_CONFIGURATION: ${{ matrix.configuration }}
+      AM_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      AM_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      PYTHONUTF8: '1'
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Select Python 3.11
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.11'
+          architecture: x64
+      - name: Run builder helper tests
+        run: |
+          New-Item -ItemType Directory -Force tools/am-cloud/test-results | Out-Null
+          python -m unittest discover -s tools/am-cloud/tests -v 2>&1 | Tee-Object tools/am-cloud/test-results/tests.log
+          exit $LASTEXITCODE
+      - name: Compile and execute native bias-core tests
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe"
+          $vs = & $vswhere -latest -version '[17.0,18.0)' -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (!$vs) { throw 'Visual Studio 2022 was not found.' }
+          $work = Join-Path $PWD 'tools/am-cloud/.work/setbiaser-tests'
+          New-Item -ItemType Directory -Force $work | Out-Null
+          $source = Join-Path $PWD 'tools/am-cloud/plugins/Setbiaser/CoreTests.cpp'
+          $lines = @('@echo off', "call `"$vs/VC/Auxiliary/Build/vcvars64.bat`" -vcvars_ver=14.44.35207 10.0.26100.0", 'if errorlevel 1 exit /b 1', "cl /nologo /std:c++20 /EHsc /W4 /WX /O2 `"$source`" /Fe:`"$work/core-tests.exe`" /Fo:`"$work/core-tests.obj`"", 'if errorlevel 1 exit /b 1', "`"$work/core-tests.exe`"", 'exit /b %errorlevel%')
+          Set-Content -LiteralPath "$work/run.cmd" -Value $lines -Encoding ascii
+          & cmd.exe /d /c "$work/run.cmd" 2>&1 | Tee-Object tools/am-cloud/test-results/setbiaser-core.log
+          exit $LASTEXITCODE
+      - name: Test native palette frame placement and close routes
+        timeout-minutes: 3
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe"
+          $vs = & $vswhere -latest -version '[17.0,18.0)' -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (!$vs) { throw 'Visual Studio 2022 was not found.' }
+          $work = Join-Path $PWD 'tools/am-cloud/.work/setbiaser-window-tests'
+          New-Item -ItemType Directory -Force $work | Out-Null
+          $plugin = Join-Path $PWD 'tools/am-cloud/plugins/Setbiaser'
+          $lines = @(
+            '@echo off',
+            "call `"$vs/VC/Auxiliary/Build/vcvars64.bat`" -vcvars_ver=14.44.35207 10.0.26100.0",
+            'if errorlevel 1 exit /b 1',
+            "rc /nologo /fo `"$work/window.res`" `"$plugin/Setbiaser.rc`"",
+            'if errorlevel 1 exit /b 1',
+            "cl /nologo /std:c++20 /EHsc /W4 /WX /O2 `"$plugin/WindowTests.cpp`" `"$work/window.res`" user32.lib /Fe:`"$work/window-tests.exe`" /Fo:`"$work/window-tests.obj`"",
+            'if errorlevel 1 exit /b 1',
+            "`"$work/window-tests.exe`"",
+            'exit /b %errorlevel%'
+          )
+          Set-Content -LiteralPath "$work/run.cmd" -Value $lines -Encoding ascii
+          & cmd.exe /d /c "$work/run.cmd" 2>&1 | Tee-Object tools/am-cloud/test-results/setbiaser-window.log
+          exit $LASTEXITCODE
+      - name: Build and audit Setbiaser
+        run: python tools/am-cloud/build.py --configuration "$env:AM_CONFIGURATION" --project "$env:AM_PROJECT"
+      - name: Verify intact and reject altered package
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $false
+          $packages = @(Get-ChildItem tools/am-cloud/artifacts/packages/*.zip)
+          if ($packages.Count -ne 1) { throw 'Expected exactly one package.' }
+          $dest = Join-Path $PWD 'tools/am-cloud/.work/setbiaser-verification'
+          Expand-Archive -LiteralPath $packages[0].FullName -DestinationPath $dest
+          pwsh -NoProfile -File "$dest/Verify-Package.ps1" 2>&1 | Tee-Object tools/am-cloud/artifacts/diagnostics/package-verification.log
+          if ($LASTEXITCODE -ne 0) { throw 'The intact package did not verify.' }
+          $hxt = @(Get-ChildItem $dest -File | Where-Object { $_.Extension -in '.hxt', '.hxtd' })
+          if ($hxt.Count -ne 1) { throw 'Expected exactly one HXT.' }
+          [IO.File]::AppendAllText($hxt[0].FullName, 'tamper-test')
+          pwsh -NoProfile -File "$dest/Verify-Package.ps1" 2>&1 | Tee-Object tools/am-cloud/artifacts/diagnostics/tamper-rejection.log
+          if ($LASTEXITCODE -eq 0) { throw 'The altered package was incorrectly accepted.' }
+          Copy-Item tools/am-cloud/plugins/Setbiaser/README.md tools/am-cloud/artifacts/packages/SETBIASER.md
+          exit 0
+      - name: Publish candidate package
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: Setbiaser-Package-${{ matrix.configuration }}-x64-r${{ github.run_number }}-a${{ github.run_attempt }}
+          path: tools/am-cloud/artifacts/packages/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Publish exact source
+        if: matrix.configuration == 'Release'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: Setbiaser-Source-r${{ github.run_number }}-a${{ github.run_attempt }}
+          path: |
+            tools/am-cloud/plugins/Setbiaser/
+            .github/workflows/setbiaser.yml
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+      - name: Preserve diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: Setbiaser-Diagnostics-${{ matrix.configuration }}-r${{ github.run_number }}-a${{ github.run_attempt }}
+          path: |
+            tools/am-cloud/artifacts/diagnostics/
+            tools/am-cloud/test-results/
+          if-no-files-found: warn
+          retention-days: 14

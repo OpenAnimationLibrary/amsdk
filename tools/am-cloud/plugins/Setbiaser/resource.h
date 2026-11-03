@@ -1,0 +1,23 @@
+#pragma once
+#define IDD_SETBIASER 100
+#define IDC_SCOPE 101
+#define IDC_OPERATION 102
+#define IDC_LINK 103
+#define IDC_COUNT 104
+#define IDC_STATUS 105
+#define IDC_OPTIONS 106
+#define IDC_REFRESH 107
+#define IDC_UNITS 108
+#define IDC_CLOSE 109
+#define IDC_VALUE0 200
+#define IDC_VALUE1 201
+#define IDC_VALUE2 202
+#define IDC_VALUE3 203
+#define IDC_VALUE4 204
+#define IDC_VALUE5 205
+#define IDC_SCRUB0 210
+#define IDC_SCRUB1 211
+#define IDC_SCRUB2 212
+#define IDC_SCRUB3 213
+#define IDC_SCRUB4 214
+#define IDC_SCRUB5 215
